@@ -17,7 +17,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'erp',
     'auditlog', 
+    'import_export'
 ] 
+
+# Optional settings
+IMPORT_EXPORT_USE_TRANSACTIONS = True  # Enable DB transactions
+IMPORT_EXPORT_SKIP_ADMIN_LOG = True    # Reduce log clutter
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -94,6 +99,15 @@ JAZZMIN_SETTINGS = {
         {"name": "Home", "url": "admin:index", "permissions": ["auth.view_user"]},
         {"model": "erp.Customer"},
     ],
+
+    "notifications": {
+        "pending_estimates": {
+            "model": "erp.Estimate",
+            "filters": {"status": "pending"},
+            "icon": "fas fa-file-invoice",
+            "text": "You have {} pending estimates",
+        }
+    }
 }
 
 JAZZMIN_UI_TWEAKS = {
@@ -106,6 +120,16 @@ JAZZMIN_UI_TWEAKS = {
     "navbar": "navbar-dark",
     "no_navbar_border": False,
     "sidebar": "sidebar-dark-primary",
+}
+
+JAZZMIN_SETTINGS = {
+    "custom_links": {
+        "dashboard": [{
+            "name": "Sales Analytics",
+            "url": "/admin/sales-analytics/",
+            "icon": "fas fa-chart-line",
+        }]
+    }
 }
 
 LANGUAGE_CODE = 'en-us'

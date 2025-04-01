@@ -2,7 +2,7 @@
 
 ## ERP System Requirements Document
 
-### Based on Departmental Interviews Conducted on [Date]
+### Based on Departmental Interviews Conducted on [31/03/2025]
 
 ## 1. Introduction
 This document outlines the key operational challenges and automation opportunities identified during onsite interviews with AutoZone’s sales, CRM, verification, stores, and dispatch teams. The findings will guide the development of an ERP system to streamline workflows alongside the existing bookkeeping (BK) system.
@@ -108,8 +108,8 @@ Dispatch logs courier details (driver, vehicle, cost) in paper registers, waits 
 | Phase | Module | Key Features | Technology |
 |-------|--------|--------------|------------|
 | **Phase 1 (Demo Priorities)** | Estimate Tracking | BK ID sync, status updates | Django, Django REST Framework |
-| | Delivery Proof | Mobile photo upload, cloud storage | Django-Storages, Amazon S3 |
-| | Dispatch Console | Courier detail management | HTMX for fast UI updates |
+| | Delivery Proof | Mobile photo upload and scanning
+| | Dispatch Console | Courier detail management | HTML and Bootstrap for fast UI updates |
 | **Phase 2 (Post-Hire)** | BK system API Integration | Bidirectional data sync | - |
 | | Advanced Analytics | Inventory forecasting | - |
 

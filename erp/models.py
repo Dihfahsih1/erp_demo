@@ -1,10 +1,12 @@
+from django.utils import timezone
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.urls import reverse
 from auditlog.models import AuditlogHistoryField
 from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
-
+from django.core.validators import FileExtensionValidator
 # ----------------------------
 # 1. Core Entities
 # ----------------------------
@@ -277,34 +279,31 @@ class Dispatch(models.Model):
         self.estimate.save()
         return True
 
-
 class DeliveryConfirmation(models.Model):
-    estimate = models.OneToOneField(
-        Estimate,
-        on_delete=models.CASCADE,
-        verbose_name=_("Estimate"),
-        related_name='delivery_confirmation'
-    )
-    signed_document = models.FileField(
-        upload_to='delivery_proofs/%Y/%m/%d/',
-        verbose_name=_("Signed Delivery Note")
-    )
+    SALES_PERSON = "sales"
+    DISPATCH = "dispatch"
+    ROLES = [
+        (SALES_PERSON, "Sales Person"),
+        (DISPATCH, "Dispatch Officer"),
+    ]
+    
     uploaded_by = models.ForeignKey(
-        Employee,
+        settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
-        limit_choices_to={'department__name': 'Sales'},
-        verbose_name=_("Uploaded By")
+        limit_choices_to={'groups__name': 'Sales'}, blank=True
     )
-    upload_time = models.DateTimeField(auto_now_add=True, verbose_name=_("Upload Time"))
-
-    class Meta:
-        verbose_name = _("Delivery Confirmation")
-        verbose_name_plural = _("Delivery Confirmations")
-        ordering = ['-upload_time']
+    signed_image = models.ImageField(
+        upload_to='delivery_notes/%Y/%m/',
+        validators=[FileExtensionValidator(['jpg', 'png', 'jpeg'])], blank=True
+    )
+    customer_name = models.CharField(max_length=200, blank=True)
+    estimate_number = models.CharField(max_length=50, blank=True)
+    delivery_date = models.DateField(null=True, blank=True)
+    extracted_data = models.JSONField(default=dict)  # Store OCR results
+    created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return f"Delivery proof for Estimate #{self.estimate.bk_estimate_id}"
-
+        return f"Delivery #{self.id} - {self.customer_name}"
 
 # ----------------------------
 # 5. Reconciliation

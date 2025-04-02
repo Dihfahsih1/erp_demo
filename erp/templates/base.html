@@ -1,0 +1,22 @@
+<!doctype html>
+{% load static %}
+<html lang="en">
+  <head>
+    {% include 'includes/head.html' %}
+  </head>
+  <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+    <div class="app-wrapper">
+      {% include 'includes/navbar.html' %}
+      {% include 'includes/sidebar.html' %}
+
+      <main class="app-main">
+        {% block content %}{% endblock %}
+      </main>
+
+      {% include 'includes/footer.html' %}
+    </div>
+
+    {% include 'includes/scripts.html' %}
+    {% block extra_scripts %}{% endblock %}
+  </body>
+</html>

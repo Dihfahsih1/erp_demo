@@ -8,3 +8,7 @@ def dashboard(request):
         'active_page': 'dashboard',
     }
     return render(request, 'index.html', context)
+
+
+def get_notifications(request):
+    pass

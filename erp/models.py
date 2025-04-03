@@ -241,11 +241,10 @@ class Verification(models.Model):
 # 4. Dispatch Automation
 # ----------------------------
 class Dispatch(models.Model):
-    estimate = models.OneToOneField(
-        Estimate,
-        on_delete=models.CASCADE,
+    estimate = models.CharField(
+        max_length=20,
         verbose_name=_("Estimate"),
-        related_name='dispatch'
+        null=True
     )
     bk_proforma_id = models.CharField(
         max_length=20,

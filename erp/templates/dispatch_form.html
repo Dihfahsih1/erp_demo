@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<!--begin::App Main-->
+<main class="app-main">
+    <!--end::App Content Header-->
+  <!--begin::App Content-->
+    <div class="app-content">
+        <!--begin::Container-->
+        <div class="container-fluid">
+        <!--begin::Row-->
+        <div class="row">
+            <h2>Create Dispatch Details</h2>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {{ form.as_p }}  <!-- Simple form rendering -->
+                    
+                    <button type="submit" class="btn btn-primary">Save Dispatch</button>
+                </form>
+
+                {% if form.instance.pk and not form.instance.is_delivered %}
+                <button id="mark-delivered" class="btn btn-success mt-3">Mark as Delivered</button>
+
+                <script>
+                document.getElementById('mark-delivered').addEventListener('click', function() {
+                    fetch(window.location.href, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            dispatch_id: {{ form.instance.pk }}
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message);
+                        if (data.status === 'success') {
+                            location.reload();
+                        }
+                    });
+                });
+                </script>
+                {% endif %}
+
+                {% if form.instance.is_delivered %}
+                <div class="alert alert-success mt-3">
+                    Dispatch #{{ form.instance.pk }} delivered on {{ form.instance.dispatch_time|date:"DATETIME_FORMAT" }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</main>
+
+{% endblock %}

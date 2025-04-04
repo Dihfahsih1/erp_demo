@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <h6>All Dispatches</h6>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    {% for header in table_headers %}
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                        {{ header }}
+                                    </th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dispatch in dispatches %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <p class="text-xs font-weight-bold mb-0">{{ dispatch.estimate }}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs font-weight-bold mb-0">{{ dispatch.bk_proforma_id }}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs font-weight-bold mb-0">{{ dispatch.transport_cost }}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs font-weight-bold mb-0">{{ dispatch.vehicle_number }}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs font-weight-bold mb-0">{{ dispatch.driver_name }}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs font-weight-bold mb-0">{{ dispatch.driver_contact }}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs font-weight-bold mb-0">
+                                            {{ dispatch.dispatch_time|date:"M d, Y H:i" }}
+                                        </p>
+                                    </td>
+                                    <td>
+                                        <span style="color:black"class="badge badge-lg {% if dispatch.is_delivered %}bg-gradient-success shadow-success{% else %}bg-gradient-secondary shadow-secondary{% endif %} p-2">
+                                            {% if dispatch.is_delivered %}Delivered ✅{% else %}Pending ⌛{% endif %}
+                                        </span>
+                                    </td>
+                                    <td class="align-middle">
+                                        {% if not dispatch.is_delivered %}
+                                        <button class="btn btn-sm btn-outline-success mark-delivered" 
+                                                data-dispatch-id="{{ dispatch.id }}">
+                                            Mark Delivered
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="9" class="text-center py-4">
+                                        No dispatch records found
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle mark as delivered action
+    document.querySelectorAll('.mark-delivered').forEach(button => {
+        button.addEventListener('click', function() {
+            const dispatchId = this.getAttribute('data-dispatch-id');
+            if (confirm('Are you sure you want to mark this dispatch as delivered?')) {
+                fetch(`/dispatch/${dispatchId}/mark-delivered/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred');
+                });
+            }
+        });
+    });
+});
+</script>
+
+{% endblock %}

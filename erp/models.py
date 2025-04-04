@@ -7,6 +7,8 @@ from auditlog.models import AuditlogHistoryField
 from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import FileExtensionValidator
+from django.core.validators import MinValueValidator
+from django.utils.translation import gettext_lazy as _
 # ----------------------------
 # 1. Core Entities
 # ----------------------------
@@ -237,14 +239,21 @@ class Verification(models.Model):
         return f"Verification for Estimate #{self.estimate.bk_estimate_id}"
 
 
-# ----------------------------
-# 4. Dispatch Automation
-# ----------------------------
+
+
 class Dispatch(models.Model):
+    # Status choices
+    class Status(models.TextChoices):
+        PENDING = 'pending', _('Pending')
+        IN_TRANSIT = 'in_transit', _('In Transit')
+        DELIVERED = 'delivered', _('Delivered')
+        CANCELLED = 'cancelled', _('Cancelled')
+
     estimate = models.CharField(
         max_length=20,
         verbose_name=_("Estimate"),
-        null=True
+        null=True,
+        blank=True
     )
     bk_proforma_id = models.CharField(
         max_length=20,
@@ -257,11 +266,38 @@ class Dispatch(models.Model):
         verbose_name=_("Transport Cost"),
         validators=[MinValueValidator(0)]
     )
-    vehicle_number = models.CharField(max_length=20, verbose_name=_("Vehicle Number"))
-    driver_name = models.CharField(max_length=100, verbose_name=_("Driver Name"))
-    driver_contact = models.CharField(max_length=20, verbose_name=_("Driver Contact"))
-    dispatch_time = models.DateTimeField(auto_now_add=True, verbose_name=_("Dispatch Time"))
-    is_delivered = models.BooleanField(default=False, verbose_name=_("Delivery Status"))
+    vehicle_number = models.CharField(
+        max_length=20, 
+        verbose_name=_("Vehicle Number")
+    )
+    driver_name = models.CharField(
+        max_length=100, 
+        verbose_name=_("Driver Name")
+    )
+    driver_contact = models.CharField(
+        max_length=20, 
+        verbose_name=_("Driver Contact")
+    )
+    dispatch_time = models.DateTimeField(
+        auto_now_add=True, 
+        verbose_name=_("Dispatch Time")
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+        verbose_name=_("Dispatch Status")
+    )
+    delivery_confirmation_time = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Delivery Confirmation Time")
+    )
+    cancellation_reason = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_("Cancellation Reason")
+    )
 
     class Meta:
         verbose_name = _("Dispatch")
@@ -269,14 +305,43 @@ class Dispatch(models.Model):
         ordering = ['-dispatch_time']
 
     def __str__(self):
-        return f"Dispatch for Estimate #{self.estimate.bk_estimate_id}"
+        return f"Dispatch #{self.id} for Estimate {self.estimate}"
 
     def mark_as_delivered(self):
-        self.is_delivered = True
+        """Mark dispatch as delivered and set timestamp"""
+        self.status = self.Status.DELIVERED
+        self.delivery_confirmation_time = timezone.now()
         self.save()
-        self.estimate.status = Estimate.Status.DELIVERED
-        self.estimate.save()
         return True
+
+    def mark_as_in_transit(self):
+        """Mark dispatch as in transit"""
+        self.status = self.Status.IN_TRANSIT
+        self.save()
+        return True
+
+    def cancel_dispatch(self, reason=None):
+        """Cancel dispatch with optional reason"""
+        self.status = self.Status.CANCELLED
+        self.cancellation_reason = reason
+        self.save()
+        return True
+
+    @property
+    def is_delivered(self):
+        """Backward-compatible property for boolean delivery status"""
+        return self.status == self.Status.DELIVERED
+
+    @property
+    def status_badge_class(self):
+        """Get appropriate CSS class for status badge"""
+        classes = {
+            self.Status.PENDING: 'bg-secondary',
+            self.Status.IN_TRANSIT: 'bg-info',
+            self.Status.DELIVERED: 'bg-success',
+            self.Status.CANCELLED: 'bg-danger',
+        }
+        return classes.get(self.status, 'bg-secondary')
 
 class DeliveryConfirmation(models.Model):
     SALES_PERSON = "sales"

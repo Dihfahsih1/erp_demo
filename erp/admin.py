@@ -80,8 +80,7 @@ class EstimateAdmin(admin.ModelAdmin):
 
 @admin.register(Dispatch)
 class DispatchAdmin(admin.ModelAdmin):
-    list_display = ('estimate', 'vehicle_number', 'driver_name', 'dispatch_time', 'is_delivered')
-    list_filter = ('dispatch_time', 'is_delivered')
+    list_display = ('estimate', 'vehicle_number', 'driver_name', 'dispatch_time')
     search_fields = ('vehicle_number', 'driver_name')
 
 # @admin.register(DeliveryConfirmation)

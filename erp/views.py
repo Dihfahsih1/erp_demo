@@ -8,7 +8,29 @@ from erp.forms import DispatchForm
 from .models import Dispatch, Estimate
 import json
 
+from django.views.decorators.http import require_http_methods
 
+@require_http_methods(["PATCH"])
+def mark_delivered(request, dispatch_id):
+    try:
+        dispatch = Dispatch.objects.get(pk=dispatch_id)
+        dispatch.mark_as_delivered()
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Dispatch marked as delivered'
+        })
+    except Dispatch.DoesNotExist:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Dispatch not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=400)
+    
+    
 def dashboard(request):
     context = {
         'page_title': 'Dashboard',
@@ -69,3 +91,26 @@ def dispatch_view(request):
             }, status=400)
     
     return HttpResponseBadRequest(_("Invalid request"))
+
+
+def dispatch_list_view(request):
+    """
+    Display all submitted dispatches in a table format
+    """
+    dispatches = Dispatch.objects.all().order_by('-dispatch_time')
+    
+    context = {
+        'dispatches': dispatches,
+        'table_headers': [
+            _("Estimate ID"),
+            _("Proforma ID"),
+            _("Transport Cost"),
+            _("Vehicle"),
+            _("Driver"),
+            _("Contact"),
+            _("Dispatch Time"),
+            _("Status"),
+            _("Actions")
+        ]
+    }
+    return render(request, 'dispatch_list.html', context)

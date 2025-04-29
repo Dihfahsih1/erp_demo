@@ -6,7 +6,7 @@ pymysql.install_as_MySQLdb()
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-7+ug312elp@(*oa#*x$0e+x-&9*13-2$*46@r6w)nh%*j&khtj'
 DEBUG = True
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = []
 
 
 INSTALLED_APPS = [ 
@@ -67,9 +67,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', 
         'NAME': 'autopros_erp',
-        'USER': 'autopros_root', 
-        'PASSWORD': 'autopros2025?', 
-        'HOST': '127.0.0.1', 
+        'USER': 'root', 
+        'PASSWORD': 'autopro2025?', 
+        'HOST': 'localhost', 
         'PORT': '3306',
     }
 }

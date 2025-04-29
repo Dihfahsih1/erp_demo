@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import FileExtensionValidator
 from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
+
 # ----------------------------
 # 1. Core Entities
 # ----------------------------
@@ -24,6 +25,17 @@ class Department(models.Model):
     def __str__(self):
         return self.name
 
+class UserRole(models.Model):
+    name = models.CharField(max_length=50, unique=True, verbose_name=_("Role Name"))
+    description = models.TextField(blank=True, verbose_name=_("Role Description"))
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = _("Role")
+        verbose_name_plural = _("Roles")
+
+    def __str__(self):
+        return self.name
 
 class Employee(AbstractUser):
     department = models.ForeignKey(
@@ -32,11 +44,30 @@ class Employee(AbstractUser):
         verbose_name=_("Department"),
         related_name='employees'
     )
+
+    role = models.ForeignKey(
+        UserRole,
+        on_delete=models.PROTECT,
+        verbose_name=_("Role"),
+        related_name='employee_role', null=True
+    )
+
     phone = models.CharField(
         max_length=20,
         verbose_name=_("Phone Number"),
         blank=True
     )
+
+
+    #is_verified = models.BooleanField(default=False, verbose_name='Verified by Admin'),
+
+    is_verified = models.BooleanField(
+        default=False,
+        verbose_name='Verified by Admin',
+        blank=True, null=True
+    )
+    
+    #is_accepted = models.BooleanField(default=False, verbose_name='Verified by Admin'),
     
     # Add these to resolve the clash
     groups = models.ManyToManyField(
@@ -44,7 +75,7 @@ class Employee(AbstractUser):
         verbose_name=_('groups'),
         blank=True,
         help_text=_('The groups this user belongs to.'),
-        related_name='employee_set',  # Changed from default
+        related_name='employee_set',  
         related_query_name='employee'
     )
     user_permissions = models.ManyToManyField(
@@ -52,7 +83,7 @@ class Employee(AbstractUser):
         verbose_name=_('user permissions'),
         blank=True,
         help_text=_('Specific permissions for this user.'),
-        related_name='employee_set',  # Changed from default
+        related_name='employee_set',   
         related_query_name='employee'
     )
 
@@ -61,19 +92,40 @@ class Employee(AbstractUser):
         verbose_name_plural = _("Employees")
 
 class Customer(models.Model):
-    name = models.CharField(max_length=100, verbose_name=_("Customer Name"))
-    contact = models.CharField(max_length=100, verbose_name=_("Contact Information"))
-    email = models.EmailField(blank=True, verbose_name=_("Email Address"))
-    address = models.TextField(blank=True, verbose_name=_("Physical Address"))
+    name_of_business = models.CharField(max_length=200, blank=True, null=True)
+    district = models.CharField(max_length=100, blank=True, null=True)
+    road_location = models.CharField(max_length=150, blank=True, null=True)
+    town_division = models.CharField(max_length=100, blank=True, null=True)
+    nearest_landmark = models.CharField(max_length=150, blank=True, null=True)
+    tel_1 = models.CharField(max_length=15, blank=True, null=True)
+    tel_2 = models.CharField(max_length=15, blank=True, null=True)
 
-    class Meta:
-        ordering = ['name']
-        verbose_name = _("Customer")
-        verbose_name_plural = _("Customers")
+    owner_name = models.CharField(max_length=100,blank=True, null=True)
+    owner_tel = models.CharField(max_length=15, blank=True, null=True)
+
+    next_of_kin = models.CharField(max_length=100, blank=True, null=True)
+    next_of_kin_tel = models.CharField(max_length=15, blank=True, null=True)
+
+    signed_by = models.CharField(max_length=100,blank=True, null=True)
+    designation = models.CharField(max_length=100,blank=True, null=True)
+
+    prepared_by = models.CharField(max_length=100, blank=True, null=True)
+    prepared_by_sign = models.CharField(max_length=100, blank=True, null=True)
+    prepared_date = models.DateField(blank=True,null=True)
+
+    remarks = models.TextField(blank=True, null=True)
+
+    location = models.CharField(max_length=255, blank=True, null=True)
+
+    # Uploads
+    certificate_of_incorporation = models.FileField(upload_to='documents/certificates/', blank=True, null=True)
+    passport_photo = models.ImageField(upload_to='photos/passports/', blank=True, null=True)
+    trading_license = models.ImageField(upload_to='photos/license/', blank=True, null=True)
+
+    date_filled = models.DateTimeField(auto_now_add=True,null=True)
 
     def __str__(self):
-        return f"{self.name} - {self.contact}"
-
+        return self.name_of_business
 
 class SparePart(models.Model):
     name = models.CharField(max_length=100, verbose_name=_("Part Name"))
@@ -106,7 +158,6 @@ class SparePart(models.Model):
     def get_absolute_url(self):
         return reverse('sparepart-detail', kwargs={'pk': self.pk})
 
-
 # ----------------------------
 # 2. Estimate Lifecycle
 # ----------------------------
@@ -124,18 +175,11 @@ class Estimate(models.Model):
         verbose_name=_("BK Estimate ID"),
         help_text=_("Reference ID from Bookkeeping System")
     )
-    customer = models.ForeignKey(
-        Customer,
-        on_delete=models.PROTECT,
-        verbose_name=_("Customer"),
-        related_name='estimates'
+    customer = models.CharField(
+        max_length=20, null=True
     )
-    sales_agent = models.ForeignKey(
-        Employee,
-        on_delete=models.PROTECT,
-        limit_choices_to={'department__name': 'Sales'},
-        verbose_name=_("Sales Agent"),
-        related_name='sales_estimates'
+    sales_agent = models.CharField(
+        max_length=20, null=True
     )
     status = models.CharField(
         max_length=20,
@@ -157,7 +201,7 @@ class Estimate(models.Model):
         ]
 
     def __str__(self):
-        return f"Estimate #{self.bk_estimate_id} - {self.customer.name} ({self.get_status_display()})"
+        return f"Estimate #{self.bk_estimate_id} - {self.customer} ({self.get_status_display()})"
 
     def get_absolute_url(self):
         return reverse('estimate-detail', kwargs={'pk': self.pk})
@@ -173,6 +217,18 @@ class Estimate(models.Model):
             verified_by=verified_by
         )
         return True
+
+    def get_status_badge_color(self):
+        colors = {
+            'draft': 'secondary',
+            'submitted': 'info',
+            'verified': 'primary',
+            'dispatched': 'warning',
+            'delivered': 'success',
+            'rejected': 'danger',
+            'cancelled': 'dark'
+        }
+        return colors.get(self.status, 'light')
 
 
 class EstimateItem(models.Model):
@@ -237,9 +293,6 @@ class Verification(models.Model):
 
     def __str__(self):
         return f"Verification for Estimate #{self.estimate.bk_estimate_id}"
-
-
-
 
 class Dispatch(models.Model):
     # Status choices
@@ -343,34 +396,52 @@ class Dispatch(models.Model):
         }
         return classes.get(self.status, 'bg-secondary')
 
-class DeliveryConfirmation(models.Model):
-    SALES_PERSON = "sales"
-    DISPATCH = "dispatch"
-    ROLES = [
-        (SALES_PERSON, "Sales Person"),
-        (DISPATCH, "Dispatch Officer"),
+class DeliveryNote(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('confirmed', 'Confirmed'),
+        ('rejected', 'Rejected'),
     ]
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
     
-    uploaded_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-        limit_choices_to={'groups__name': 'Sales'}, blank=True
-    )
-    signed_image = models.ImageField(
-        upload_to='delivery_notes/%Y/%m/',
-        validators=[FileExtensionValidator(['jpg', 'png', 'jpeg'])], blank=True
-    )
-    customer_name = models.CharField(max_length=200, blank=True)
-    estimate_number = models.CharField(max_length=50, blank=True)
-    delivery_date = models.DateField(null=True, blank=True)
-    extracted_data = models.JSONField(default=dict)  # Store OCR results
-    created_at = models.DateTimeField(default=timezone.now)
+    delivery_no = models.CharField(max_length=100, null=True, blank=True)
+    delivery_date = models.DateField(null=True, blank=True)  # Changed to DateField
+    receiver_name = models.CharField(max_length=100, null=True, blank=True)
+    receiver_contact = models.CharField(max_length=20, null=True, blank=True)
+    warehouse = models.CharField(max_length=100, null=True, blank=True, default="Main Location")
+
+    estimate_number = models.CharField(max_length=100, null=True, blank=True)
+    delivery_note_number = models.CharField(max_length=100, null=True, blank=True)
+    customer_name_address = models.TextField(null=True, blank=True)
+    sales_person = models.CharField(max_length=100, null=True, blank=True)  # Should be required
+    date_of_delivery = models.DateField(null=True, blank=True)  # Changed to DateField
+
+    remarks = models.TextField(null=True, blank=True)
+    date_goods_received = models.DateField(null=True, blank=True)  # Changed to DateField
+
+    image = models.ImageField(upload_to='delivery_notes/', null=True, blank=True)
+    extracted_text = models.TextField(null=True, blank=True)
+
+    created_at = models.CharField(max_length=100, null=True, blank=True)
+    updated_at = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
-        return f"Delivery #{self.id} - {self.customer_name}"
+        return f"Delivery {self.delivery_no} - {self.receiver_name}"
 
+class DeliveryNoteItem(models.Model):
+    delivery_note = models.ForeignKey(DeliveryNote, related_name='items', on_delete=models.CASCADE)
+    item_code = models.CharField(max_length=100, null=True, blank=True)  # Added for codes like "REV-OF-TR-BK"
+    item_description = models.CharField(max_length=255)
+    quantity = models.FloatField(default=1)  # Default quantity is 1
+
+    def __str__(self):
+        return f"{self.item_code} - {self.item_description}"
 # ----------------------------
-# 5. Reconciliation
+# 5. Reconciliation          #
 # ----------------------------
 class StoresReconciliation(models.Model):
     estimate = models.OneToOneField(

@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* Add to your main CSS file */
+#imageModal {
+    transition: opacity 0.3s ease;
+}
+
+#modalImage {
+    transition: transform 0.3s ease;
+    cursor: zoom-out;
+}
+
+.image-preview-link {
+    display: inline-block;
+    background: none;
+    border: none;
+    padding: 0;
+}
+Key Fe
+</style>
+<div class="container py-5">
+    <h2>Delivery Notes</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Delivery No</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Image</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for note in notes %}
+            <tr>
+                <td>{{ note.delivery_note_number|default:"-" }}</td>
+                <td>{{ note.receiver_name }}</td>
+                <td>{{ note.date_of_delivery|date:"Y-m-d" }}</td>
+                <td>
+                    <span class="badge bg-{% if note.status == 'confirmed' %}success{% else %}warning{% endif %}">
+                        {{ note.status|default:"pending"|title }}
+                    </span>
+                </td>
+                <td>
+                    {% if note.image %}
+                        <a href="{{ note.image.url }}" class="image-preview-link">
+                            <img src="{{ note.image.url }}" class="img-thumbnail" style="width: 100px; cursor: zoom-in;">
+                        </a>
+                    {% else %}
+                        No image
+                    {% endif %}
+                </td>
+                <td>
+                    {% if note.status != 'confirmed' %}
+                    <button class="btn btn-sm btn-success confirm-delivery ms-2" data-note-id="{{ note.id }}">
+                        Confirm
+                    </button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6">No delivery notes found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;text-align:center;">
+    <span style="position:absolute;top:20px;right:30px;color:white;font-size:40px;cursor:pointer;" onclick="closeImageModal()">&times;</span>
+    <img id="modalImage" src="" style="max-height:90%;max-width:90%;margin-top:5%;">
+</div>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Simple Image Modal System
+function openImageModal(imageUrl) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    
+    modalImg.src = imageUrl;
+    modal.style.display = 'block';
+    
+    // Close modal when clicking outside image
+    modal.onclick = function(e) {
+        if (e.target === modal) {
+            closeImageModal();
+        }
+    };
+    
+    // Close with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeImageModal();
+        }
+    });
+}
+
+function closeImageModal() {
+    document.getElementById('imageModal').style.display = 'none';
+}
+
+// Initialize image preview links
+document.addEventListener('DOMContentLoaded', function() {
+    // Image preview
+    document.querySelectorAll('.image-preview-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            openImageModal(this.href);
+        });
+    });
+    
+    // Test function (can remove)
+    window.testImageModal = function() {
+        openImageModal('https://via.placeholder.com/800x600');
+    };
+    
+    // Confirm delivery functionality
+    document.querySelectorAll('.confirm-delivery').forEach(button => {
+        button.addEventListener('click', function() {
+            const noteId = this.getAttribute('data-note-id');
+            if (confirm('Are you sure you want to confirm this delivery?')) {
+                fetch(`/delivery-details/${noteId}/confirm/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

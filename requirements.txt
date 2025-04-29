@@ -15,4 +15,4 @@ python-slugify==8.0.4
 six==1.17.0
 sqlparse==0.5.3
 tablib==3.8.0
-text-unidecode==1.3
+

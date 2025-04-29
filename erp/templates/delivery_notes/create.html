@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Upload Signed Delivery Note</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="upload-form">
+                        {% csrf_token %}
+                        
+                        <!-- Customer Information -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="receiver_name" class="form-label">Receiver Name</label>
+                                <input type="text" class="form-control" id="receiver_name" name="receiver_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="receiver_contact" class="form-label">Receiver Contact</label>
+                                <input type="text" class="form-control" id="receiver_contact" name="receiver_contact">
+                            </div>
+                        </div>
+
+                        <!-- Delivery Information -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="delivery_note_number" class="form-label">Delivery Note Number</label>
+                                <input type="text" class="form-control" id="delivery_note_number" name="delivery_note_number" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="date_of_delivery" class="form-label">Receiving Date</label>
+                                <input type="date" class="form-control" id="date_of_delivery" name="date_of_delivery">
+                            </div>
+                        </div>
+
+                        <!-- Image Upload Section -->
+                        <div class="mb-4 text-center">
+                            <label for="image" class="form-label">Select or Drag & Drop Delivery Note Image:</label>
+                            <div class="border border-3 rounded p-5 bg-light" 
+                                 style="cursor:pointer; position:relative;"
+                                 onclick="document.getElementById('image').click();">
+                                <input type="file" name="image" id="image" accept="image/*" 
+                                       class="d-none" required onchange="previewImage(event)">
+                                <div id="preview-container">
+                                    <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                                    <p>Click here or drag an image to upload</p>
+                                </div>
+                                <img id="preview-image" src="#" alt="Preview" class="img-fluid rounded d-none" style="max-height: 300px;"/>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-primary btn-preview" onclick="showPreview()">
+                                <i class="fas fa-eye me-2"></i>Preview
+                            </button>
+                            <button type="button" class="btn btn-success d-none" id="submit-btn" onclick="confirmSubmission()">
+                                <i class="fas fa-check me-2"></i>Confirm & Submit
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="previewModalLabel">Delivery Note Preview</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5>Customer Details</h5>
+                        <p><strong>Name:</strong> <span id="preview-customer-name"></span></p>
+                        <p><strong>Address:</strong> <span id="preview-customer-address"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Delivery Details</h5>
+                        <p><strong>Note Number:</strong> <span id="preview-estimate-number"></span></p>
+                        <p><strong>Delivery Date:</strong> <span id="preview-delivery-date"></span></p>
+                    </div>
+                </div>
+                
+                <div class="mb-4 text-center">
+                    <h5>Uploaded Image</h5>
+                    <img id="modal-preview-image" src="#" class="img-fluid rounded border" style="max-height: 400px;">
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Edit Details</button>
+                <button type="button" class="btn btn-primary" onclick="confirmSubmission()">Confirm & Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+ <script>
+    // Preview uploaded image in form
+    function previewImage(event) {
+        console.log('previewImage function called');
+        const fileInput = event.target;
+        const previewContainer = document.getElementById('preview-container');
+        const previewImage = document.getElementById('preview-image');
+    
+        if (fileInput.files && fileInput.files[0]) {
+            console.log('File selected:', fileInput.files[0].name);
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                console.log('File preview loaded');
+                previewContainer.classList.add('d-none');
+                previewImage.classList.remove('d-none');
+                previewImage.src = e.target.result;
+            }
+            reader.onerror = function(e) {
+                console.error('Error reading file:', e.target.error);
+            }
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+    }
+    
+    // Show preview modal
+    function showPreview() {
+        console.log('showPreview function called');
+        
+        // Validate required fields
+        const customerName = document.getElementById('receiver_name').value;
+        const estimateNumber = document.getElementById('delivery_note_number').value;
+        const deliveryDate = document.getElementById('date_of_delivery').value;
+        const image = document.getElementById('image').files[0];
+        
+        console.log('Form values:', {
+            customerName,
+            estimateNumber,
+            deliveryDate,
+            image: image ? image.name : 'No image selected'
+        });
+        
+        if (!customerName || !deliveryDate || !estimateNumber || !image) {
+            const missingFields = [];
+            if (!customerName) missingFields.push('Receiver Name');
+            if (!deliveryDate) missingFields.push('Delivery Date');
+            if (!estimateNumber) missingFields.push('Delivery Note Number');
+            if (!image) missingFields.push('Image');
+            
+            console.warn('Missing required fields:', missingFields);
+            alert('Please fill all required fields: ' + missingFields.join(', '));
+            return false;
+        }
+    
+        // Populate preview modal
+        document.getElementById('preview-customer-name').textContent = customerName;
+        document.getElementById('preview-customer-address').textContent = document.getElementById('receiver_contact').value;
+        document.getElementById('preview-estimate-number').textContent = estimateNumber;
+        document.getElementById('preview-delivery-date').textContent = deliveryDate;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            console.log('Modal preview image loaded');
+            document.getElementById('modal-preview-image').src = e.target.result;
+            
+            // Show modal only after image is loaded
+            try {
+                const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+                previewModal.show();
+                console.log('Preview modal shown');
+            } catch (e) {
+                console.error('Error showing preview modal:', e);
+            }
+        }
+        reader.onerror = function(e) {
+            console.error('Error loading modal preview image:', e.target.error);
+        }
+        reader.readAsDataURL(image);
+        
+        return false; // Prevent default form submission
+    }
+    
+    // Confirm submission
+    function confirmSubmission() {
+        console.log('confirmSubmission function called');
+        try {
+            // Trigger the actual form submission
+            const form = document.getElementById('upload-form');
+            const formData = new FormData(form);
+            
+            // Hide modal first
+            const previewModal = bootstrap.Modal.getInstance(document.getElementById('previewModal'));
+            previewModal.hide();
+            
+            // Submit form via fetch
+            submitFormData(form.action, formData);
+        } catch (e) {
+            console.error('Error in confirmSubmission:', e);
+        }
+    }
+
+    // Dedicated function for form submission
+    async function submitFormData(url, formData) {
+        console.log('Starting form submission');
+        
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            });
+            
+            console.log('Response status:', response.status);
+            
+            const data = await response.json();
+            console.log('Response data:', data);
+            
+            if (data.success) {
+                console.log('Submission successful, redirecting...');
+                window.location.href = data.redirect_url;
+            } else {
+                console.warn('Submission failed with errors:', data.errors);
+                displayFormErrors(data.errors);
+                alert(data.message || "Please correct the errors below.");
+            }
+        } catch (error) {
+            console.error('Submission error:', error);
+            alert('An error occurred while submitting the form');
+        }
+    }
+    
+    // Function to display form errors
+    function displayFormErrors(errors) {
+        // Clear previous errors
+        document.querySelectorAll('.is-invalid').forEach(el => {
+            el.classList.remove('is-invalid');
+        });
+        document.querySelectorAll('.invalid-feedback').forEach(el => {
+            el.remove();
+        });
+        
+        if (errors) {
+            for (const [field, error] of Object.entries(errors)) {
+                console.log(`Error for field ${field}:`, error);
+                const input = document.querySelector(`[name="${field}"]`) || 
+                            document.querySelector(`#id_${field}`) || 
+                            document.querySelector(`#${field}`);
+                
+                if (input) {
+                    input.classList.add('is-invalid');
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'invalid-feedback';
+                    errorDiv.textContent = Array.isArray(error) ? error.join(' ') : error;
+                    input.parentNode.appendChild(errorDiv);
+                } else {
+                    console.warn(`Could not find input element for field: ${field}`);
+                }
+            }
+        }
+    }
+
+    // Initialize form event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        // Preview button
+        document.querySelector('.btn-preview').addEventListener('click', showPreview);
+        
+        // Form submission
+        const form = document.getElementById('upload-form');
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log('Main form submission intercepted');
+        });
+        
+        // Submit button
+        const submitBtn = document.getElementById('submit-btn');
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Submit button clicked directly');
+            });
+        }
+    });
+</script>
+{% endblock %}

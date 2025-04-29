@@ -1,13 +1,16 @@
  
 from pathlib import Path
+import pymysql
+pymysql.install_as_MySQLdb()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-7+ug312elp@(*oa#*x$0e+x-&9*13-2$*46@r6w)nh%*j&khtj'
 DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 INSTALLED_APPS = [ 
+    'erp',
     'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -15,12 +18,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'erp',
+    
     'auditlog', 
     "crispy_forms",
     "crispy_bootstrap4",  # Change to "crispy_bootstrap4" if using Bootstr
     
 ]
+
+AUTH_USER_MODEL = 'erp.Employee' 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
@@ -61,9 +66,9 @@ WSGI_APPLICATION = 'erp_demo.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', 
-        'NAME': 'erp_demo',
-        'USER': 'root', 
-        'PASSWORD': '', 
+        'NAME': 'autopros_erp',
+        'USER': 'autopros_root', 
+        'PASSWORD': 'autopros2025?', 
         'HOST': '127.0.0.1', 
         'PORT': '3306',
     }
@@ -84,7 +89,9 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
+# File upload settings
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+FILE_UPLOAD_PERMISSIONS = 0o644
  
 JAZZMIN_SETTINGS = { 
     # ============ Branding ============

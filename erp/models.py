@@ -42,7 +42,8 @@ class Employee(AbstractUser):
         Department,
         on_delete=models.PROTECT,
         verbose_name=_("Department"),
-        related_name='employees'
+        related_name='employees',
+        blank=True, null=True
     )
 
     role = models.ForeignKey(

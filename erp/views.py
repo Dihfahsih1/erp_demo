@@ -123,6 +123,9 @@ def mark_delivered(request, dispatch_id):
     
 @login_required
 def dashboard(request):
+    user=request.user.role 
+    
+    print(user)
     context = {
         'page_title': 'Dashboard',
         'active_page': 'dashboard',
@@ -131,6 +134,7 @@ def dashboard(request):
 
 @login_required
 def dispatch_view(request):
+   
     """
     Simplified dispatch view that handles:
     - GET: Show empty form

@@ -1,3 +1,4 @@
+{% load custom_tags %}
 {% load static %} 
 <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
   
@@ -32,36 +33,38 @@
           
         </li>
 
-        <li class="nav-header">ESTIMATES FROM BK</li>
-        <li class="nav-item">
-          <a href="{%url 'register_customer' %}" class="nav-link">
-            <i class="nav-icon bi bi-circle-fill"></i>
-            <p>Register Customer</p>
-          </a>
-        </li>
+        {% if user|has_role:"Admin,Credit Officer,Estimates in Charge" %}
+          <li class="nav-header">ESTIMATES FROM BK</li>
 
-        <li class="nav-item">
-          <a href="{%url 'customer_list' %}" class="nav-link">
-            <i class="nav-icon bi bi-circle-fill"></i>
-            <p>List Of Customer</p>
-          </a>
-        </li>
-
-        
           <li class="nav-item">
-            <a href="{%url 'record_estimate' %}" class="nav-link">
+            <a href="{% url 'register_customer' %}" class="nav-link">
+              <i class="nav-icon bi bi-circle-fill"></i>
+              <p>Register Customer</p>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href="{% url 'customer_list' %}" class="nav-link">
+              <i class="nav-icon bi bi-circle-fill"></i>
+              <p>List Of Customer</p>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href="{% url 'record_estimate' %}" class="nav-link">
               <i class="nav-icon bi bi-circle-fill"></i>
               <p>Record Estimate</p>
             </a>
           </li>
+
           <li class="nav-item">
-            <a href="{%url 'list_estimates' %}" class="nav-link">
+            <a href="{% url 'list_estimates' %}" class="nav-link">
               <i class="nav-icon bi bi-circle-fill"></i>
               <p>List Of Estimate</p>
             </a>
           </li>
-        </li>
-      
+        {% endif %}
+
         <li class="nav-header">TRANSPORTATION</li>
         <li class="nav-item">
           <a href="{% url 'mark_dispatch_delivered' %}" class="nav-link">
@@ -70,60 +73,6 @@
               Create Courier Details
             </p>
           </a>
-          <!-- <ul class="nav nav-treeview">
-            <li class="nav-item">
-              <a href="#" class="nav-link">
-                <i class="nav-icon bi bi-box-arrow-in-right"></i>
-                <p>
-                  Version 1
-                  <i class="nav-arrow bi bi-chevron-right"></i>
-                </p>
-              </a>
-              <ul class="nav nav-treeview">
-                <li class="nav-item">
-                  <a href="./examples/login.html" class="nav-link">
-                    <i class="nav-icon bi bi-circle"></i>
-                    <p>Login</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="./examples/register.html" class="nav-link">
-                    <i class="nav-icon bi bi-circle"></i>
-                    <p>Register</p>
-                  </a>
-                </li>
-              </ul>
-            </li>
-            <li class="nav-item">
-              <a href="#" class="nav-link">
-                <i class="nav-icon bi bi-box-arrow-in-right"></i>
-                <p>
-                  Version 2
-                  <i class="nav-arrow bi bi-chevron-right"></i>
-                </p>
-              </a>
-              <ul class="nav nav-treeview">
-                <li class="nav-item">
-                  <a href="./examples/login-v2.html" class="nav-link">
-                    <i class="nav-icon bi bi-circle"></i>
-                    <p>Login</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="./examples/register-v2.html" class="nav-link">
-                    <i class="nav-icon bi bi-circle"></i>
-                    <p>Register</p>
-                  </a>
-                </li>
-              </ul>
-            </li>
-            <li class="nav-item">
-              <a href="./examples/lockscreen.html" class="nav-link">
-                <i class="nav-icon bi bi-circle"></i>
-                <p>Lockscreen</p>
-              </a>
-            </li>
-          </ul> -->
         </li>
         <li class="nav-item">
           <a href="{% url 'dispatch_list' %}" class="nav-link">

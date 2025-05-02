@@ -122,6 +122,7 @@ class Customer(models.Model):
     certificate_of_incorporation = models.FileField(upload_to='documents/certificates/', blank=True, null=True)
     passport_photo = models.ImageField(upload_to='photos/passports/', blank=True, null=True)
     trading_license = models.ImageField(upload_to='photos/license/', blank=True, null=True)
+    national_id = models.ImageField(upload_to='photos/national_id/', blank=True, null=True)
 
     date_filled = models.DateTimeField(auto_now_add=True,null=True)
 

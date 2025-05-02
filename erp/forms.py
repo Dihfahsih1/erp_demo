@@ -26,7 +26,7 @@ class EmployeeLoginForm(AuthenticationForm):
 class CustomerForm(forms.ModelForm):
     class Meta:
         model = Customer
-        fields = '__all__'
+        fields = "__all__"
         widgets = {
             'location': forms.TextInput(attrs={'id': 'location-input', 'placeholder': 'Auto-detect or type location'}),
             'prepared_date': forms.DateInput(attrs={'type': 'date'}),

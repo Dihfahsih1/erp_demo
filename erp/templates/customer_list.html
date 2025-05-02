@@ -33,13 +33,14 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
+                
                 <tbody>
                     {% for customer in page_obj.object_list %}
                     <tr>
                         <td>{{ forloop.counter }}</td>
                         <td>{{ customer.name_of_business }}</td>
-                        <td>{{ customer.physical_address }}</td>
-                        <td>{{ customer.tel_number }}</td>
+                        <td>{{ customer.nearest_landmark }}</td>
+                        <td>{{ customer.tel_1 }}</td>
                         <td>{{ customer.owner_name }}</td>
                         <td>{{ customer.next_of_kin }}</td>
                         <td>{{ customer.location }}</td>

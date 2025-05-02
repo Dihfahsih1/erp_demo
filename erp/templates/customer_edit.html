@@ -157,16 +157,16 @@
     <div class="col-md-6">
         <label class="form-label">Business Billboard</label>
         <div class="document-upload-container">
-            {% if form.instance.billboard_photo %}
+            {% if form.instance.trading_license %}
                 <div class="current-document mb-3">
                     <small class="text-muted">Current Document:</small>
                     <div class="document-preview">
-                        <img src="{{ form.instance.billboard_photo.url }}" class="img-thumbnail document-thumbnail">
+                        <img src="{{ form.instance.trading_license.url }}" class="img-thumbnail document-thumbnail">
                         <div class="document-actions mt-2">
-                            <a href="{{ form.instance.billboard_photo.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <a href="{{ form.instance.trading_license.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                 <i class="fas fa-eye"></i> View
                             </a>
-                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete('billboard_photo')">
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete('trading_license')">
                                 <i class="fas fa-trash"></i> Remove
                             </button>
                         </div>
@@ -176,11 +176,11 @@
             
             <div class="upload-control">
                 <label class="btn btn-sm btn-success mb-0">
-                    <i class="fas fa-upload"></i> {% if form.instance.billboard_photo %}Replace{% else %}Upload{% endif %} Billboard
-                    {{ form.billboard_photo }}
+                    <i class="fas fa-upload"></i> {% if form.instance.trading_license %}Replace{% else %}Upload{% endif %} Billboard
+                    {{ form.trading_license }}
                 </label>
                 <small class="form-text text-muted">JPG or PNG, max 2MB</small>
-                <div id="billboard_photo_filename" class="file-name-display mt-1"></div>
+                <div id="trading_license_filename" class="file-name-display mt-1"></div>
             </div>
         </div>
     </div>
@@ -231,25 +231,25 @@
     <div class="col-md-6">
         <label class="form-label">National ID / Other ID Document</label>
         <div class="document-upload-container">
-            {% if form.instance.id_document %}
+            {% if form.instance.national_id %}
                 <div class="current-document mb-3">
                     <small class="text-muted">Current Document:</small>
                     <div class="document-preview">
-                        {% with form.instance.id_document.url|lower as doc_url %}
+                        {% with form.instance.national_id.url|lower as doc_url %}
                             {% if ".pdf" in doc_url %}
                                 <div class="pdf-thumbnail">
                                     <i class="fas fa-file-pdf fa-3x text-danger"></i>
                                     <small>PDF Document</small>
                                 </div>
                             {% else %}
-                                <img src="{{ form.instance.id_document.url }}" class="img-thumbnail document-thumbnail">
+                                <img src="{{ form.instance.national_id.url }}" class="img-thumbnail document-thumbnail">
                             {% endif %}
                         {% endwith %}
                         <div class="document-actions mt-2">
-                            <a href="{{ form.instance.id_document.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <a href="{{ form.instance.national_id.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                 <i class="fas fa-eye"></i> View
                             </a>
-                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete('id_document')">
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete('national_id')">
                                 <i class="fas fa-trash"></i> Remove
                             </button>
                         </div>
@@ -259,11 +259,11 @@
             
             <div class="upload-control">
                 <label class="btn btn-sm btn-success mb-0">
-                    <i class="fas fa-upload"></i> {% if form.instance.id_document %}Replace{% else %}Upload{% endif %} ID Document
-                    {{ form.id_document }}
+                    <i class="fas fa-upload"></i> {% if form.instance.national_id %}Replace{% else %}Upload{% endif %} ID Document
+                    {{ form.national_id }}
                 </label>
                 <small class="form-text text-muted">PDF, JPG or PNG, max 5MB</small>
-                <div id="id_document_filename" class="file-name-display mt-1"></div>
+                <div id="national_id_filename" class="file-name-display mt-1"></div>
             </div>
         </div>
     </div>
@@ -309,7 +309,7 @@
     // Show selected filename
     document.addEventListener('DOMContentLoaded', function() {
         // For each file input
-        ['passport_photo', 'billboard_photo', 'certificate_of_incorporation', 'id_document'].forEach(field => {
+        ['passport_photo', 'trading_license', 'certificate_of_incorporation', 'national_id'].forEach(field => {
             const input = document.querySelector(`#id_${field}`);
             if (input) {
                 input.addEventListener('change', function() {

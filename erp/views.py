@@ -62,10 +62,12 @@ def customer_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return render(request, 'customer_list.html', {'page_obj': page_obj})
-
+ 
 @login_required
 def register_customer(request):
     submitted = False
+    user = request.user  
+
     if request.method == 'POST':
         form = CustomerForm(request.POST, request.FILES)
         if form.is_valid():
@@ -74,8 +76,14 @@ def register_customer(request):
             submitted = True
     else:
         form = CustomerForm()
+ 
+    form.fields['prepared_by'].widget.attrs.update({
+        'readonly': 'readonly',
+        'placeholder': user.get_full_name() or user.username
+    })
 
     return render(request, 'register_customer.html', {'form': form, 'submitted': submitted})
+
 
 @login_required
 def customer_view(request, pk):

@@ -107,11 +107,9 @@ class Customer(models.Model):
     next_of_kin = models.CharField(max_length=100, blank=True, null=True)
     next_of_kin_tel = models.CharField(max_length=15, blank=True, null=True)
 
-    signed_by = models.CharField(max_length=100,blank=True, null=True)
-    designation = models.CharField(max_length=100,blank=True, null=True)
+    approved_by = models.CharField(max_length=100,blank=True, null=True)
 
     prepared_by = models.CharField(max_length=100, blank=True, null=True)
-    prepared_by_sign = models.CharField(max_length=100, blank=True, null=True)
     prepared_date = models.DateField(blank=True,null=True)
 
     remarks = models.TextField(blank=True, null=True)

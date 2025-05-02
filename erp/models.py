@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import FileExtensionValidator
 from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
-
+from datetime import date
 # ----------------------------
 # 1. Core Entities
 # ----------------------------
@@ -394,34 +394,31 @@ class Dispatch(models.Model):
             self.Status.DELIVERED: 'bg-success',
             self.Status.CANCELLED: 'bg-danger',
         }
-        return classes.get(self.status, 'bg-secondary')
-
+        return classes.get(self.status, 'bg-secondary') 
 class DeliveryNote(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
-        ('confirmed', 'Confirmed'),
+        ('received', 'Received'),
         ('rejected', 'Rejected'),
     ]
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='pending'
-    )
-    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+
     delivery_no = models.CharField(max_length=100, null=True, blank=True)
-    delivery_date = models.DateField(null=True, blank=True)  # Changed to DateField
+    customer_name = models.CharField(max_length=100, null=True, blank=True)  # typo fixed
+    date_of_billing = models.DateField(null=True, blank=True)
     receiver_name = models.CharField(max_length=100, null=True, blank=True)
     receiver_contact = models.CharField(max_length=20, null=True, blank=True)
-    warehouse = models.CharField(max_length=100, null=True, blank=True, default="Main Location")
+    invoice_no = models.CharField(max_length=100, null=True, blank=True)
+    transaction_value = models.CharField(max_length=100, null=True, blank=True)
 
     estimate_number = models.CharField(max_length=100, null=True, blank=True)
     delivery_note_number = models.CharField(max_length=100, null=True, blank=True)
     customer_name_address = models.TextField(null=True, blank=True)
-    sales_person = models.CharField(max_length=100, null=True, blank=True)  # Should be required
-    date_of_delivery = models.DateField(null=True, blank=True)  # Changed to DateField
+    sales_person = models.CharField(max_length=100, null=True, blank=True)
+    delivery_person = models.CharField(max_length=100, null=True, blank=True)
 
     remarks = models.TextField(null=True, blank=True)
-    date_goods_received = models.DateField(null=True, blank=True)  # Changed to DateField
+    date_goods_received = models.DateField(null=True, blank=True)
 
     image = models.ImageField(upload_to='delivery_notes/', null=True, blank=True)
     extracted_text = models.TextField(null=True, blank=True)
@@ -431,6 +428,29 @@ class DeliveryNote(models.Model):
 
     def __str__(self):
         return f"Delivery {self.delivery_no} - {self.receiver_name}"
+
+    def days_outstanding(self):
+        """Returns the number of days outstanding only if status is pending."""
+        if self.status == 'pending' and self.date_of_billing:
+            return (date.today() - self.date_of_billing).days
+        return 0
+
+    def aging_category(self):
+        """Returns aging range like 0<15, >15, >30, etc."""
+        days = self.days_outstanding()
+        if self.status != 'pending' or not self.date_of_billing:
+            return "N/A"
+        if days < 15:
+            return "0<15"
+        elif 15 <= days < 30:
+            return ">15"
+        elif 30 <= days < 45:
+            return ">30"
+        elif 45 <= days < 60:
+            return ">45"
+        else:
+            return f">{(days // 15) * 15}"  # general case
+
 
 class DeliveryNoteItem(models.Model):
     delivery_note = models.ForeignKey(DeliveryNote, related_name='items', on_delete=models.CASCADE)

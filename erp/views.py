@@ -233,7 +233,7 @@ def record_estimate(request):
     # GET request - show both forms
     form = EstimateForm(initial={
         'status': Estimate.Status.DRAFT,
-        'bk_estimate_id': generate_estimate_id(),
+        'bk_estimate_id': generate_estimate_id(request),
         'sales_agent': request.user.get_full_name() or request.user.username
     })
     upload_form = EstimateUploadForm()
@@ -301,7 +301,7 @@ def handle_excel_upload(request):
         })
 
 @login_required
-def generate_estimate_id():
+def generate_estimate_id(request):
     """Generate a new estimate ID in EST-YYYY-NNNN format"""
     from django.utils import timezone
     year = timezone.now().strftime('%Y')

@@ -21,7 +21,7 @@ INSTALLED_APPS = [
     
     'auditlog', 
     "crispy_forms",
-    "crispy_bootstrap4",  # Change to "crispy_bootstrap4" if using Bootstr
+    "crispy_bootstrap4", 
     
 ]
 
@@ -30,8 +30,8 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 # Optional settings
-IMPORT_EXPORT_USE_TRANSACTIONS = True  # Enable DB transactions
-IMPORT_EXPORT_SKIP_ADMIN_LOG = True    # Reduce log clutter
+IMPORT_EXPORT_USE_TRANSACTIONS = True  
+IMPORT_EXPORT_SKIP_ADMIN_LOG = True    
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -95,12 +95,12 @@ FILE_UPLOAD_PERMISSIONS = 0o644
  
 JAZZMIN_SETTINGS = { 
     # ============ Branding ============
-    "site_title": "AutoZone Admin",  # Browser tab title
-    "site_header": "AutoZone ERP",  # Login/signup header
-    "site_brand": "AutoZone Pro",  # Sidebar text
-    "site_logo": "img/Logo.png",  # Sidebar logo
-    "login_logo": "img/Logo.png",  # Login page logo
-    "site_logo_classes": "img-fluid",  # Better than img-circle for rectangular logos
+    "site_title": "AutoZone Admin",  
+    "site_header": "AutoZone ERP",  
+    "site_brand": "AutoZone Pro", 
+    "site_logo": "img/Logo.png",  
+    "login_logo": "img/Logo.png", 
+    "site_logo_classes": "img-fluid",  
     "copyright": "AutoZone Ltd",
     "user_avatar": None,
     

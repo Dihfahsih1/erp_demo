@@ -68,11 +68,12 @@ class DeliveryNoteForm(forms.ModelForm):
         fields = "__all__"
         widgets = {
             'delivery_date': forms.DateInput(attrs={'type': 'date'}), 
+            'sales_person': forms.Select(attrs={'class': 'form-control', 'required': True}),
+             
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        sales_exec_role = UserRole.objects.filter(name='sales_executive').first()
-        self.fields['sales_person'].queryset = Employee.objects.filter(role=sales_exec_role)
+        self.fields['sales_person'].queryset = Employee.objects.filter(role__name='Sales Executive')
         
 
 class EstimateForm(forms.ModelForm):

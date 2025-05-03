@@ -6,7 +6,7 @@ from django.utils.translation import gettext as _
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from erp.forms import DispatchForm,DeliveryNoteForm, EstimateForm
-from .models import Customer, DeliveryNote, Dispatch, Estimate
+from .models import Customer, DeliveryNote, Dispatch, Employee, Estimate, UserRole
 import json
 from django.db.models import Q
 from django.core.paginator import Paginator
@@ -546,10 +546,15 @@ from django.http import JsonResponse
 from django.urls import reverse
 import json
 
+sales_exec_role = UserRole.objects.filter(name='Sales Executive').first()
 @login_required
 def create_delivery_note(request):
+    
     if request.method == 'POST':
         form = DeliveryNoteForm(request.POST, request.FILES)
+        form.fields['sales_person'].queryset = Employee.objects.filter(role=sales_exec_role)
+
+        print(form.errors)
         if form.is_valid():
             note = form.save(commit=False)
             note.status = 'pending'
@@ -561,6 +566,8 @@ def create_delivery_note(request):
             messages.error(request, "Please correct the errors in the form.")
     else:
         form = DeliveryNoteForm()
+        form.fields['sales_person'].queryset = Employee.objects.filter(role=sales_exec_role)
+
         
 
     return render(request, 'delivery_notes/create_delivery_details.html', {'form': form})

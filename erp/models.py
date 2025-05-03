@@ -411,11 +411,10 @@ class DeliveryNote(models.Model):
     invoice_no = models.CharField(max_length=100, null=True, blank=True)
     transaction_value = models.CharField(max_length=100, null=True, blank=True)
 
-    estimate_number = models.CharField(max_length=100, null=True, blank=True)
+    estimate_number = models.CharField(max_length=200, null=True, blank=True)
     delivery_note_number = models.CharField(max_length=100, null=True, blank=True)
     customer_name_address = models.TextField(null=True, blank=True)
     sales_person = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
-    sale_agent = models.CharField(max_length=100,null=True, blank=True)
     delivery_person = models.CharField(max_length=100, null=True, blank=True)
 
     remarks = models.TextField(null=True, blank=True)

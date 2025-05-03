@@ -1,7 +1,7 @@
 # dispatch/forms.py
 from django import forms
 from django.utils.translation import gettext_lazy as _
-from .models import Dispatch,DeliveryNote, Estimate
+from .models import Dispatch,DeliveryNote, Estimate, UserRole
 
 from .models import Customer,Employee,Department,UserRole
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
@@ -61,22 +61,18 @@ class DispatchForm(forms.ModelForm):
 
 
 class DeliveryNoteForm(forms.ModelForm):
+    
+
     class Meta:
         model = DeliveryNote
-        fields = [
-            'image',
-            'receiver_name',
-            'delivery_note_number', 
-        ]
+        fields = "__all__"
         widgets = {
             'delivery_date': forms.DateInput(attrs={'type': 'date'}), 
         }
-    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['image'].required = True
-        self.fields['receiver_name'].required = True
-        self.fields['delivery_note_number'].required = True
+        sales_exec_role = UserRole.objects.filter(name='sales_executive').first()
+        self.fields['sales_person'].queryset = Employee.objects.filter(role=sales_exec_role)
         
 
 class EstimateForm(forms.ModelForm):
@@ -129,3 +125,13 @@ class DispatchVerificationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['cancellation_reason'].required = False
+        
+class SalesAgentNoteForm(forms.ModelForm):
+    class Meta:
+        model = DeliveryNote
+        fields = ['image', 'extracted_text', 'receiver_name', 'receiver_contact', 'date_goods_received']
+
+class OfficerReviewForm(forms.ModelForm):
+    class Meta:
+        model = DeliveryNote
+        fields = ['status', 'remarks']

@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h4>Record Delivery Note Details</h4>
+
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="date_of_billing" class="form-label">Date of Billing</label>
+                                <input type="date" class="form-control" name="date_of_billing" id="date_of_billing" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="invoice_no" class="form-label">Invoice Number</label>
+                                <input type="text" class="form-control" name="invoice_no" id="invoice_no" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="customer_name" class="form-label">Customer Name</label>
+                                <input type="text" class="form-control" name="customer_name" id="customer_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="sales_person" class="form-label">Sales Person</label>
+                                <input type="text" class="form-control" name="sales_person" id="sales_person" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="estimate_number" class="form-label">Estimate Number</label>
+                                <input type="text" class="form-control" name="estimate_number" id="estimate_number" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="transaction_value" class="form-label">Transaction Value</label>
+                                <input type="text" class="form-control" name="transaction_value" id="transaction_value" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="delivery_person" class="form-label">Delivery Person</label>
+                                <input type="text" class="form-control" name="delivery_person" id="delivery_person">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="status" class="form-label">Delivery Note Status</label>
+                                <select class="form-select" name="status" id="status" onchange="toggleReceivedDateField()">
+                                    <option value="pending">Pending</option>
+                                    <option value="received">Received</option>
+                                    <option value="rejected">Rejected</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 d-none" id="received-date-group">
+                            <label for="date_goods_received" class="form-label">Date Goods Received (signed note returned)</label>
+                            <input type="date" class="form-control" name="date_goods_received" id="date_goods_received">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="remarks" class="form-label">Remarks (optional)</label>
+                            <textarea class="form-control" name="remarks" id="remarks" rows="3"></textarea>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Submit Delivery Note
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleReceivedDateField() {
+    const status = document.getElementById('status').value;
+    const receivedGroup = document.getElementById('received-date-group');
+    if (status === 'received') {
+        receivedGroup.classList.remove('d-none');
+    } else {
+        receivedGroup.classList.add('d-none');
+    }
+}
+</script>
+{% endblock %}

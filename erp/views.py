@@ -15,7 +15,7 @@ import pandas as pd
 from io import BytesIO
 from datetime import datetime
 from .models import Estimate
-from .forms import DispatchVerificationForm, EstimateForm, EstimateUploadForm
+from .forms import DispatchVerificationForm, EstimateForm, EstimateUploadForm, OfficerReviewForm, SalesAgentNoteForm
 from django.shortcuts import render, get_object_or_404, redirect
 from .forms import CustomerForm, EmployeeLoginForm,EmployeeRegistrationForm
 from django.contrib.auth import login, authenticate
@@ -546,42 +546,68 @@ from django.http import JsonResponse
 from django.urls import reverse
 import json
 
+@login_required
 def create_delivery_note(request):
     if request.method == 'POST':
         form = DeliveryNoteForm(request.POST, request.FILES)
-        
         if form.is_valid():
-            delivery_note = form.save(commit=False)
-            delivery_note.sales_person = request.user.get_full_name() or request.user.username
-            delivery_note.status = 'pending'
-            delivery_note.save()
-            
-            return JsonResponse({
-                'success': True,
-                'redirect_url': reverse('delivery_note_list'),
-                'message': "Delivery note submitted successfully!"
-            })
+            note = form.save(commit=False)
+            note.status = 'pending'
+            note.created_at = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+            note.updated_at = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+            note.save()
+            messages.success(request, "Delivery note created successfully.")
         else:
-            # Convert form errors to a more detailed format
-            errors = {}
-            for field in form.errors:
-                errors[field] = {
-                    'id': f'id_{field}',  # matches Django's default ID format
-                    'errors': form.errors[field]
-                }
-            
-            return JsonResponse({
-                'success': False,
-                'errors': errors,
-                'message': "Please correct the errors below.",
-                'form_errors': form.errors.as_json()
-            }, status=400)
-    
-    # GET request handling
-    form = DeliveryNoteForm()
-    return render(request, 'delivery_notes/create.html', {'form': form})
+            messages.error(request, "Please correct the errors in the form.")
+    else:
+        form = DeliveryNoteForm()
+        
+
+    return render(request, 'delivery_notes/create_delivery_details.html', {'form': form})
+
+
+from django.utils.timezone import now
+def upload_signed_note(request):
+    pending_notes = DeliveryNote.objects.filter(status='pending')
+
+    if request.method == 'POST':
+        invoice_no = request.POST.get('invoice_no')
+        note = DeliveryNote.objects.get(invoice_no=invoice_no)
+
+        # Update relevant fields
+        note.image = request.FILES.get('image')
+        note.remarks = request.POST.get('remarks')
+        note.receiver_name = request.POST.get('receiver_name')
+        note.receiver_contact = request.POST.get('receiver_contact')
+        note.delivery_note_number = request.POST.get('delivery_note_number')
+        note.date_goods_received =  request.POST.get('date_goods_received')
+
+        note.status = 'received'
+        note.save()
+
+        messages.success(request, f"Signed note for Invoice {invoice_no} uploaded and marked as received.")
+        return redirect('upload_signed_note')
+
+    return render(request, 'delivery_notes/upload_signed_delivery.html', {
+        'pending_notes': pending_notes
+    })
     
 @login_required
 def delivery_note_list(request):
     notes = DeliveryNote.objects.all()
     return render(request, 'delivery_notes/list.html', {'notes': notes})
+
+@login_required
+def confirm_delivery_note(request, pk):
+    note = get_object_or_404(DeliveryNote, pk=pk)
+
+    if request.method == 'POST':
+        form = OfficerReviewForm(request.POST, instance=note)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Delivery note status updated.")
+            return redirect('delivery_note_list')
+    else:
+        form = OfficerReviewForm(instance=note)
+    
+    return render(request, 'delivery_notes/confirm.html', {'form': form, 'note': note})

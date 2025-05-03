@@ -29,10 +29,10 @@ urlpatterns = [
      path('accounts/loggedout/', auth_views.LogoutView.as_view(), name='log_out'),
      
      # Upload the delivery notes
-    #  path('delivery-notes/upload/', views.upload_delivery_note, name='upload_delivery_note'),
-     
+     path('delivery-notes/upload/', views.upload_signed_note, name='upload_signed_note'),
      path('delivery-details/form/', views.create_delivery_note, name='create_delivery_note'),
      path('delivery/notes/', views.delivery_note_list, name='delivery_note_list'),
-    path('delivery-details/<int:pk>/confirm/', views.confirm_delivery, name='confirm_delivery'),
+     
+     path('delivery-details/<int:pk>/confirm/', views.confirm_delivery, name='confirm_delivery_note'),
     
 ]

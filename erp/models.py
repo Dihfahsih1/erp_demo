@@ -403,8 +403,8 @@ class DeliveryNote(models.Model):
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
 
-    delivery_no = models.CharField(max_length=100, null=True, blank=True)
-    customer_name = models.CharField(max_length=100, null=True, blank=True)  # typo fixed
+    delivery_no = models.CharField(max_length=200, null=True, blank=True)
+    customer_name = models.CharField(max_length=200, null=True, blank=True)  # typo fixed
     date_of_billing = models.DateField(null=True, blank=True)
     receiver_name = models.CharField(max_length=100, null=True, blank=True)
     receiver_contact = models.CharField(max_length=20, null=True, blank=True)
@@ -414,7 +414,8 @@ class DeliveryNote(models.Model):
     estimate_number = models.CharField(max_length=100, null=True, blank=True)
     delivery_note_number = models.CharField(max_length=100, null=True, blank=True)
     customer_name_address = models.TextField(null=True, blank=True)
-    sales_person = models.CharField(max_length=100, null=True, blank=True)
+    sales_person = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
+    sale_agent = models.CharField(max_length=100,null=True, blank=True)
     delivery_person = models.CharField(max_length=100, null=True, blank=True)
 
     remarks = models.TextField(null=True, blank=True)
@@ -425,6 +426,7 @@ class DeliveryNote(models.Model):
 
     created_at = models.CharField(max_length=100, null=True, blank=True)
     updated_at = models.CharField(max_length=100, null=True, blank=True)
+    designation = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
         return f"Delivery {self.delivery_no} - {self.receiver_name}"
@@ -450,8 +452,7 @@ class DeliveryNote(models.Model):
             return ">45"
         else:
             return f">{(days // 15) * 15}"  # general case
-
-
+ 
 class DeliveryNoteItem(models.Model):
     delivery_note = models.ForeignKey(DeliveryNote, related_name='items', on_delete=models.CASCADE)
     item_code = models.CharField(max_length=100, null=True, blank=True)  # Added for codes like "REV-OF-TR-BK"

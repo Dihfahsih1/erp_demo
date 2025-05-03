@@ -87,10 +87,17 @@
         <li class="nav-header">DELIVERY NOTES</li>
         <li class="nav-item">
           <a href="{% url 'create_delivery_note' %}" class="nav-link">
-            <i class="nav-icon bi bi-download"></i>
-            <p>Upload Delivery Note</p>
+            <i class="nav-icon bi bi-pen-fill"></i>
+            <p>Record Delivery Details</p>
           </a>
         </li>
+        <li class="nav-item">
+          <a href="{% url 'upload_signed_note' %}" class="nav-link">
+            <i class="nav-icon bi bi-upload"></i>
+            <p>Upload Signed Note</p>
+          </a>
+        </li>
+       
         <li class="nav-item">
           <a href="{% url 'delivery_note_list' %}" class="nav-link">
             <i class="nav-icon bi bi-grip-horizontal"></i>

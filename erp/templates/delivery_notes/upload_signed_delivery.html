@@ -13,15 +13,16 @@
                     <form method="post" enctype="multipart/form-data" id="upload-form">
                         {% csrf_token %}
                         
+                        <input type="hidden" name="status" value="{{ note.status }}">
                         <!-- Customer Information -->
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="receiver_name" class="form-label">Receiver Name</label>
-                                <input type="text" class="form-control" id="receiver_name" name="receiver_name" required>
+                                <input type="text" class="form-control" id="receiver_name" name="receiver_name" value="{{ note.receiver_name }}" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="receiver_contact" class="form-label">Receiver Contact</label>
-                                <input type="text" class="form-control" id="receiver_contact" name="receiver_contact">
+                                <input type="text" class="form-control" id="receiver_contact" name="receiver_contact" value="{{ note.receiver_contact }}">
                             </div>
                         </div>
 
@@ -29,11 +30,11 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="delivery_note_number" class="form-label">Delivery Note Number</label>
-                                <input type="text" class="form-control" id="delivery_note_number" name="delivery_note_number" required>
+                                <input type="text" class="form-control" id="delivery_note_number" name="delivery_note_number" value="{{ note.delivery_note_number }}" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="date_of_delivery" class="form-label">Receiving Date</label>
-                                <input type="date" class="form-control" id="date_of_delivery" name="date_of_delivery">
+                                <input type="date" class="form-control" id="date_of_delivery" name="date_of_delivery" value="{{ note.date_goods_received|date:'Y-m-d' }}">
                             </div>
                         </div>
 
@@ -103,7 +104,6 @@
         </div>
     </div>
 </div>
-
  <script>
     // Preview uploaded image in form
     function previewImage(event) {

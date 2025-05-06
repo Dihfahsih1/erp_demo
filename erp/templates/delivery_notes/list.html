@@ -1,151 +1,278 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load static %}
 
 {% block content %}
-<style>
-    /* Add to your main CSS file */
-#imageModal {
-    transition: opacity 0.3s ease;
-}
+<div class="container-fluid py-4">
+    <h2 class="mb-4">Delivery Notes Management</h2>
+    
+    <!-- Filter Controls -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="dateFilter" class="form-label">Filter by Receiving Date:</label>
+                    <input type="date" id="dateFilter" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label for="statusFilter" class="form-label">Filter by Status:</label>
+                    <select id="statusFilter" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="being_processed">Being Processed</option>
+                        <option value="received">Received</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button id="resetFilters" class="btn btn-outline-secondary">Reset Filters</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-#modalImage {
-    transition: transform 0.3s ease;
-    cursor: zoom-out;
-}
-
-.image-preview-link {
-    display: inline-block;
-    background: none;
-    border: none;
-    padding: 0;
-}
-Key Fe
-</style>
-<div class="container py-5">
-    <h2>Delivery Notes</h2>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Delivery No</th>
-                <th>Customer</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Image</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for note in notes %}
-            <tr>
-                <td>{{ note.delivery_note_number|default:"-" }}</td>
-                <td>{{ note.receiver_name }}</td>
-                <td>{{ note.date_of_delivery|date:"Y-m-d" }}</td>
-                <td>
-                    <span class="badge bg-{% if note.status == 'confirmed' %}success{% else %}warning{% endif %}">
-                        {{ note.status|default:"pending"|title }}
-                    </span>
-                </td>
-                <td>
-                    {% if note.image %}
-                        <a href="{{ note.image.url }}" class="image-preview-link">
-                            <img src="{{ note.image.url }}" class="img-thumbnail" style="width: 100px; cursor: zoom-in;">
-                        </a>
-                    {% else %}
-                        No image
-                    {% endif %}
-                </td>
-                <td>
-                    {% if note.status != 'confirmed' %}
-                    <button class="btn btn-sm btn-success confirm-delivery ms-2" data-note-id="{{ note.id }}">
-                        Confirm
-                    </button>
-                    {% endif %}
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6">No delivery notes found</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- Delivery Notes Table -->
+    <div class="card">
+        <div class="card-body">
+            <table id="deliveryTable" class="table table-striped" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>DN Number</th>
+                        <th>Invoice No</th>
+                        <th>Customer</th>
+                        <th>Delivery Person</th>
+                        <th>Receiver</th>
+                        <th>Received Date</th>
+                        <th>Status</th>
+                        <th>Value</th>
+                        <th>Signed Note</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for note in delivery_notes %}
+                    <tr>
+                        <td>{{ note.delivery_note_number }}</td>
+                        <td>{{ note.invoice_no }}</td>
+                        <td>{{ note.customer_name }}</td>
+                        <td>{{ note.delivery_person }}</td>
+                        <td>{{ note.receiver_name }}</td>
+                        <td>{{ note.date_goods_received|date:"Y-m-d" }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if note.status == 'received' %}bg-success
+                                {% elif note.status == 'being_processed' %}bg-info
+                                {% elif note.status == 'rejected' %}bg-danger
+                                {% else %}bg-warning{% endif %}">
+                                {{ note.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{{ note.transaction_value }}</td>
+                        <td>
+                            {% if note.image %}
+                                <a href="{{ note.image.url }}" class="image-preview-link">
+                                    <img src="{{ note.image.url }}" class="img-thumbnail" style="width: 60px; cursor: zoom-in;">
+                                </a>
+                            {% else %}
+                                No image
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-info view-details" data-note-id="{{ note.id }}">
+                                <i class="fas fa-eye"></i> Details
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
-<!-- Image Modal -->
-<div id="imageModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;text-align:center;">
-    <span style="position:absolute;top:20px;right:30px;color:white;font-size:40px;cursor:pointer;" onclick="closeImageModal()">&times;</span>
-    <img id="modalImage" src="" style="max-height:90%;max-width:90%;margin-top:5%;">
+<!-- Image Preview Modal -->
+<div id="imageModal" class="modal-overlay">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <img id="modalImage" class="modal-image">
+    </div>
 </div>
 
+<!-- Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Delivery Note Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="detailsModalContent">
+                <!-- Content will be loaded via AJAX -->
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}
 
+{% block styles %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+<style>
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal-content {
+        position: relative;
+        max-width: 90%;
+        max-height: 90%;
+    }
+    
+    .modal-image {
+        max-height: 90vh;
+        max-width: 90vw;
+        display: block;
+    }
+    
+    .close-btn {
+        position: absolute;
+        top: -40px;
+        right: -40px;
+        color: white;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    
+    .close-btn:hover {
+        color: #ccc;
+    }
+    
+    .badge {
+        font-size: 0.85em;
+    }
+</style>
+{% endblock %}
+
 {% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
-// Simple Image Modal System
-function openImageModal(imageUrl) {
-    const modal = document.getElementById('imageModal');
-    const modalImg = document.getElementById('modalImage');
-    
-    modalImg.src = imageUrl;
-    modal.style.display = 'block';
-    
-    // Close modal when clicking outside image
-    modal.onclick = function(e) {
-        if (e.target === modal) {
-            closeImageModal();
-        }
-    };
-    
-    // Close with Escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeImageModal();
-        }
-    });
-}
+    $(document).ready(function() {
+        // Initialize DataTable with export buttons
+        var table = $('#deliveryTable').DataTable({
+            dom: '<"top"lfB>rt<"bottom"ip>',
+            buttons: [
+                {
+                    extend: 'excel',
+                    text: '<i class="fas fa-file-excel"></i> Excel',
+                    className: 'btn btn-success'
+                },
+                {
+                    extend: 'pdf',
+                    text: '<i class="fas fa-file-pdf"></i> PDF',
+                    className: 'btn btn-danger'
+                },
+                {
+                    extend: 'print',
+                    text: '<i class="fas fa-print"></i> Print',
+                    className: 'btn btn-dark'
+                }
+            ],
+            responsive: true,
+            pageLength: 25
+        });
 
-function closeImageModal() {
-    document.getElementById('imageModal').style.display = 'none';
-}
+        // Date filter
+        $('#dateFilter').on('change', function() {
+            table.column(5).search(this.value).draw();
+        });
 
-// Initialize image preview links
-document.addEventListener('DOMContentLoaded', function() {
-    // Image preview
-    document.querySelectorAll('.image-preview-link').forEach(link => {
-        link.addEventListener('click', function(e) {
+        // Status filter
+        $('#statusFilter').on('change', function() {
+            table.column(6).search(this.value).draw();
+        });
+
+        // Reset filters
+        $('#resetFilters').on('click', function() {
+            $('#dateFilter').val('');
+            $('#statusFilter').val('');
+            table.search('').columns().search('').draw();
+        });
+
+        // Image preview modal
+        $(document).on('click', '.image-preview-link', function(e) {
             e.preventDefault();
-            openImageModal(this.href);
+            const imageUrl = $(this).attr('href');
+            $('#modalImage').attr('src', imageUrl);
+            $('#imageModal').fadeIn();
+            $('body').css('overflow', 'hidden');
+        });
+
+        // Close image modal
+        $('.close-btn').on('click', function() {
+            $('#imageModal').fadeOut();
+            $('body').css('overflow', 'auto');
+        });
+
+        // Details modal
+        $(document).on('click', '.view-details', function() {
+            var noteId = $(this).data('note-id');
+            var url = '/delivery-notes/' + noteId + '/details/';
+            
+            $('#detailsModalContent').html(`
+                <div class="text-center py-4">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            `);
+            
+            $('#detailsModal').modal('show');
+            
+            $.get(url, function(data) {
+                $('#detailsModalContent').html(data);
+            }).fail(function() {
+                $('#detailsModalContent').html(`
+                    <div class="alert alert-danger">
+                        Failed to load details. Please try again.
+                    </div>
+                `);
+            });
         });
     });
-    
-    // Test function (can remove)
-    window.testImageModal = function() {
-        openImageModal('https://via.placeholder.com/800x600');
-    };
-    
-    // Confirm delivery functionality
-    document.querySelectorAll('.confirm-delivery').forEach(button => {
-        button.addEventListener('click', function() {
-            const noteId = this.getAttribute('data-note-id');
-            if (confirm('Are you sure you want to confirm this delivery?')) {
-                fetch(`/delivery-details/${noteId}/confirm/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({})
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    }
-                });
-            }
-        });
-    });
-});
+
+    function closeImageModal() {
+        $('#imageModal').fadeOut();
+        $('body').css('overflow', 'auto');
+    }
 </script>
 {% endblock %}

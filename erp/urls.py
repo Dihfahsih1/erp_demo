@@ -34,5 +34,10 @@ urlpatterns = [
      path('delivery/notes/', views.delivery_note_list, name='delivery_note_list'),
      
      path('delivery-details/<int:pk>/confirm/', views.confirm_delivery, name='confirm_delivery_note'),
+     
+     path('my-deliveries/', views.delivery_note_list_by_sales_person, name='delivery_note_list_by_sales_person'),
+     path('upload-note/<int:note_id>/', views.upload_signed_note, name='upload_signed_note'),
+     path('upload-signed-note/<int:note_id>/', views.upload_signed_note, name='upload_signed_note'),
+
     
 ]

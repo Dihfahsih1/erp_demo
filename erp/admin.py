@@ -9,6 +9,8 @@ from django.utils.html import format_html
 from django.conf import settings
 from django.templatetags.static import static
 from .utils.delivery_ocr import extract_delivery_data
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 
 # Model Admin Classes
 @admin.register(UserRole)
@@ -22,17 +24,34 @@ class DepartmentAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 @admin.register(Employee)
-class EmployeeAdmin(admin.ModelAdmin):
+class EmployeeAdmin(UserAdmin):
+    add_form = UserCreationForm
+    form = UserChangeForm
+    model = Employee
+
     list_display = ('username', 'email', 'department', 'phone')
     list_filter = ('department', 'is_staff')
     search_fields = ('username', 'email', 'phone')
+
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         ('Personal Info', {'fields': ('first_name', 'last_name', 'email', 'phone')}),
-        ('Permissions', {'fields': ('role','is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Permissions', {'fields': ('role', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
         ('Department', {'fields': ('department',)}),
     )
+
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'password1', 'password2', 'email', 'department'),
+        }),
+    )
+
+    def save_model(self, request, obj, form, change):
+        if 'password' in form.changed_data:
+            obj.set_password(obj.password)  # Still keep this as a safeguard
+        super().save_model(request, obj, form, change)
 
 @admin.register(Customer)
 class CustomerAdmin(admin.ModelAdmin):

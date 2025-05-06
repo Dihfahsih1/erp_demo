@@ -59,7 +59,29 @@ class DispatchForm(forms.ModelForm):
             'driver_contact': _('Driver Contact'),
         }
 
+class DeliveryNoteUploadForm(forms.ModelForm):
+    date_of_delivery = forms.DateField(
+        label="Receiving Date",
+        widget=forms.DateInput(attrs={'type': 'date'}),
+        required=False
+    )
 
+    class Meta:
+        model = DeliveryNote
+        fields = ['image', 'receiver_name', 'receiver_contact', 'date_of_delivery', 'delivery_note_number']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.date_goods_received:
+            self.initial['date_of_delivery'] = self.instance.date_goods_received
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if 'date_of_delivery' in self.cleaned_data:
+            instance.date_goods_received = self.cleaned_data['date_of_delivery']
+        if commit:
+            instance.save()
+        return instance
 class DeliveryNoteForm(forms.ModelForm):
     
 

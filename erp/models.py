@@ -398,34 +398,36 @@ class Dispatch(models.Model):
 class DeliveryNote(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
+        ('being_processed', 'Being Processed'),
         ('received', 'Received'),
         ('rejected', 'Rejected'),
     ]
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-
-    delivery_no = models.CharField(max_length=200, null=True, blank=True)
-    customer_name = models.CharField(max_length=200, null=True, blank=True)  # typo fixed
-    date_of_billing = models.DateField(null=True, blank=True)
+    estimate_number = models.CharField(max_length=200, null=True, blank=True)
+    delivery_note_number = models.CharField(max_length=100, null=True, blank=True)
     receiver_name = models.CharField(max_length=100, null=True, blank=True)
     receiver_contact = models.CharField(max_length=20, null=True, blank=True)
+    date_goods_received = models.DateField(null=True, blank=True)
+    
+    
+
+    
+    customer_name = models.CharField(max_length=200, null=True, blank=True)  # typo fixed
+    date_of_billing = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     invoice_no = models.CharField(max_length=100, null=True, blank=True)
     transaction_value = models.CharField(max_length=100, null=True, blank=True)
 
-    estimate_number = models.CharField(max_length=200, null=True, blank=True)
-    delivery_note_number = models.CharField(max_length=100, null=True, blank=True)
+    
     customer_name_address = models.TextField(null=True, blank=True)
     sales_person = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
     delivery_person = models.CharField(max_length=100, null=True, blank=True)
-
     remarks = models.TextField(null=True, blank=True)
-    date_goods_received = models.DateField(null=True, blank=True)
+    
 
     image = models.ImageField(upload_to='delivery_notes/', null=True, blank=True)
     extracted_text = models.TextField(null=True, blank=True)
-
     created_at = models.CharField(max_length=100, null=True, blank=True)
     updated_at = models.CharField(max_length=100, null=True, blank=True)
-    designation = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
         return f"Delivery {self.delivery_no} - {self.receiver_name}"

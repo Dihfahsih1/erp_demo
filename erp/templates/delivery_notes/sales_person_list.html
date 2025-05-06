@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<h2>My Delivery Notes</h2>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+
+<table id="deliveryTable" class="display nowrap" style="width:100%">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Estimate No</th>
+            <th>Invoice No</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Transaction Value</th>
+            <th>Signed Note</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for note in delivery_notes %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ note.estimate_number }}</td>
+            <td>{{ note.invoice_no }}</td>
+            <td>{{ note.date_of_billing }}</td>
+            <td>
+                <span class="badge 
+                    {% if note.status == 'received' %}bg-success
+                    {% elif note.status == 'being_processed' %}bg-info
+                    {% elif note.status == 'rejected' %}bg-danger
+                    {% else %}bg-warning{% endif %}">
+                    {{ note.get_status_display }}
+                </span>
+            </td>
+            <td>{{ note.transaction_value }}</td>
+           <td>
+            {% if note.image %}
+                <a href="{{ note.image.url }}" class="image-preview-link">
+                    <img src="{{ note.image.url }}" class="img-thumbnail" style="width: 100px; cursor: zoom-in;">
+                </a>
+            {% else %}
+                No image
+            {% endif %}
+            <td>
+                {% if note.status == 'pending' and not note.signed_note %}
+                    <a href="{% url 'upload_signed_note' note.id %}" class="btn btn-sm btn-primary">
+                        Upload Signed Note
+                    </a>
+                {% elif note.status == 'being_processed' and note.signed_note %}
+                    <span class="text-info">In Process</span>
+                {% elif note.status == 'received' %}
+                    <span class="text-success">Confirmed</span>
+                {% elif note.status == 'rejected' %}
+                    <span class="text-danger">Rejected</span>
+                {% else %}
+                    <span class="text-muted">No action</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Image Modal -->
+<div id="imageModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;text-align:center;">
+    <span style="position:absolute;top:20px;right:30px;color:white;font-size:40px;cursor:pointer;" onclick="closeImageModal()">&times;</span>
+    <img id="modalImage" src="" style="max-height:90%;max-width:90%;margin-top:5%;">
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+
+
+<!-- Add this modal HTML anywhere in your template (right before closing body tag is good) -->
+<div id="imageModal" class="modal-overlay">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <img id="modalImage" class="modal-image">
+    </div>
+</div>
+
+<style>
+    /* Modal styles */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal-content {
+        position: relative;
+        max-width: 90%;
+        max-height: 90%;
+    }
+    
+    .modal-image {
+        max-height: 90vh;
+        max-width: 90vw;
+        display: block;
+    }
+    
+    .close-btn {
+        position: absolute;
+        top: -40px;
+        right: -40px;
+        color: white;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    
+    .close-btn:hover {
+        color: #ccc;
+    }
+</style>
+
+<script>
+    $(document).ready(function () {
+        // Initialize DataTable
+        $('#deliveryTable').DataTable({
+            dom: 'Bfrtip',
+            buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
+        });
+
+        // Image preview modal logic
+        $(document).on('click', '.image-preview-link', function(e) {
+            e.preventDefault();
+            const imageUrl = $(this).attr('href') || $(this).data('image-url');
+            
+            // Set image source and show modal
+            $('#modalImage').attr('src', imageUrl);
+            $('#imageModal').fadeIn();
+            
+            // Disable body scroll
+            $('body').css('overflow', 'hidden');
+        });
+
+        // Close modal when clicking the X button
+        $('.close-btn').on('click', closeImageModal);
+        
+        // Close modal when clicking outside image
+        $('#imageModal').on('click', function(e) {
+            if (e.target === this) {
+                closeImageModal();
+            }
+        });
+        
+        // Close modal with Escape key
+        $(document).on('keyup', function(e) {
+            if (e.key === "Escape") {
+                closeImageModal();
+            }
+        });
+    });
+
+    function closeImageModal() {
+        $('#imageModal').fadeOut();
+        $('body').css('overflow', 'auto');
+    }
+</script>
+{% endblock %}

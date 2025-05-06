@@ -15,7 +15,7 @@ import pandas as pd
 from io import BytesIO
 from datetime import datetime
 from .models import Estimate
-from .forms import DispatchVerificationForm, EstimateForm, EstimateUploadForm, OfficerReviewForm, SalesAgentNoteForm
+from .forms import DeliveryNoteUploadForm, DispatchVerificationForm, EstimateForm, EstimateUploadForm, OfficerReviewForm, SalesAgentNoteForm
 from django.shortcuts import render, get_object_or_404, redirect
 from .forms import CustomerForm, EmployeeLoginForm,EmployeeRegistrationForm
 from django.contrib.auth import login, authenticate
@@ -573,36 +573,50 @@ def create_delivery_note(request):
     return render(request, 'delivery_notes/create_delivery_details.html', {'form': form})
 
 
+
 from django.utils.timezone import now
-def upload_signed_note(request):
-    pending_notes = DeliveryNote.objects.filter(status='pending')
+
+from django.http import JsonResponse
+
+@login_required
+def upload_signed_note(request, note_id):
+    note = get_object_or_404(DeliveryNote, id=note_id, sales_person=request.user.id)
 
     if request.method == 'POST':
-        invoice_no = request.POST.get('invoice_no')
-        note = DeliveryNote.objects.get(invoice_no=invoice_no)
-
-        # Update relevant fields
-        note.image = request.FILES.get('image')
-        note.remarks = request.POST.get('remarks')
-        note.receiver_name = request.POST.get('receiver_name')
-        note.receiver_contact = request.POST.get('receiver_contact')
-        note.delivery_note_number = request.POST.get('delivery_note_number')
-        note.date_goods_received =  request.POST.get('date_goods_received')
-
-        note.status = 'received'
-        note.save()
-
-        messages.success(request, f"Signed note for Invoice {invoice_no} uploaded and marked as received.")
-        return redirect('upload_signed_note')
+        form = DeliveryNoteUploadForm(request.POST, request.FILES, instance=note)
+        if form.is_valid():
+            updated_note = form.save(commit=False)
+            updated_note.status = 'being_processed'
+            updated_note.save()
+            return JsonResponse({
+                'success': True,
+                'message': f"Signed note for Invoice {note.invoice_no} uploaded successfully.",
+                'redirect_url': '/my-deliveries/'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'errors': form.errors,
+                'message': "Please correct the errors in the form."
+            })
+    else:
+        form = DeliveryNoteUploadForm(instance=note)
 
     return render(request, 'delivery_notes/upload_signed_delivery.html', {
-        'pending_notes': pending_notes
+        'note': note,
+        'form': form
     })
     
 @login_required
 def delivery_note_list(request):
-    notes = DeliveryNote.objects.all()
-    return render(request, 'delivery_notes/list.html', {'notes': notes})
+    delivery_notes = DeliveryNote.objects.all().order_by('-date_goods_received')
+    return render(request, 'delivery_notes/list.html', {'delivery_notes': delivery_notes})
+
+def delivery_note_details(request, note_id):
+    note = get_object_or_404(DeliveryNote, id=note_id)
+    return render(request, 'delivery_notes/details_partial.html', {
+        'note': note
+    })
 
 @login_required
 def confirm_delivery_note(request, pk):
@@ -618,3 +632,19 @@ def confirm_delivery_note(request, pk):
         form = OfficerReviewForm(instance=note)
     
     return render(request, 'delivery_notes/confirm.html', {'form': form, 'note': note})
+
+
+
+@login_required
+def delivery_note_list_by_sales_person(request):
+    user_role = request.user.role.name.lower() if request.user.role else ""
+     
+    if user_role == "sales executive": 
+        delivery_notes = DeliveryNote.objects.filter(sales_person=request.user)
+    else: 
+        delivery_notes = DeliveryNote.objects.none() 
+
+    return render(request, 'delivery_notes/sales_person_list.html', {
+        'delivery_notes': delivery_notes
+    })
+

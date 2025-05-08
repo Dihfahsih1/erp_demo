@@ -65,9 +65,9 @@
                                 <label for="delivery_person" class="form-label">Delivery Person</label>
                                 <input type="text" class="form-control" name="delivery_person" id="delivery_person">
                             </div>
-                            <div class="col-md-6">
-                                <label for="status" class="form-label">Delivery Note Status</label>
-                                <select class="form-select" name="status" id="status" onchange="toggleReceivedDateField()">
+                            <div class="col-md-6" hidden>
+                                <label for="status" class="form-label">Delivery Note Status</label>  
+                                <select class="form-select" type="hidden" name="status" id="status" onchange="toggleReceivedDateField()">
                                     <option value="pending">Pending</option>
                                     <option value="received">Received</option>
                                     <option value="rejected">Rejected</option>
@@ -82,7 +82,7 @@
 
                         <div class="mb-3">
                             <label for="remarks" class="form-label">Remarks (optional)</label>
-                            <textarea class="form-control" name="remarks" id="remarks" rows="3"></textarea>
+                            <textarea class="form-control" name="remarks" id="remarks" rows="2"></textarea>
                         </div>
 
                         <div class="d-grid">

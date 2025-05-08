@@ -1,7 +1,7 @@
 import json
 from django import forms
 from django.contrib import admin
-from .models import Department, Employee, Customer, SparePart, Estimate, EstimateItem, Verification, Dispatch, DeliveryNote, StoresReconciliation, UserRole
+from .models import Department, Employee, Customer, RegionOfOperation, SparePart, Estimate, EstimateItem, Verification, Dispatch, DeliveryNote, StoresReconciliation, UserRole
 
 from django.utils.html import format_html
 from django.contrib import admin
@@ -29,7 +29,7 @@ class EmployeeAdmin(UserAdmin):
     form = UserChangeForm
     model = Employee
 
-    list_display = ('username', 'email', 'department', 'phone')
+    list_display = ('username', 'email', 'department','region_of_operation')
     list_filter = ('department', 'is_staff')
     search_fields = ('username', 'email', 'phone')
 
@@ -39,6 +39,7 @@ class EmployeeAdmin(UserAdmin):
         ('Permissions', {'fields': ('role', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
         ('Department', {'fields': ('department',)}),
+        ('Region', {'fields': ('region_of_operation',)}),
     )
 
     add_fieldsets = (
@@ -104,9 +105,7 @@ class EstimateAdmin(admin.ModelAdmin):
 
 @admin.register(Dispatch)
 class DispatchAdmin(admin.ModelAdmin):
-    list_display = ('estimate', 'vehicle_number', 'driver_name', 'dispatch_time')
-    search_fields = ('vehicle_number', 'driver_name')
-
+    list_display = ('customer_name', 'invoice_no') 
 @admin.register(DeliveryNote)
 class DeliveryNoteAdmin(admin.ModelAdmin):
     list_display = ('estimate_number', 'customer_name_address')  
@@ -120,4 +119,7 @@ class StoresReconciliationAdmin(admin.ModelAdmin):
     list_display = ('estimate', 'reconciled_by', 'reconciliation_date')
     readonly_fields = ('reconciliation_date',)
 
+@admin.register(RegionOfOperation)
+class RegionOfOperationAdmin(admin.ModelAdmin):
+    list_display = ('name', 'description',)
 

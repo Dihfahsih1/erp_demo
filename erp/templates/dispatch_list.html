@@ -26,35 +26,35 @@
                                 {% for dispatch in dispatches %}
                                 <tr>
                                     <td class="ps-4">
-                                        <p class="text-xs font-weight-bold mb-0">{{ dispatch.estimate }}</p>
+                                        <p class="text-xs font-weight-bold mb-0">{{ dispatch.billing_date }}</p>
                                     </td>
                                     <td>
-                                        <p class="text-xs font-weight-bold mb-0">{{ dispatch.bk_proforma_id }}</p>
+                                        <p class="text-xs font-weight-bold mb-0">{{ dispatch.customer_name }}</p>
                                     </td>
                                     <td>
-                                        <p class="text-xs font-weight-bold mb-0">{{ dispatch.transport_cost }}</p>
+                                        <p class="text-xs font-weight-bold mb-0">{{ dispatch.invoice_no }}</p>
                                     </td>
                                     <td>
-                                        <p class="text-xs font-weight-bold mb-0">{{ dispatch.vehicle_number }}</p>
+                                        <p class="text-xs font-weight-bold mb-0">{{ dispatch.invoice_amount }}</p>
                                     </td>
                                     <td>
-                                        <p class="text-xs font-weight-bold mb-0">{{ dispatch.driver_name }}</p>
+                                        <p class="text-xs font-weight-bold mb-0">{{ dispatch.office_gate_pass }}</p>
                                     </td>
                                     <td>
-                                        <p class="text-xs font-weight-bold mb-0">{{ dispatch.driver_contact }}</p>
+                                        <p class="text-xs font-weight-bold mb-0">{{ dispatch.store_gate_pass }}</p>
                                     </td>
                                     <td>
                                         <p class="text-xs font-weight-bold mb-0">
-                                            {{ dispatch.dispatch_time|date:"M d, Y H:i" }}
+                                            {{ dispatch.billing_date|date:"M d, Y H:i" }}
                                         </p>
                                     </td>
                                     <td>
-                                        <span style="color:black"class="badge badge-lg {% if dispatch.is_delivered %}bg-gradient-success shadow-success{% else %}bg-gradient-secondary shadow-secondary{% endif %} p-2">
-                                            {% if dispatch.is_delivered %}Delivered ✅{% else %}Pending ⌛{% endif %}
+                                        <span style="color:black"class="badge badge-lg {% if dispatch.invoice_no %}bg-gradient-success shadow-success{% else %}bg-gradient-secondary shadow-secondary{% endif %} p-2">
+                                            {% if dispatch.invoice_no %}Delivered ✅{% else %}Pending ⌛{% endif %}
                                         </span>
                                     </td>
                                     <td class="align-middle">
-                                        {% if not dispatch.is_delivered %}
+                                        {% if not dispatch.invoice_no %}
                                         <button class="btn btn-sm btn-outline-success mark-delivered" 
                                                 data-dispatch-id="{{ dispatch.id }}">
                                             Mark Delivered

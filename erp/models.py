@@ -37,6 +37,17 @@ class UserRole(models.Model):
     def __str__(self):
         return self.name
 
+class RegionOfOperation(models.Model):
+    name = models.CharField(max_length=50, unique=True, verbose_name=_("Region Name"))
+    description = models.TextField(blank=True, verbose_name=_("Description"))
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = _("Region")
+        verbose_name_plural = _("Regions")
+
+    def __str__(self):
+        return self.name
 class Employee(AbstractUser):
     department = models.ForeignKey(
         Department,
@@ -86,6 +97,15 @@ class Employee(AbstractUser):
         help_text=_('Specific permissions for this user.'),
         related_name='employee_set',   
         related_query_name='employee'
+    )
+    region_of_operation = models.ForeignKey(
+        RegionOfOperation,
+        on_delete=models.PROTECT,
+        verbose_name=_("Region of Operation"),
+        related_name='employees',
+        blank=True,
+        null=True,
+        default="Office"
     )
 
     class Meta:
@@ -295,106 +315,17 @@ class Verification(models.Model):
         return f"Verification for Estimate #{self.estimate.bk_estimate_id}"
 
 class Dispatch(models.Model):
-    # Status choices
-    class Status(models.TextChoices):
-        PENDING = 'pending', _('Pending')
-        IN_TRANSIT = 'in_transit', _('In Transit')
-        DELIVERED = 'delivered', _('Delivered')
-        CANCELLED = 'cancelled', _('Cancelled')
-
-    estimate = models.CharField(
-        max_length=20,
-        verbose_name=_("Estimate"),
-        null=True,
-        blank=True
-    )
-    bk_proforma_id = models.CharField(
-        max_length=20,
-        verbose_name=_("BK Proforma ID"),
-        help_text=_("Reference ID from Bookkeeping System")
-    )
-    transport_cost = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        verbose_name=_("Transport Cost"),
-        validators=[MinValueValidator(0)]
-    )
-    vehicle_number = models.CharField(
-        max_length=20, 
-        verbose_name=_("Vehicle Number")
-    )
-    driver_name = models.CharField(
-        max_length=100, 
-        verbose_name=_("Driver Name")
-    )
-    driver_contact = models.CharField(
-        max_length=20, 
-        verbose_name=_("Driver Contact")
-    )
-    dispatch_time = models.DateTimeField(
-        auto_now_add=True, 
-        verbose_name=_("Dispatch Time")
-    )
-    status = models.CharField(
-        max_length=20,
-        choices=Status.choices,
-        default=Status.PENDING,
-        verbose_name=_("Dispatch Status")
-    )
-    delivery_confirmation_time = models.DateTimeField(
-        null=True,
-        blank=True,
-        verbose_name=_("Delivery Confirmation Time")
-    )
-    cancellation_reason = models.TextField(
-        null=True,
-        blank=True,
-        verbose_name=_("Cancellation Reason")
-    )
-
-    class Meta:
-        verbose_name = _("Dispatch")
-        verbose_name_plural = _("Dispatches")
-        ordering = ['-dispatch_time']
-
+    billing_date = models.DateField(null=True, blank=True)
+    customer_name = models.CharField(max_length=200, null=True, blank=True)
+    invoice_no = models.CharField(max_length=100, null=True, blank=True)
+    invoice_amount = models.CharField(max_length=100, null=True, blank=True)
+    office_gate_pass = models.CharField(max_length=100, null=True, blank=True)
+    store_gate_pass = models.CharField(max_length=100, null=True, blank=True)
+    
     def __str__(self):
-        return f"Dispatch #{self.id} for Estimate {self.estimate}"
+        return f"Dispatch for {self.customer_name} - {self.invoice_no}"
+        
 
-    def mark_as_delivered(self):
-        """Mark dispatch as delivered and set timestamp"""
-        self.status = self.Status.DELIVERED
-        self.delivery_confirmation_time = timezone.now()
-        self.save()
-        return True
-
-    def mark_as_in_transit(self):
-        """Mark dispatch as in transit"""
-        self.status = self.Status.IN_TRANSIT
-        self.save()
-        return True
-
-    def cancel_dispatch(self, reason=None):
-        """Cancel dispatch with optional reason"""
-        self.status = self.Status.CANCELLED
-        self.cancellation_reason = reason
-        self.save()
-        return True
-
-    @property
-    def is_delivered(self):
-        """Backward-compatible property for boolean delivery status"""
-        return self.status == self.Status.DELIVERED
-
-    @property
-    def status_badge_class(self):
-        """Get appropriate CSS class for status badge"""
-        classes = {
-            self.Status.PENDING: 'bg-secondary',
-            self.Status.IN_TRANSIT: 'bg-info',
-            self.Status.DELIVERED: 'bg-success',
-            self.Status.CANCELLED: 'bg-danger',
-        }
-        return classes.get(self.status, 'bg-secondary') 
 class DeliveryNote(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -407,8 +338,6 @@ class DeliveryNote(models.Model):
     receiver_name = models.CharField(max_length=100, null=True, blank=True)
     receiver_contact = models.CharField(max_length=20, null=True, blank=True)
     date_goods_received = models.DateField(null=True, blank=True)
-    
-    
 
     
     customer_name = models.CharField(max_length=200, null=True, blank=True)  # typo fixed

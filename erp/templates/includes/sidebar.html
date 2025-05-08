@@ -33,7 +33,7 @@
           
         </li>
 
-        {% comment %} {% if user|has_role:"Admin,Credit Officer,Estimates in Charge" %} {% endcomment %}
+        {% if request.user.role and request.user.role.name == 'CRM Officer' or request.user.role.name == 'Estimates Officer' %}
         <li class="nav-header">CUSTOMERS</li>
 
           <li class="nav-item">
@@ -64,8 +64,39 @@
               <p>List Of Estimate</p>
             </a>
           </li>
-        {% comment %} {% endif %} {% endcomment %}
+         {% endif %}  
 
+         
+        {% if request.user.role and request.user.role.name == 'Delivery Officer' %}
+        <li class="nav-header">DELIVERY NOTES</li>
+        
+          
+        <li class="nav-item">
+          <a href="{% url 'create_delivery_note' %}" class="nav-link">
+            <i class="nav-icon bi bi-pen-fill"></i>
+            <p>Record Delivery Details</p>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="{% url 'delivery_note_list' %}" class="nav-link">
+            <i class="nav-icon bi bi-grip-horizontal"></i>
+            <p>Delivery Notes</p>
+          </a>
+        </li>
+        {% endif %}
+
+        {% if request.user.role and request.user.role.name == 'Sales Officer' %}
+          <li class="nav-item">
+            <a href="{% url 'delivery_note_list_by_sales_person' %}" class="nav-link">
+              <i class="nav-icon bi bi-grip-horizontal"></i>
+              <p>My Delivery Notes</p>
+            </a>
+          </li> 
+        {% endif %}
+       
+        
+        {% if request.user.role and request.user.role.name == 'Delivery Officer' or "Dispatch Officer"%} 
         <li class="nav-header">TRANSPORTATION</li>
         <li class="nav-item">
           <a href="{% url 'mark_dispatch_delivered' %}" class="nav-link">
@@ -83,57 +114,27 @@
             </p>
           </a>
         </li>
-        
-        <li class="nav-header">DELIVERY NOTES</li>
-        <li class="nav-item">
-          <a href="{% url 'create_delivery_note' %}" class="nav-link">
-            <i class="nav-icon bi bi-pen-fill"></i>
-            <p>Record Delivery Details</p>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="{% url 'upload_signed_note' %}" class="nav-link">
-            <i class="nav-icon bi bi-upload"></i>
-            <p>Upload Signed Note</p>
-          </a>
-        </li>
-       
-        <li class="nav-item">
-          <a href="{% url 'delivery_note_list' %}" class="nav-link">
-            <i class="nav-icon bi bi-grip-horizontal"></i>
-            <p>Delivery Notes</p>
-          </a>
-        </li>
 
-        <li class="nav-item">
-          <a href="{% url 'delivery_note_list_by_sales_person' %}" class="nav-link">
-            <i class="nav-icon bi bi-grip-horizontal"></i>
-            <p>My Delivery Notes</p>
-          </a>
-        </li>
-       
-        
-
-        <li class="nav-header">DISPATCH VERIFICATION</li>
-        <li class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="nav-icon bi bi-circle text-danger"></i>
-            <p class="text">Record Dispatch</p>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="nav-icon bi bi-circle text-warning"></i>
-            <p>Dispatched items</p>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="nav-icon bi bi-circle text-info"></i>
-            <p>Reports</p>
-          </a>
-        </li>
-
+          <li class="nav-header">DISPATCH VERIFICATION</li>
+          <li class="nav-item">
+            <a href="#" class="nav-link">
+              <i class="nav-icon bi bi-circle text-danger"></i>
+              <p class="text">Record Dispatch</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link">
+              <i class="nav-icon bi bi-circle text-warning"></i>
+              <p>Dispatched items</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link">
+              <i class="nav-icon bi bi-circle text-info"></i>
+              <p>Reports</p>
+            </a>
+          </li>
+        {% endif %}
         {% if user.is_authenticated %}
           <li class="nav-item">
             <a class="nav-link" href="{% url 'log_out' %}">

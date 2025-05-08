@@ -200,7 +200,7 @@ def dispatch_list_view(request):
     """
     Display all submitted dispatches in a table format
     """
-    dispatches = Dispatch.objects.all().order_by('-dispatch_time')
+    dispatches = Dispatch.objects.all().order_by('-billing_date')
     
     context = {
         'dispatches': dispatches,
@@ -217,8 +217,6 @@ def dispatch_list_view(request):
         ]
     }
     return render(request, 'dispatch_list.html', context)
-
-
 
 
 @login_required
@@ -395,7 +393,6 @@ def verify_dispatch(request, dispatch_id):
                 messages.success(request, 'Dispatch verified and marked as In Transit!')
             elif 'cancel' in request.POST:
                 dispatch = form.save(commit=False)
-                dispatch.cancel_dispatch(form.cleaned_data.get('cancellation_reason'))
                 messages.warning(request, 'Dispatch cancelled with reason.')
             return redirect('dispatch-detail', dispatch_id=dispatch.id)
     else:
@@ -639,7 +636,7 @@ def confirm_delivery_note(request, pk):
 def delivery_note_list_by_sales_person(request):
     user_role = request.user.role.name.lower() if request.user.role else ""
      
-    if user_role == "sales executive": 
+    if user_role == "sales officer": 
         delivery_notes = DeliveryNote.objects.filter(sales_person=request.user)
     else: 
         delivery_notes = DeliveryNote.objects.none() 

@@ -244,10 +244,15 @@ def record_estimate(request):
 from django.http import JsonResponse
 
 def autocomplete_customers(request):
-    if 'term' in request.GET:
-        qs = Customer.objects.filter(name__icontains=request.GET.get('term'))
-        results = [{'id': c.id, 'name': c.name} for c in qs]
-        return JsonResponse(results, safe=False)
+    term = request.GET.get('term', '')
+    results = []
+    customers = Customer.objects.filter(owner_name__icontains=term)[:10]
+    for customer in customers:
+        results.append({
+            'id': customer.id,
+            'text': customer.owner_name
+        })
+    return JsonResponse({'results': results})
     
 @login_required
 def handle_form_submission(request):

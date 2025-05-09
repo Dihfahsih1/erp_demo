@@ -44,8 +44,14 @@
             <span class="badge bg-light text-primary">Detailed Entry</span>
         </div>
         <div class="card-body">
-            <form method="post" class="needs-validation" novalidate>
+            <form method="post" class="needs-validation" novalidate id="estimate-form">
                 {% csrf_token %}
+                
+                <!-- Debugging info -->
+                <div class="d-none">
+                    <p>Form Errors: {{ form.errors }}</p>
+                    <p>Form Data: {{ form.data }}</p>
+                </div>
                 
                 <!-- Section 1: Basic Information -->
                 <div class="mb-4 p-3 border rounded bg-light">
@@ -58,6 +64,7 @@
                                 <input type="text" 
                                        class="form-control" 
                                        name="bk_estimate_id" 
+                                       id="bk_estimate_id"
                                        value="{{ form.bk_estimate_id.value|default:'' }}"
                                        required
                                        placeholder="EST-2023-0001">
@@ -68,7 +75,7 @@
                             <label class="form-label fw-bold">Status*</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-tasks"></i></span>
-                                <select class="form-select" name="status" required>
+                                <select class="form-select" name="status" id="status" required>
                                     {% for value, label in form.fields.status.choices %}
                                         <option value="{{ value }}" {% if form.status.value == value %}selected{% endif %}>
                                             {{ label }}
@@ -89,8 +96,9 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="far fa-calendar"></i></span>
                                 <input type="date" 
-                                       class="form-control datepicker" 
+                                       class="form-control" 
                                        name="created_date" 
+                                       id="created_date"
                                        value="{{ form.created_date.value|default:'' }}"
                                        required
                                        autocomplete="off">
@@ -101,8 +109,9 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-warehouse"></i></span>
                                 <input type="date" 
-                                       class="form-control datepicker" 
+                                       class="form-control" 
                                        name="received_date" 
+                                       id="received_date"
                                        value="{{ form.received_date.value|default:'' }}"
                                        autocomplete="off">
                             </div>
@@ -114,28 +123,20 @@
                 <div class="mb-4 p-3 border rounded bg-light">
                     <h6 class="mb-3 text-primary"><i class="fas fa-users me-2"></i>People</h6>
                     <div class="row g-3">
-                        <!-- Customer with Autocomplete -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Customer*</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-user-tie"></i></span>
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="customer-search"
-                                       value="{% if form.customer_name.value %}{{ form.customer_name.value }}{% endif %}"
-                                       placeholder="Start typing customer name..."
-                                       autocomplete="off">
-                                <input type="hidden" name="customer_name" id="customer-id" value="{{ form.customer_name.value|default:'' }}">
-                            </div>
-                            <div class="list-group mt-1" id="customer-results" style="display:none; max-height:200px; overflow-y:auto;"></div>
-                        </div>
+                        <select class="form-select" name="owner_name" id="customer-select" required>
+                            {% if form.owner_name.value %}
+                                <option value="{{ form.owner_name.value }}" selected>
+                                    {{ form.owner_name.selected_label }}
+                                </option>
+                            {% endif %}
+                        </select>
                         
                         <!-- Sales Person -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Sales Person*</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-user-check"></i></span>
-                                <select class="form-select" name="sales_person" required>
+                                <select class="form-select" name="sales_person" id="sales_person" required>
                                     <option value="">Select Sales Person</option>
                                     {% for emp in sales_persons %}
                                         <option value="{{ emp.id }}" {% if form.sales_person.value == emp.id %}selected{% endif %}>
@@ -151,7 +152,7 @@
                             <label class="form-label fw-bold">Stores Receiver</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-user-shield"></i></span>
-                                <select class="form-select" name="receiver">
+                                <select class="form-select" name="receiver" id="receiver">
                                     <option value="">Select Receiver</option>
                                     {% for emp in stores_receivers %}
                                         <option value="{{ emp.id }}" {% if form.receiver.value == emp.id %}selected{% endif %}>
@@ -176,6 +177,7 @@
                                 <input type="number" 
                                        class="form-control" 
                                        name="amount" 
+                                       id="amount"
                                        step="0.01"
                                        min="0"
                                        value="{{ form.amount.value|default:'0.00' }}"
@@ -190,7 +192,7 @@
                     <a href="{% url 'list_estimates' %}" class="btn btn-outline-secondary me-md-2">
                         <i class="fas fa-times me-2"></i>Cancel
                     </a>
-                    <button type="submit" name="form_submit" class="btn btn-primary">
+                    <button type="submit" name="form_submit" class="btn btn-primary" id="submit-btn">
                         <i class="fas fa-save me-2"></i>Save Estimate
                     </button>
                 </div>
@@ -198,28 +200,81 @@
         </div>
     </div>
 </div>
-
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<select id="customer-select" style="width:100%"></select>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script>
-  $('#customer-select').select2({
-    placeholder: 'Search for a customer',
-    ajax: {
-      url: '/customers/autocomplete/',
-      dataType: 'json',
-      delay: 250,
-      processResults: function (data) {
-        return {
-          results: data.map(function(item) {
-            return { id: item.id, text: item.name };
-          })
-        };
-      }
-    }
-  });
-</script>
 
+
+<script>
+$(document).ready(function() {
+    console.log('Document ready - initializing form');
+    
+    // Initialize Select2 for customer search
+   
+    $(document).ready(function() {
+        $('#customer-select').select2({
+            placeholder: 'Search for customer...',
+            minimumInputLength: 2,
+            ajax: {
+                url: '{% url "autocomplete_customers" %}',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return {
+                        term: params.term,
+                        page: params.page
+                    };
+                },
+                processResults: function (data, params) {
+                    return {
+                        results: data.results
+                    };
+                },
+                cache: true
+            }
+        });
+    });
+    
+    
+    // Form submission handler
+    $('#estimate-form').on('submit', function(e) {
+        console.log('Form submitted');
+        console.log('Form data:', {
+            bk_estimate_id: $('#bk_estimate_id').val(),
+            status: $('#status').val(),
+            created_date: $('#created_date').val(),
+            customer_name: $('#customer-select').val(),
+            sales_person: $('#sales_person').val(),
+            receiver: $('#receiver').val(),
+            amount: $('#amount').val()
+        });
+        
+        if (!this.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Form validation failed');
+        }
+        
+        $(this).addClass('was-validated');
+    });
+    
+    // Debugging: Log all form changes
+    $('#estimate-form').on('change', 'input, select, textarea', function() {
+        console.log('Field changed:', $(this).attr('name'), '=', $(this).val());
+    });
+    
+    // Initialize date fields
+    $('.datepicker').datepicker({
+        format: 'yyyy-mm-dd',
+        autoclose: true,
+        todayHighlight: true
+    }).on('changeDate', function(e) {
+        console.log('Date selected:', $(this).attr('name'), '=', e.format());
+    });
+    
+    console.log('Form initialization complete');
+});
+</script>
 
 <style>
     .card {
@@ -229,9 +284,10 @@
     .card-header {
         border-radius: 10px 10px 0 0 !important;
     }
-    .form-control, .form-select {
-        border-radius: 5px;
-        padding: 10px;
+    .form-control, .form-select, .select2-selection {
+        border-radius: 5px !important;
+        padding: 10px !important;
+        height: auto !important;
     }
     .input-group-text {
         background-color: #f8f9fa;
@@ -239,19 +295,18 @@
     .bg-light {
         background-color: #f8fafc !important;
     }
-    #customer-results {
-        position: absolute;
-        z-index: 1000;
-        width: calc(100% - 40px);
+    .was-validated .form-control:invalid, 
+    .was-validated .form-select:invalid,
+    .was-validated .select2-selection:invalid {
+        border-color: #dc3545 !important;
     }
-    #customer-results a:hover {
-        background-color: #f8f9fa;
+    .was-validated .form-control:valid, 
+    .was-validated .form-select:valid,
+    .was-validated .select2-selection:valid {
+        border-color: #28a745 !important;
     }
-    .was-validated .form-control:invalid, .was-validated .form-select:invalid {
-        border-color: #dc3545;
-    }
-    .was-validated .form-control:valid, .was-validated .form-select:valid {
-        border-color: #28a745;
+    .select2-container {
+        width: 100% !important;
     }
 </style>
 {% endblock %}

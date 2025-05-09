@@ -5,7 +5,15 @@ from .models import Dispatch,DeliveryNote, Estimate, UserRole
 
 from .models import Customer,Employee,Department,UserRole
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
- 
+
+
+from dal import autocomplete
+
+class CustomerAuto(forms.ModelForm):
+    customer = forms.ModelChoiceField(
+        queryset=Customer.objects.all(),
+        widget=autocomplete.ModelSelect2(url='customer-autocomplete')
+    )
 
 class EmployeeRegistrationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -84,18 +92,18 @@ class DeliveryNoteForm(forms.ModelForm):
 class EstimateForm(forms.ModelForm):
     class Meta:
         model = Estimate
-        fields = ['bk_estimate_id', 'customer', 'sales_agent', 'status']
+        fields = ['bk_estimate_id', 'customer_name', 'sales_person', 'status']
         widgets = {
             'bk_estimate_id': forms.TextInput(attrs={'readonly': True}),
             'status': forms.Select(attrs={'class': 'form-select'}),
-            'customer': forms.TextInput(attrs={'class': 'form-control'}),
-            'sales_agent': forms.TextInput(attrs={'readonly': True, 'class': 'form-control'}),
+            'customer_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'sales_person': forms.TextInput(attrs={'readonly': True, 'class': 'form-control'}),
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['bk_estimate_id'].required = False
-        self.fields['sales_agent'].required = False
+        self.fields['sales_person'].required = False
 
 class EstimateUploadForm(forms.Form):
     excel_file = forms.FileField(

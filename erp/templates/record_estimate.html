@@ -1,74 +1,257 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
 <div class="container mt-4">
-    <h2>Record Estimates</h2>
+    <h2 class="mb-4"><i class="fas fa-file-invoice-dollar me-2"></i>Record Estimates</h2>
     
     <!-- Excel Upload Section -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Bulk Upload via Excel</h5>
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-file-excel me-2"></i>Bulk Upload via Excel</h5>
+            <span class="badge bg-light text-primary">Bulk Option</span>
         </div>
         <div class="card-body">
-            <form method="post" enctype="multipart/form-data">
+            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                 {% csrf_token %}
-                <div class="mb-3">
-                    <label class="form-label">Excel File</label>
-                    {{ upload_form.excel_file }}
-                    <div class="form-text">
-                        <a href="{% url 'download_estimate_template' %}" class="text-decoration-none">
-                            <i class="fas fa-download"></i> Download template
-                        </a>
+                <div class="row">
+                    <div class="col-md-8 mb-3">
+                        <label class="form-label">Excel File</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-file-upload"></i></span>
+                            {{ upload_form.excel_file }}
+                        </div>
+                        <div class="form-text">
+                            <a href="{% url 'download_estimate_template' %}" class="text-decoration-none">
+                                <i class="fas fa-download me-1"></i> Download template file
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end mb-3">
+                        <button type="submit" name="excel_upload" class="btn btn-primary w-100">
+                            <i class="fas fa-file-import me-2"></i> Upload Estimates
+                        </button>
                     </div>
                 </div>
-                <button type="submit" name="excel_upload" class="btn btn-primary">
-                    <i class="fas fa-file-import me-2"></i> Upload Estimates
-                </button>
             </form>
         </div>
     </div>
     
     <!-- Manual Form Section -->
-    <div class="card">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Single Estimate Entry</h5>
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Single Estimate Entry</h5>
+            <span class="badge bg-light text-primary">Detailed Entry</span>
         </div>
         <div class="card-body">
-            <form method="post">
+            <form method="post" class="needs-validation" novalidate>
                 {% csrf_token %}
                 
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Estimate Number</label>
-                        {{ form.bk_estimate_id }}
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Status</label>
-                        {{ form.status }}
+                <!-- Section 1: Basic Information -->
+                <div class="mb-4 p-3 border rounded bg-light">
+                    <h6 class="mb-3 text-primary"><i class="fas fa-info-circle me-2"></i>Basic Information</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Estimate Number*</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-hashtag"></i></span>
+                                <input type="text" 
+                                       class="form-control" 
+                                       name="bk_estimate_id" 
+                                       value="{{ form.bk_estimate_id.value|default:'' }}"
+                                       required
+                                       placeholder="EST-2023-0001">
+                            </div>
+                            <small class="form-text text-muted">Unique reference ID from bookkeeping system</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Status*</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-tasks"></i></span>
+                                <select class="form-select" name="status" required>
+                                    {% for value, label in form.fields.status.choices %}
+                                        <option value="{{ value }}" {% if form.status.value == value %}selected{% endif %}>
+                                            {{ label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Customer</label>
-                        {{ form.customer }}
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">CRM Officer</label>
-                        {{ form.sales_agent }}
+                <!-- Section 2: Dates -->
+                <div class="mb-4 p-3 border rounded bg-light">
+                    <h6 class="mb-3 text-primary"><i class="far fa-calendar-alt me-2"></i>Dates</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Estimate Date*</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="far fa-calendar"></i></span>
+                                <input type="date" 
+                                       class="form-control datepicker" 
+                                       name="created_date" 
+                                       value="{{ form.created_date.value|default:'' }}"
+                                       required
+                                       autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Received in Stores</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-warehouse"></i></span>
+                                <input type="date" 
+                                       class="form-control datepicker" 
+                                       name="received_date" 
+                                       value="{{ form.received_date.value|default:'' }}"
+                                       autocomplete="off">
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="d-grid gap-2">
+                <!-- Section 3: People -->
+                <div class="mb-4 p-3 border rounded bg-light">
+                    <h6 class="mb-3 text-primary"><i class="fas fa-users me-2"></i>People</h6>
+                    <div class="row g-3">
+                        <!-- Customer with Autocomplete -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Customer*</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user-tie"></i></span>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="customer-search"
+                                       value="{% if form.customer_name.value %}{{ form.customer_name.value }}{% endif %}"
+                                       placeholder="Start typing customer name..."
+                                       autocomplete="off">
+                                <input type="hidden" name="customer_name" id="customer-id" value="{{ form.customer_name.value|default:'' }}">
+                            </div>
+                            <div class="list-group mt-1" id="customer-results" style="display:none; max-height:200px; overflow-y:auto;"></div>
+                        </div>
+                        
+                        <!-- Sales Person -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Sales Person*</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user-check"></i></span>
+                                <select class="form-select" name="sales_person" required>
+                                    <option value="">Select Sales Person</option>
+                                    {% for emp in sales_persons %}
+                                        <option value="{{ emp.id }}" {% if form.sales_person.value == emp.id %}selected{% endif %}>
+                                            {{ emp.first_name }} {{ emp.last_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Stores Receiver -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Stores Receiver</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user-shield"></i></span>
+                                <select class="form-select" name="receiver">
+                                    <option value="">Select Receiver</option>
+                                    {% for emp in stores_receivers %}
+                                        <option value="{{ emp.id }}" {% if form.receiver.value == emp.id %}selected{% endif %}>
+                                            {{ emp.first_name }} {{ emp.last_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <small class="form-text text-muted">Only stores department employees appear here</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Section 4: Financial -->
+                <div class="mb-4 p-3 border rounded bg-light">
+                    <h6 class="mb-3 text-primary"><i class="fas fa-money-bill-wave me-2"></i>Financial Details</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Amount*</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                                <input type="number" 
+                                       class="form-control" 
+                                       name="amount" 
+                                       step="0.01"
+                                       min="0"
+                                       value="{{ form.amount.value|default:'0.00' }}"
+                                       required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a href="{% url 'list_estimates' %}" class="btn btn-outline-secondary me-md-2">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
                     <button type="submit" name="form_submit" class="btn btn-primary">
                         <i class="fas fa-save me-2"></i>Save Estimate
                     </button>
-                    <a href="{% url 'list_estimates' %}" class="btn btn-outline-secondary">
-                        Cancel
-                    </a>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<select id="customer-select" style="width:100%"></select>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+  $('#customer-select').select2({
+    placeholder: 'Search for a customer',
+    ajax: {
+      url: '/customers/autocomplete/',
+      dataType: 'json',
+      delay: 250,
+      processResults: function (data) {
+        return {
+          results: data.map(function(item) {
+            return { id: item.id, text: item.name };
+          })
+        };
+      }
+    }
+  });
+</script>
+
+
+<style>
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+    .form-control, .form-select {
+        border-radius: 5px;
+        padding: 10px;
+    }
+    .input-group-text {
+        background-color: #f8f9fa;
+    }
+    .bg-light {
+        background-color: #f8fafc !important;
+    }
+    #customer-results {
+        position: absolute;
+        z-index: 1000;
+        width: calc(100% - 40px);
+    }
+    #customer-results a:hover {
+        background-color: #f8f9fa;
+    }
+    .was-validated .form-control:invalid, .was-validated .form-select:invalid {
+        border-color: #dc3545;
+    }
+    .was-validated .form-control:valid, .was-validated .form-select:valid {
+        border-color: #28a745;
+    }
+</style>
 {% endblock %}

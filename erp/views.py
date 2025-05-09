@@ -221,6 +221,7 @@ def dispatch_list_view(request):
 
 @login_required
 def record_estimate(request):
+    sales_persons = Employee.objects.filter(role__name='Sales Officer')
     if request.method == 'POST':
         # Check which form was submitted
         if 'excel_file' in request.FILES:
@@ -232,14 +233,21 @@ def record_estimate(request):
     form = EstimateForm(initial={
         'status': Estimate.Status.DRAFT,
         'bk_estimate_id': generate_estimate_id(request),
-        'sales_agent': request.user.get_full_name() or request.user.username
     })
     upload_form = EstimateUploadForm()
     
     return render(request, 'record_estimate.html', {
-        'form': form,
+        'form': form, 'sales_persons': sales_persons,
         'upload_form': upload_form
     })
+
+from django.http import JsonResponse
+
+def autocomplete_customers(request):
+    if 'term' in request.GET:
+        qs = Customer.objects.filter(name__icontains=request.GET.get('term'))
+        results = [{'id': c.id, 'name': c.name} for c in qs]
+        return JsonResponse(results, safe=False)
     
 @login_required
 def handle_form_submission(request):
@@ -279,7 +287,7 @@ def handle_excel_upload(request):
                 Estimate.objects.create(
                     bk_estimate_id=row['bk_estimate_id'],
                     customer=row['customer'],
-                    sales_agent=row.get('sales_agent', request.user.get_full_name() or request.user.username),
+                    sales_person=row.get('sales_person', request.user.get_full_name() or request.user.username),
                     status=row.get('status', Estimate.Status.DRAFT),
                     created_at=row.get('created_at', datetime.now())
                 )
@@ -328,7 +336,7 @@ def list_estimates(request):
     
     # Restrict view based on permissions
     if not request.user.has_perm('estimates.view_all_estimates'):
-        estimates = estimates.filter(sales_agent=request.user.get_full_name() or request.user.username)
+        estimates = estimates.filter(sales_person=request.user.get_full_name() or request.user.username)
     
     # Pagination
     paginator = Paginator(estimates, 25)
@@ -354,7 +362,7 @@ def download_estimate_template(request):
     data = {
         'bk_estimate_id': ['EST-2023-0001', 'EST-2023-0002'],
         'customer': ['Customer A', 'Customer B'],
-        'sales_agent': ['Agent 1', 'Agent 2'],
+        'sales_person': ['Agent 1', 'Agent 2'],
         'status': ['draft', 'submitted'],
         'created_at': [datetime.now(), datetime.now()]
     }

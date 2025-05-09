@@ -36,8 +36,7 @@ class EmployeeAdmin(UserAdmin):
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         ('Personal Info', {'fields': ('first_name', 'last_name', 'email', 'phone')}),
-        ('Permissions', {'fields': ('role', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
-        ('Important dates', {'fields': ('last_login', 'date_joined')}),
+        ('Permissions', {'fields': ('role', 'is_active', 'is_staff', 'is_superuser')}),
         ('Department', {'fields': ('department',)}),
         ('Region', {'fields': ('region_of_operation',)}),
     )
@@ -51,7 +50,7 @@ class EmployeeAdmin(UserAdmin):
 
     def save_model(self, request, obj, form, change):
         if 'password' in form.changed_data:
-            obj.set_password(obj.password)  # Still keep this as a safeguard
+            obj.set_password(obj.password)  # Hash the password
         super().save_model(request, obj, form, change)
 
 @admin.register(Customer)
@@ -80,9 +79,9 @@ class EstimateItemInline(admin.TabularInline):
 
 @admin.register(Estimate)
 class EstimateAdmin(admin.ModelAdmin):
-    list_display = ('bk_estimate_id', 'customer', 'sales_agent', 'status', 'created_at', 'total_value')
+    list_display = ('bk_estimate_id', 'customer_name', 'sales_person', 'status', 'receiver', 'amount')
     list_filter = ('status', 'created_at')
-    search_fields = ('bk_estimate_id', 'customer__name')
+    search_fields = ('bk_estimate_id', 'customer_name__name')
     inlines = [EstimateItemInline]
     date_hierarchy = 'created_at'
     readonly_fields = ('created_at', 'updated_at')

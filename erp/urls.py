@@ -40,6 +40,7 @@ urlpatterns = [
      path('delivery-notes/<int:note_id>/', views.delivery_note_details, name='delivery_note_details'),
      
      path('update-note-status/', views.update_note_status, name='update_note_status'),
+     path('customers/autocomplete/', views.autocomplete_customers, name='autocomplete_customers'),
 
     
 ]

@@ -105,7 +105,7 @@ class Employee(AbstractUser):
         related_name='employees',
         blank=True,
         null=True,
-        default="Office"
+        default=None
     )
 
     class Meta:
@@ -188,6 +188,11 @@ class Estimate(models.Model):
         VERIFIED = 'verified', _('Verified')
         DISPATCHED = 'dispatched', _('Dispatched')
         DELIVERED = 'delivered', _('Delivered (Signed)')
+    created_date = models.DateField(
+        null=True,  
+        blank=True,
+        verbose_name='Date When Estimate was Created'
+    )
     
     bk_estimate_id = models.CharField(
         max_length=20,
@@ -195,11 +200,42 @@ class Estimate(models.Model):
         verbose_name=_("BK Estimate ID"),
         help_text=_("Reference ID from Bookkeeping System")
     )
-    customer = models.CharField(
-        max_length=20, null=True
+     
+    customer_name = models.ForeignKey(
+        Customer,
+        null=True,   
+        blank=True,
+        on_delete=models.PROTECT,
+        verbose_name=_("Customer"),
+        related_name='estimates'
     )
-    sales_agent = models.CharField(
-        max_length=20, null=True
+    sales_person = models.ForeignKey(
+        Employee,
+        null=True,   
+        blank=True,
+        on_delete=models.PROTECT,
+        limit_choices_to={'role__name': 'sales_person'},
+        related_name='estimates_as_sales_person'
+    )
+    receiver = models.ForeignKey(
+        Employee,
+        null=True,   
+        blank=True,
+        on_delete=models.PROTECT,
+        limit_choices_to={'department__name': 'Stores'},  
+        related_name='estimates_received',
+        verbose_name='Stores Department Receiver'
+    )
+    # received_date = models.DateField(
+    #     null=True,   
+    #     blank=True,
+    #     verbose_name='Date Received in Stores'
+    # )
+    
+    amount = models.DecimalField(
+        max_digits=10,  
+        decimal_places=2,   
+        default=0.00,  
     )
     status = models.CharField(
         max_length=20,

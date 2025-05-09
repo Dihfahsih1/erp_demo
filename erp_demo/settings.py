@@ -10,6 +10,8 @@ ALLOWED_HOSTS = []
 
 
 INSTALLED_APPS = [ 
+    'dal',
+    'dal_select2',            
     'erp',
     'jazzmin',
     'django.contrib.admin',

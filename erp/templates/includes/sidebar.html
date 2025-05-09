@@ -96,7 +96,7 @@
         {% endif %}
        
         
-        {% if request.user.role and request.user.role.name == 'Delivery Officer' or "Dispatch Officer"%} 
+        {% if request.user.role and request.user.role.name == 'Delivery Officer' or request.user.role.name == 'Dispatch Officer' %}
         <li class="nav-header">TRANSPORTATION</li>
         <li class="nav-item">
           <a href="{% url 'mark_dispatch_delivered' %}" class="nav-link">
@@ -114,7 +114,9 @@
             </p>
           </a>
         </li>
+        {% endif %}
 
+        {% if request.user.role and request.user.role.name == 'Dispatch Officer' or request.user.role.name == 'Delivery Officer' %}
           <li class="nav-header">DISPATCH VERIFICATION</li>
           <li class="nav-item">
             <a href="#" class="nav-link">

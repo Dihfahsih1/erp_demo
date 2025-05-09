@@ -38,6 +38,8 @@ urlpatterns = [
      path('my-deliveries/', views.delivery_note_list_by_sales_person, name='delivery_note_list_by_sales_person'),
      path('upload-note/<int:note_id>/', views.upload_signed_note, name='upload_signed_note'),
      path('delivery-notes/<int:note_id>/', views.delivery_note_details, name='delivery_note_details'),
+     
+     path('update-note-status/', views.update_note_status, name='update_note_status'),
 
     
 ]

@@ -240,6 +240,7 @@ def record_estimate(request):
         'form': form,
         'upload_form': upload_form
     })
+    
 @login_required
 def handle_form_submission(request):
     form = EstimateForm(request.POST)
@@ -622,8 +623,15 @@ def confirm_delivery_note(request, pk):
     if request.method == 'POST':
         form = OfficerReviewForm(request.POST, instance=note)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Delivery note status updated.")
+            note = form.save(commit=False)
+            status = form.cleaned_data.get('status')
+            if status == 'received':
+                note.status = 'received'
+                messages.success(request, "Delivery note marked as received.")
+            elif status == 'rejected':
+                note.status = 'rejected'
+                messages.warning(request, "Delivery note marked as rejected.")
+            note.save()
             return redirect('delivery_note_list')
     else:
         form = OfficerReviewForm(instance=note)
@@ -644,4 +652,26 @@ def delivery_note_list_by_sales_person(request):
     return render(request, 'delivery_notes/sales_person_list.html', {
         'delivery_notes': delivery_notes
     })
+    
+    
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+from .models import DeliveryNote
+
+@require_POST
+@csrf_exempt  # Only use this if you're having CSRF issues - better to properly handle CSRF
+def update_note_status(request):
+    note_id = request.POST.get('note_id')
+    status = request.POST.get('status')
+    
+    try:
+        note = DeliveryNote.objects.get(id=note_id)
+        note.status = status
+        note.save()
+        return JsonResponse({'success': True})
+    except DeliveryNote.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Delivery note not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
 

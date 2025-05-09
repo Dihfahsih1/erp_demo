@@ -108,7 +108,7 @@ class DispatchAdmin(admin.ModelAdmin):
     list_display = ('customer_name', 'invoice_no') 
 @admin.register(DeliveryNote)
 class DeliveryNoteAdmin(admin.ModelAdmin):
-    list_display = ('estimate_number', 'customer_name_address')  
+    list_display = ('delivery_note_number', 'customer_name','status','sales_person',)  
 
     # def mark_as_verified(self, request, queryset):
     #     queryset.update(is_verified=True)

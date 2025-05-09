@@ -359,7 +359,7 @@ class DeliveryNote(models.Model):
     updated_at = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
-        return f"Delivery {self.delivery_no} - {self.receiver_name}"
+        return f"Delivery {self.delivery_note_number} - {self.receiver_name}"
 
     def days_outstanding(self):
         """Returns the number of days outstanding only if status is pending."""

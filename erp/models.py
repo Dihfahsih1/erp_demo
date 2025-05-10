@@ -13,6 +13,11 @@ from datetime import date
 # ----------------------------
 # 1. Core Entities
 # ----------------------------
+
+class SalesOfficerManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(role__name='Sales Officer')
+    
 class Department(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name=_("Department Name"))
     description = models.TextField(blank=True, verbose_name=_("Description"))
@@ -108,9 +113,20 @@ class Employee(AbstractUser):
         default=None
     )
 
+
+        
     class Meta:
-        verbose_name = _("Employee")
-        verbose_name_plural = _("Employees")
+        permissions = [
+            ('can_delete_employee', 'Can delete employee records'),
+        ]
+
+    def delete(self, *args, **kwargs):
+        if self.estimate_set.exists():  # Checks if employee has estimates
+            raise models.ProtectedError(
+                "Cannot delete employee with existing estimates",
+                self
+            )
+        super().delete(*args, **kwargs)
 
 class Customer(models.Model):
     name_of_business = models.CharField(max_length=200, blank=True, null=True)
@@ -214,7 +230,7 @@ class Estimate(models.Model):
         null=True,   
         blank=True,
         on_delete=models.PROTECT,
-        limit_choices_to={'role__name': 'sales_person'},
+        limit_choices_to={'role__name': 'Sales Officer'},
         related_name='estimates_as_sales_person'
     )
     receiver = models.ForeignKey(

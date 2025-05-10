@@ -5,37 +5,6 @@
 <div class="container mt-4">
     <h2 class="mb-4"><i class="fas fa-file-invoice-dollar me-2"></i>Record Estimates</h2>
     
-    <!-- Excel Upload Section -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="fas fa-file-excel me-2"></i>Bulk Upload via Excel</h5>
-            <span class="badge bg-light text-primary">Bulk Option</span>
-        </div>
-        <div class="card-body">
-            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
-                {% csrf_token %}
-                <div class="row">
-                    <div class="col-md-8 mb-3">
-                        <label class="form-label">Excel File</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-file-upload"></i></span>
-                            {{ upload_form.excel_file }}
-                        </div>
-                        <div class="form-text">
-                            <a href="{% url 'download_estimate_template' %}" class="text-decoration-none">
-                                <i class="fas fa-download me-1"></i> Download template file
-                            </a>
-                        </div>
-                    </div>
-                    <div class="col-md-4 d-flex align-items-end mb-3">
-                        <button type="submit" name="excel_upload" class="btn btn-primary w-100">
-                            <i class="fas fa-file-import me-2"></i> Upload Estimates
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
     
     <!-- Manual Form Section -->
     <div class="card shadow-lg">
@@ -104,8 +73,8 @@
                                        autocomplete="off">
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Received in Stores</label>
+                        <div class="col-md-6" style="display: none;">
+                            <label class="form-label fw-bold" for="received_date">Received in Stores</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-warehouse"></i></span>
                                 <input type="date" 
@@ -123,6 +92,7 @@
                 <div class="mb-4 p-3 border rounded bg-light">
                     <h6 class="mb-3 text-primary"><i class="fas fa-users me-2"></i>People</h6>
                     <div class="row g-3">
+                        <label class="form-label fw-bold">Customer*</label>
                         <select class="form-select" name="owner_name" id="customer-select" required>
                             {% if form.owner_name.value %}
                                 <option value="{{ form.owner_name.value }}" selected>
@@ -136,32 +106,23 @@
                             <label class="form-label fw-bold">Sales Person*</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-user-check"></i></span>
-                                <select class="form-select" name="sales_person" id="sales_person" required>
-                                    <option value="">Select Sales Person</option>
-                                    {% for emp in sales_persons %}
-                                        <option value="{{ emp.id }}" {% if form.sales_person.value == emp.id %}selected{% endif %}>
-                                            {{ emp.first_name }} {{ emp.last_name }}
+                                <select class="form-select {% if form.sales_person.errors %}is-invalid{% endif %}"
+                                        name="sales_person" id="sales_person" required>
+                                    {% for option in form.sales_person.field.queryset %}
+                                        <option value="{{ option.id }}"
+                                                {% if form.sales_person.value|stringformat:"s" == option.id|stringformat:"s" %}selected{% endif %}>
+                                            {{ option.first_name }} {{ option.last_name }}
                                         </option>
                                     {% endfor %}
                                 </select>
                             </div>
-                        </div>
-                        
-                        <!-- Stores Receiver -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Stores Receiver</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-user-shield"></i></span>
-                                <select class="form-select" name="receiver" id="receiver">
-                                    <option value="">Select Receiver</option>
-                                    {% for emp in stores_receivers %}
-                                        <option value="{{ emp.id }}" {% if form.receiver.value == emp.id %}selected{% endif %}>
-                                            {{ emp.first_name }} {{ emp.last_name }}
-                                        </option>
+                            {% if form.sales_person.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.sales_person.errors %}
+                                        {{ error }}
                                     {% endfor %}
-                                </select>
-                            </div>
-                            <small class="form-text text-muted">Only stores department employees appear here</small>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -204,7 +165,9 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-
+<script>
+    document.getElementById("myDiv").classList.add("d-none");
+</script>
 <script>
 $(document).ready(function() {
     console.log('Document ready - initializing form');
@@ -236,43 +199,7 @@ $(document).ready(function() {
     });
     
     
-    // Form submission handler
-    $('#estimate-form').on('submit', function(e) {
-        console.log('Form submitted');
-        console.log('Form data:', {
-            bk_estimate_id: $('#bk_estimate_id').val(),
-            status: $('#status').val(),
-            created_date: $('#created_date').val(),
-            customer_name: $('#customer-select').val(),
-            sales_person: $('#sales_person').val(),
-            receiver: $('#receiver').val(),
-            amount: $('#amount').val()
-        });
-        
-        if (!this.checkValidity()) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Form validation failed');
-        }
-        
-        $(this).addClass('was-validated');
-    });
-    
-    // Debugging: Log all form changes
-    $('#estimate-form').on('change', 'input, select, textarea', function() {
-        console.log('Field changed:', $(this).attr('name'), '=', $(this).val());
-    });
-    
-    // Initialize date fields
-    $('.datepicker').datepicker({
-        format: 'yyyy-mm-dd',
-        autoclose: true,
-        todayHighlight: true
-    }).on('changeDate', function(e) {
-        console.log('Date selected:', $(this).attr('name'), '=', e.format());
-    });
-    
-    console.log('Form initialization complete');
+
 });
 </script>
 

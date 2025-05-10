@@ -1,26 +1,31 @@
-from django.shortcuts import render
-from django.shortcuts import get_object_or_404, render, redirect
-from django.http import JsonResponse, HttpResponseBadRequest
+from venv import logger
+from django.forms import ValidationError
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
 from django.contrib import messages
 from django.utils.translation import gettext as _
-from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from erp.forms import DispatchForm,DeliveryNoteForm, EstimateForm
+from django.contrib.auth import login, authenticate
+from django.core.paginator import Paginator
+from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.csrf import csrf_exempt
+from django.urls import reverse
+from erp.forms import DispatchForm, DeliveryNoteForm, EstimateForm, DeliveryNoteUploadForm, DispatchVerificationForm, EstimateUploadForm, OfficerReviewForm, SalesAgentNoteForm, CustomerForm, EmployeeLoginForm, EmployeeRegistrationForm
 from .models import Customer, DeliveryNote, Dispatch, Employee, Estimate, UserRole
 import json
-from django.db.models import Q
-from django.core.paginator import Paginator
-from django.views.decorators.http import require_http_methods
 import pandas as pd
 from io import BytesIO
 from datetime import datetime
-from .models import Estimate
-from .forms import DeliveryNoteUploadForm, DispatchVerificationForm, EstimateForm, EstimateUploadForm, OfficerReviewForm, SalesAgentNoteForm
-from django.shortcuts import render, get_object_or_404, redirect
-from .forms import CustomerForm, EmployeeLoginForm,EmployeeRegistrationForm
-from django.contrib.auth import login, authenticate
-from django.core.paginator import Paginator
+from django.utils.timezone import now
+from django.shortcuts import render, redirect
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.db import transaction
+import pandas as pd
+from datetime import datetime
+
+
 
 
 def register_employee(request):
@@ -30,7 +35,7 @@ def register_employee(request):
             user = form.save()
             login(request, user)
             messages.success(request, 'Registration successful!')
-            return redirect('dashboard')  # Replace with your desired redirect
+            return redirect('dashboard')  
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
@@ -48,7 +53,7 @@ def login_employee(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, f'Welcome back, {username}!')
-                return redirect('dashboard')  # Replace with your desired redirect
+                return redirect('dashboard')  
         else:
             messages.error(request, 'Invalid username or password.')
     else:
@@ -58,7 +63,7 @@ def login_employee(request):
 @login_required
 def customer_list(request):
     customers = Customer.objects.all().order_by('-date_filled')
-    paginator = Paginator(customers, 10)  # Show 10 customers per page
+    paginator = Paginator(customers, 10)  
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return render(request, 'customer_list.html', {'page_obj': page_obj})
@@ -131,9 +136,6 @@ def mark_delivered(request, dispatch_id):
     
 @login_required
 def dashboard(request):
-    user=request.user.role 
-    
-    print(user)
     context = {
         'page_title': 'Dashboard',
         'active_page': 'dashboard',
@@ -156,18 +158,18 @@ def dispatch_view(request):
         return render(request, 'dispatch_form.html', {'form': form})
         
     elif request.method == 'POST':
-        # Save form data
+         
         form = DispatchForm(request.POST)
         if form.is_valid():
             dispatch = form.save()
             messages.success(request, _("Dispatch saved successfully!"))
-            return redirect('mark_dispatch_delivered')  # Redirect to same page to clear form
+            return redirect('mark_dispatch_delivered')   
         else:
-            # Show form with errors
+             
             return render(request, 'dispatch_form.html', {'form': form})
     
     elif request.method == 'PATCH' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        # AJAX endpoint for marking as delivered
+        
         try:
             data = json.loads(request.body)
             dispatch_id = data.get('dispatch_id')
@@ -222,96 +224,109 @@ def dispatch_list_view(request):
 @login_required
 def record_estimate(request):
     sales_persons = Employee.objects.filter(role__name='Sales Officer')
+    print(sales_persons)
     if request.method == 'POST':
-        # Check which form was submitted
-        if 'excel_file' in request.FILES:
-            return handle_excel_upload(request)
-        else:
-            return handle_form_submission(request)
+        form = EstimateForm(request.POST)
+        print(form.errors)
+        if form.is_valid():
+            try:
+                estimate = form.save(commit=False)
+                estimate.created_by = request.user
+                
+                # Ensure sales person is properly assigned
+                if hasattr(form, 'cleaned_data') and 'sales_person' in form.cleaned_data:
+                    estimate.sales_person = form.cleaned_data['sales_person']
+                
+                estimate.save()
+                messages.success(request, "Estimate created successfully!")
+                return redirect('list_estimates')
+                
+            except Exception as e:
+                messages.error(request, f"Error saving estimate: {str(e)}")
+    else:
+        form = EstimateForm(initial={
+            'status': Estimate.Status.DRAFT,
+            'bk_estimate_id': generate_estimate_id(request),
+            
+        })
     
-    # GET request - show both forms
-    form = EstimateForm(initial={
-        'status': Estimate.Status.DRAFT,
-        'bk_estimate_id': generate_estimate_id(request),
-    })
-    upload_form = EstimateUploadForm()
-    
-    return render(request, 'record_estimate.html', {
-        'form': form, 'sales_persons': sales_persons,
-        'upload_form': upload_form
-    })
-
-from django.http import JsonResponse
+    return render(request, 'record_estimate.html', {'form': form,'sales_person': sales_persons})
 
 def autocomplete_customers(request):
     term = request.GET.get('term', '')
-    results = []
-    customers = Customer.objects.filter(owner_name__icontains=term)[:10]
-    for customer in customers:
-        results.append({
-            'id': customer.id,
-            'text': customer.owner_name
-        })
-    return JsonResponse({'results': results})
+    customers = Customer.objects.filter(
+        owner_name__icontains=term
+    ).values('id', 'owner_name')[:10]
     
-@login_required
-def handle_form_submission(request):
-    form = EstimateForm(request.POST)
-    if form.is_valid():
-        estimate = form.save()
-        messages.success(request, f'Estimate #{estimate.bk_estimate_id} recorded successfully!')
-        return redirect('list_estimates')
-    else:
-        upload_form = EstimateUploadForm()
-        return render(request, 'record_estimate.html', {
-            'form': form,
-            'upload_form': upload_form
-        })
+    return JsonResponse({
+        'results': [
+            {'id': cust['id'], 'text': cust['owner_name']} 
+            for cust in customers
+        ]
+    })
 
 @login_required
 def handle_excel_upload(request):
     upload_form = EstimateUploadForm(request.POST, request.FILES)
+    
     if not upload_form.is_valid():
-        form = EstimateForm()
-        return render(request, 'record_estimate.html', {
-            'form': form,
-            'upload_form': upload_form
-        })
+        for error in upload_form.errors.values():
+            messages.error(request, error)
+        return redirect('record_estimate')
     
     try:
         excel_file = request.FILES['excel_file']
-        df = pd.read_excel(excel_file)
         
-        required_columns = ['bk_estimate_id', 'customer', 'status']
-        if not all(col in df.columns for col in required_columns):
-            raise ValueError("Missing required columns in Excel file")
+        # Validate file extension
+        if not excel_file.name.endswith(('.xlsx', '.xls')):
+            raise ValueError("Only .xlsx or .xls files are allowed")
         
-        success_count = 0
-        for _, row in df.iterrows():
-            try:
-                Estimate.objects.create(
-                    bk_estimate_id=row['bk_estimate_id'],
-                    customer=row['customer'],
-                    sales_person=row.get('sales_person', request.user.get_full_name() or request.user.username),
-                    status=row.get('status', Estimate.Status.DRAFT),
-                    created_at=row.get('created_at', datetime.now())
-                )
-                success_count += 1
-            except Exception as e:
-                messages.warning(request, f"Error processing row {_ + 2}: {str(e)}")
-        
-        messages.success(request, f"Successfully imported {success_count} estimates!")
-        return redirect('list_estimates')
+        with transaction.atomic():
+            df = pd.read_excel(excel_file)
+            required_columns = ['bk_estimate_id', 'customer', 'status']
+            
+            # Validate required columns
+            if not all(col in df.columns for col in required_columns):
+                missing = set(required_columns) - set(df.columns)
+                raise ValueError(f"Missing required columns: {', '.join(missing)}")
+            
+            success_count = 0
+            for index, row in df.iterrows():
+                try:
+                    # Get or create customer
+                    customer, _ = Customer.objects.get_or_create(
+                        owner_name=row['customer'].strip()
+                    )
+                    
+                    # Create estimate
+                    Estimate.objects.create(
+                        bk_estimate_id=row['bk_estimate_id'].strip(),
+                        owner_name=customer,
+                        sales_person=row.get('sales_person') or request.user.get_full_name() or request.user.username,
+                        status=row.get('status', Estimate.Status.DRAFT),
+                        created_date=row.get('created_date', datetime.now()),
+                        created_by=request.user
+                    )
+                    success_count += 1
+                    
+                except Exception as e:
+                    messages.warning(
+                        request, 
+                        f"Row {index + 2}: {str(e)}"
+                    )
+                    continue
+            
+            messages.success(
+                request, 
+                f"Successfully imported {success_count} estimates!"
+            )
+            return redirect('list_estimates')
     
     except Exception as e:
         messages.error(request, f"Error processing Excel file: {str(e)}")
-        form = EstimateForm()
-        upload_form = EstimateUploadForm()
-        return render(request, 'record_estimate.html', {
-            'form': form,
-            'upload_form': upload_form
-        })
-
+        
+        return redirect('record_estimate')
+    
 @login_required
 def generate_estimate_id(request):
     """Generate a new estimate ID in EST-YYYY-NNNN format"""
@@ -355,10 +370,6 @@ def list_estimates(request):
     }
     return render(request, 'list_estimates.html', context)
 
-
-from django.http import HttpResponse
-import pandas as pd
-from io import BytesIO
 
 
 @login_required
@@ -542,9 +553,7 @@ def verify_dispatch(request, dispatch_id):
 #     return render(request, 'upload_delivery_note.html', {'form': form})
 
 
-from django.views.decorators.http import require_POST
-from django.http import JsonResponse
-from django.urls import reverse
+
 
 @require_POST
 def confirm_delivery(request, pk):
@@ -552,10 +561,7 @@ def confirm_delivery(request, pk):
     note.status = 'confirmed'
     note.save()
     return JsonResponse({'success': True})
-    
-from django.http import JsonResponse
-from django.urls import reverse
-import json
+
 
 sales_exec_role = UserRole.objects.filter(name='Sales Executive').first()
 @login_required
@@ -583,11 +589,6 @@ def create_delivery_note(request):
 
     return render(request, 'delivery_notes/create_delivery_details.html', {'form': form})
 
-
-
-from django.utils.timezone import now
-
-from django.http import JsonResponse
 
 @login_required
 def upload_signed_note(request, note_id):
@@ -667,10 +668,6 @@ def delivery_note_list_by_sales_person(request):
     })
     
     
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
-from .models import DeliveryNote
 
 @require_POST
 @csrf_exempt  # Only use this if you're having CSRF issues - better to properly handle CSRF

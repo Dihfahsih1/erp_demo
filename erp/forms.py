@@ -86,25 +86,18 @@ class DeliveryNoteForm(forms.ModelForm):
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['sales_person'].queryset = Employee.objects.filter(role__name='Sales Executive')
+        self.fields['sales_person'].queryset = Employee.objects.filter(role__name='Sales Officer')
         
-
 class EstimateForm(forms.ModelForm):
     class Meta:
         model = Estimate
-        fields = ['bk_estimate_id', 'customer_name', 'sales_person', 'status']
-        widgets = {
-            'bk_estimate_id': forms.TextInput(attrs={'readonly': True}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
-            'customer_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'sales_person': forms.TextInput(attrs={'readonly': True, 'class': 'form-control'}),
-        }
-    
+        fields = '__all__'
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['bk_estimate_id'].required = False
-        self.fields['sales_person'].required = False
-
+        self.fields['sales_person'].queryset = Employee.objects.filter(
+            role__name='Sales Officer' 
+        )
 class EstimateUploadForm(forms.Form):
     excel_file = forms.FileField(
         label='Excel File',

@@ -242,7 +242,7 @@ def record_estimate(request):
                 messages.error(request, f"Error saving estimate: {str(e)}")
     else:
         form = EstimateForm(initial={
-            'status': Estimate.Status.DRAFT,
+            'status': Estimate.Status.SUBMITTED,
             'bk_estimate_id': generate_estimate_id(request),
             
         })
@@ -261,6 +261,11 @@ def autocomplete_customers(request):
             for cust in customers
         ]
     })
+
+
+def estimate_detail(request, pk):
+    estimate = get_object_or_404(Estimate, pk=pk)
+    return render(request, 'estimates/detail.html', {'estimate': estimate})
 
 @login_required
 def handle_excel_upload(request):
@@ -375,6 +380,35 @@ def estimate_search(request):
     else:
         return render(request, 'your_main_template.html', {'page_obj': page_obj})
 
+
+@login_required
+def estimate_action(request, pk):
+    estimate = get_object_or_404(Estimate, pk=pk)
+    action = request.POST.get("action")
+
+    # Only credit officers can perform these actions
+    if request.user.role.name != "Credit Officer":
+        messages.error(request, "You are not authorized to perform this action.")
+        return redirect(estimate.get_absolute_url())
+
+    if action == "verify":
+        estimate.status = Estimate.Status.VERIFIED
+        messages.success(request, "Estimate verified successfully.")
+    elif action == "on-hold":
+        estimate.status = Estimate.Status.ON_HOLD
+        messages.warning(request, "Estimate put on hold.")
+    elif action == "reject":
+        estimate.status = Estimate.Status.REJECTED
+        messages.error(request, "Estimate rejected.")
+    elif action == "cancel":
+        estimate.status = Estimate.Status.CANCELLED
+        messages.error(request, "Estimate cancelled.")
+    else:
+        messages.error(request, "Invalid action.")
+
+    estimate.save()
+    return redirect(request.META.get("HTTP_REFERER", estimate.get_absolute_url()))
+ 
 @login_required
 def download_estimate_template(request):
     # Create a sample DataFrame

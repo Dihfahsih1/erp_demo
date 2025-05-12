@@ -1,0 +1,50 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-header bg-primary text-white rounded-top-4">
+            <h3 class="mb-0">
+                <i class="bi bi-receipt"></i> Estimate #{{ estimate.bk_estimate_id }}
+            </h3>
+        </div>
+        <div class="card-body p-4">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <h5><i class="bi bi-person-fill"></i> Customer</h5>
+                    <p class="text-muted">{{ estimate.customer_name }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="bi bi-person-badge-fill"></i> Sales Officer</h5>
+                    <p class="text-muted">{{ estimate.sales_person }}</p>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <h5><i class="bi bi-calendar-event-fill"></i> Created On</h5>
+                    <p class="text-muted">{{ estimate.created_at|date:"F d, Y" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="bi bi-currency-dollar"></i> Amount</h5>
+                    <p class="text-muted fw-bold">UGX {{ estimate.amount|floatformat:2 }}</p>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h5><i class="bi bi-info-circle-fill"></i> Status</h5>
+                <span class="badge bg-{{ estimate.get_status_badge_color }} px-3 py-2">
+                    {{ estimate.get_status_display }}
+                </span>
+            </div>
+
+            <div>
+                <a href="{% url 'estimate-list' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-left-circle"></i> Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

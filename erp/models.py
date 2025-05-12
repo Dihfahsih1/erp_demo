@@ -200,10 +200,13 @@ class SparePart(models.Model):
 class Estimate(models.Model):
     class Status(models.TextChoices):
         DRAFT = 'draft', _('Draft (Sales)')
-        SUBMITTED = 'submitted', _('Submitted to CRM')
+        SUBMITTED = 'submitted', _('Submitted')
         VERIFIED = 'verified', _('Verified')
         DISPATCHED = 'dispatched', _('Dispatched')
         DELIVERED = 'delivered', _('Delivered (Signed)')
+        ON_HOLD = 'on-hold', _('On Hold') 
+        REJECTED = 'rejected', _('Rejected')
+        CANCELLED = 'cancelled', _('Cancelled')
     created_date = models.DateField(
         null=True,  
         blank=True,
@@ -292,10 +295,11 @@ class Estimate(models.Model):
             'draft': 'secondary',
             'submitted': 'info',
             'verified': 'primary',
-            'dispatched': 'warning',
+            'dispatched': 'success',
             'delivered': 'success',
+            'on-hold': 'warning',
             'rejected': 'danger',
-            'cancelled': 'dark'
+            'cancelled': 'warning'
         }
         return colors.get(self.status, 'light')
 

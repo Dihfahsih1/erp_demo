@@ -15,6 +15,30 @@
     </a> 
   </div>  
   <div class="sidebar-wrapper">
+    <div class="card shadow-sm mb-4 border-0 rounded-4 bg-light">
+      <div class="card-body d-flex align-items-start">
+        <div class="me-3">
+          <i class="bi bi-person-circle fs-2 text-primary"></i>
+        </div>
+        <div class="flex-grow-1">
+          <h6 class="mb-1 text-muted fw-bold">
+            <i class="bi bi-shield-lock-fill text-secondary me-1"></i>Logged in as:
+          </h6>
+          <p class="mb-1 text-dark fw-semibold">
+            {{ request.user.get_full_name|default:request.user.username }}
+          </p>
+          <div class="d-flex flex-wrap gap-1">
+            <span class="badge bg-success">
+              <i class="bi bi-award-fill me-1"></i>{{ request.user.role.name }}
+            </span>
+            <span class="badge bg-info text-dark">
+              <i class="bi bi-building me-1"></i>{{ request.user.department.name }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div> 
+  
     <nav class="mt-2"> 
       <ul
         class="nav sidebar-menu flex-column"
@@ -33,34 +57,35 @@
           
         </li>
 
-        {% if request.user.role and request.user.role.name == 'CRM Officer' or request.user.role.name == 'Estimates Officer' %}
+        {% if request.user.role and request.user.role.name == 'CRM Officer' or request.user.role.name == 'Estimates Officer' or request.user.role.name == 'Credit Officer' %}
         <li class="nav-header">CUSTOMERS</li>
 
           <li class="nav-item">
             <a href="{% url 'register_customer' %}" class="nav-link">
-              <i class="nav-icon bi bi-circle-fill"></i>
+              <i class="nav-icon bi bi-person-plus"></i>
               <p>Register Customer</p>
             </a>
           </li>
 
           <li class="nav-item">
             <a href="{% url 'customer_list' %}" class="nav-link">
-              <i class="nav-icon bi bi-circle-fill"></i>
+              <i class="nav-icon bi bi-people"></i>
               <p>List Of Customer</p>
             </a>
           </li>
-
-        <li class="nav-header">ESTIMATES</li>
-          <li class="nav-item">
-            <a href="{% url 'record_estimate' %}" class="nav-link">
-              <i class="nav-icon bi bi-circle-fill"></i>
-              <p>Record Estimate</p>
-            </a>
-          </li>
+          {% if request.user.role and request.user.role.name == 'Estimates Officer' %}
+            <li class="nav-header">ESTIMATES</li>
+              <li class="nav-item">
+                <a href="{% url 'record_estimate' %}" class="nav-link">
+                  <i class="nav-icon bi bi-pencil-square"></i>
+                  <p>Record Estimate</p>
+                </a>
+              </li>
+          {% endif %}
 
           <li class="nav-item">
             <a href="{% url 'list_estimates' %}" class="nav-link">
-              <i class="nav-icon bi bi-circle-fill"></i>
+              <i class="nav-icon bi bi-list-ul"></i>
               <p>List Of Estimate</p>
             </a>
           </li>
@@ -73,14 +98,14 @@
           
         <li class="nav-item">
           <a href="{% url 'create_delivery_note' %}" class="nav-link">
-            <i class="nav-icon bi bi-pen-fill"></i>
+            <i class="nav-icon bi bi-truck"></i>
             <p>Record Delivery Details</p>
           </a>
         </li>
 
         <li class="nav-item">
           <a href="{% url 'delivery_note_list' %}" class="nav-link">
-            <i class="nav-icon bi bi-grip-horizontal"></i>
+            <i class="nav-icon bi bi-clipboard-data"></i>
             <p>Delivery Notes</p>
           </a>
         </li>
@@ -89,7 +114,8 @@
         {% if request.user.role and request.user.role.name == 'Sales Officer' %}
           <li class="nav-item">
             <a href="{% url 'delivery_note_list_by_sales_person' %}" class="nav-link">
-              <i class="nav-icon bi bi-grip-horizontal"></i>
+              
+              <i class="nav-icon bi bi-file-earmark-person"></i>
               <p>My Delivery Notes</p>
             </a>
           </li> 
@@ -100,7 +126,7 @@
         <li class="nav-header">TRANSPORTATION</li>
         <li class="nav-item">
           <a href="{% url 'mark_dispatch_delivered' %}" class="nav-link">
-            <i class="nav-icon bi bi-box-arrow-in-right"></i>
+            <i class="nav-icon bi bi-box-seam"></i>
             <p>
               Create Courier Details
             </p>
@@ -108,7 +134,7 @@
         </li>
         <li class="nav-item">
           <a href="{% url 'dispatch_list' %}" class="nav-link">
-            <i class="nav-icon bi bi-box-arrow-in-right"></i>
+            <i class="nav-icon bi bi-card-list"></i>
             <p>
               List Courier Details
             </p>
@@ -120,27 +146,27 @@
           <li class="nav-header">DISPATCH VERIFICATION</li>
           <li class="nav-item">
             <a href="#" class="nav-link">
-              <i class="nav-icon bi bi-circle text-danger"></i>
+              <i class="nav-icon bi bi-send-check text-danger"></i>
               <p class="text">Record Dispatch</p>
             </a>
           </li>
           <li class="nav-item">
             <a href="#" class="nav-link">
-              <i class="nav-icon bi bi-circle text-warning"></i>
+              <i class="nav-icon bi bi-check2-circle text-warning"></i>
               <p>Dispatched items</p>
             </a>
           </li>
           <li class="nav-item">
             <a href="#" class="nav-link">
-              <i class="nav-icon bi bi-circle text-info"></i>
+              <i class="nav-icon bi bi-bar-chart-line text-info"></i>
               <p>Reports</p>
             </a>
           </li>
         {% endif %}
         {% if user.is_authenticated %}
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'log_out' %}">
-              <i class="fas fa-sign-out-alt"></i> Logout
+            <a class="nav-link text-danger fw-semibold" href="{% url 'log_out' %}">
+              <i class="bi bi-box-arrow-right me-2 fs-5"></i> Logout
             </a>
           </li>
         {% endif %}

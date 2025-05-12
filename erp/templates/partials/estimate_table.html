@@ -4,6 +4,7 @@
             <th>Estimate #</th>
             <th>Customer</th>
             <th>Sales Officer</th>
+            <th>Estimate Value</th>
             <th>Status</th>
             <th>Created</th>
             <th>Actions</th>
@@ -15,6 +16,7 @@
             <td>{{ estimate.bk_estimate_id }}</td>
             <td>{{ estimate.customer_name }}</td>
             <td>{{ estimate.sales_person }}</td>
+            <td>{{ estimate.amount }}</td>
             <td>
                 <span style="color: black;" class="badge bg-{{ estimate.get_status_badge_color }}">
                     {{ estimate.get_status_display }}
@@ -22,12 +24,53 @@
             </td>
             <td>{{ estimate.created_at|date:"Y-m-d" }}</td>
             <td>
-                {% if perms.estimates.change_estimate %}
-                <a href="#" class="btn btn-sm btn-outline-primary" title="Edit">
-                    <i class="fas fa-edit"></i>
-                </a>
+                
+            
+                {% if request.user.role.name == "Credit Officer" and estimate.status == "submitted" %}
+                    <div class="btn-group btn-group-sm mt-1" role="group">
+                        <form method="post" action="{% url 'estimate-action' estimate.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="verify">
+                            <button type="submit" class="btn btn-success btn-sm">Verify</button>
+                        </form>
+                        <form method="post" action="{% url 'estimate-action' estimate.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="on-hold">
+                            <button type="submit" class="btn btn-warning btn-sm">Hold</button>
+                        </form>
+                        <form method="post" action="{% url 'estimate-action' estimate.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="reject">
+                            <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                        </form>
+                        <form method="post" action="{% url 'estimate-action' estimate.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="cancel">
+                            <button type="submit" class="btn btn-dark btn-sm">Cancel</button>
+                        </form>
+                    </div>
+                {% elif request.user.role.name == "Credit Officer" and estimate.status == "on-hold" %}
+                    <div class="btn-group btn-group-sm mt-1" role="group">
+                        <form method="post" action="{% url 'estimate-action' estimate.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="verify">
+                            <button type="submit" class="btn btn-success btn-sm">Verify</button>
+                        </form>
+                        <form method="post" action="{% url 'estimate-action' estimate.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="reject">
+                            <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                        </form>
+                        <form method="post" action="{% url 'estimate-action' estimate.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="cancel">
+                            <button type="submit" class="btn btn-dark btn-sm">Cancel</button>
+                        </form>
+                    </div>
                 {% endif %}
             </td>
+            
+              
         </tr>
         {% empty %}
         <tr>
@@ -36,3 +79,5 @@
         {% endfor %}
     </tbody>
 </table>
+
+

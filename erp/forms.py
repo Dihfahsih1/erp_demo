@@ -105,6 +105,11 @@ class EstimateForm(forms.ModelForm):
         self.fields['sales_person'].queryset = Employee.objects.filter(
             role__name='Sales Officer' 
         )
+        
+class BillingForm(forms.ModelForm):
+    class Meta:
+        model = Estimate
+        fields = ['invoice_number', 'invoice_amount']
 class EstimateUploadForm(forms.Form):
     excel_file = forms.FileField(
         label='Excel File',

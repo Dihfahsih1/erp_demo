@@ -8,9 +8,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, authenticate
 from django.core.paginator import Paginator
 from django.views.decorators.http import require_http_methods, require_POST
-from django.views.decorators.csrf import csrf_exempt
+from django.views .decorators.csrf import csrf_exempt
 from django.urls import reverse
-from erp.forms import DispatchForm, DeliveryNoteForm, EstimateForm, DeliveryNoteUploadForm, DispatchVerificationForm, EstimateUploadForm, OfficerReviewForm, SalesAgentNoteForm, CustomerForm, EmployeeLoginForm, EmployeeRegistrationForm
+from erp.forms import BillingForm, DispatchForm, DeliveryNoteForm, EstimateForm, DeliveryNoteUploadForm, DispatchVerificationForm, EstimateUploadForm, OfficerReviewForm, SalesAgentNoteForm, CustomerForm, EmployeeLoginForm, EmployeeRegistrationForm
 from .models import Customer, DeliveryNote, Dispatch, Employee, Estimate, UserRole
 import json
 import pandas as pd
@@ -220,6 +220,28 @@ def dispatch_list_view(request):
     }
     return render(request, 'dispatch_list.html', context)
 
+ 
+from django.utils import timezone
+
+@login_required 
+def record_billing(request, estimate_id):
+    estimate = get_object_or_404(Estimate, id=estimate_id, status='verified')
+
+    if request.method == 'POST':
+        form = BillingForm(request.POST, instance=estimate)
+        if form.is_valid():
+            billing = form.save(commit=False)
+            billing.billing_officer = request.user
+            billing.status = 'billed'
+            billing.date_billed = timezone.now()  # set billing date automatically
+            billing.save()
+            return redirect('all_billed_estimates')
+    return redirect('all_billed_estimates') 
+
+@login_required
+def all_billed_estimates(request):
+    billed_estimates = Estimate.objects.filter(status='billed').order_by('-date_billed')
+    return render(request, 'billed_estimates_list.html', {'billed_estimates': billed_estimates}) 
 
 @login_required
 def record_estimate(request):
@@ -406,6 +428,8 @@ def estimate_action(request, pk):
     else:
         messages.error(request, "Invalid action.")
 
+    estimate.date_verified = timezone.now()  
+    estimate.verified_by = request.user
     estimate.save()
     return redirect(request.META.get("HTTP_REFERER", estimate.get_absolute_url()))
  

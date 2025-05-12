@@ -24,29 +24,74 @@
             </td>
             <td>{{ estimate.created_at|date:"Y-m-d" }}</td>
             <td>
-                
+                {% if request.user.role.name == "Billing Officer" and estimate.status == "verified" %}
+                    <button type="button"
+                        class="btn btn-primary btn-sm"
+                        data-bs-toggle="modal"
+                        data-bs-target="#billingModal{{ estimate.id }}">
+                        <i class="bi bi-receipt"></i> Record Billing
+                    </button>
+
+
+                            <!-- Billing Modal -->
+                    <div class="modal fade" id="billingModal{{ estimate.id }}" tabindex="-1" aria-labelledby="billingModalLabel{{ estimate.id }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form method="POST" action="{% url 'record_billing' estimate.id %}">
+                            {% csrf_token %}
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="billingModalLabel{{ estimate.id }}">Record Billing</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                    
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                <label for="invoice_number" class="form-label">Invoice Number</label>
+                                <input type="text" class="form-control" name="invoice_number" required>
+                                </div>
+                    
+                                <div class="mb-3">
+                                <label for="invoice_amount" class="form-label">Invoice Amount</label>
+                                <input type="number" step="0.01" class="form-control" name="invoice_amount" required>
+                                </div>
+                    
+                                <div class="mb-3">
+                                <label for="date_received" class="form-label">Date Received</label>
+                                <input type="date" class="form-control" name="date_received" required>
+                                </div>
+                            </div>
+                    
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-success">Confirm Billing</button>
+                            </div>
+                            </form>
+                        </div>
+                        </div>
+                    </div>
+                {% endif %}
             
                 {% if request.user.role.name == "Credit Officer" and estimate.status == "submitted" %}
                     <div class="btn-group btn-group-sm mt-1" role="group">
                         <form method="post" action="{% url 'estimate-action' estimate.pk %}">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="verify">
-                            <button type="submit" class="btn btn-success btn-sm">Verify</button>
+                            <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Do you confirm this ACTION??');">Verify</button>
                         </form>
                         <form method="post" action="{% url 'estimate-action' estimate.pk %}">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="on-hold">
-                            <button type="submit" class="btn btn-warning btn-sm">Hold</button>
+                            <button type="submit" class="btn btn-warning btn-sm" onclick="return confirm('Do you confirm this ACTION??');">Hold</button>
                         </form>
                         <form method="post" action="{% url 'estimate-action' estimate.pk %}">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="reject">
-                            <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                            <button type="submit" class="btn btn-danger btn-sm mr-2" onclick="return confirm('Do you confirm this ACTION??');">Reject</button>
                         </form>
                         <form method="post" action="{% url 'estimate-action' estimate.pk %}">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="cancel">
-                            <button type="submit" class="btn btn-dark btn-sm">Cancel</button>
+                            <button type="submit" class="btn btn-dark btn-sm" onclick="return confirm('Do you confirm this ACTION??');">Cancel</button>
                         </form>
                     </div>
                 {% elif request.user.role.name == "Credit Officer" and estimate.status == "on-hold" %}
@@ -54,17 +99,17 @@
                         <form method="post" action="{% url 'estimate-action' estimate.pk %}">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="verify">
-                            <button type="submit" class="btn btn-success btn-sm">Verify</button>
+                            <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Do you confirm this ACTION??');">Verify</button>
                         </form>
                         <form method="post" action="{% url 'estimate-action' estimate.pk %}">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="reject">
-                            <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Do you confirm this ACTION??');">Reject</button>
                         </form>
                         <form method="post" action="{% url 'estimate-action' estimate.pk %}">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="cancel">
-                            <button type="submit" class="btn btn-dark btn-sm">Cancel</button>
+                            <button type="submit" class="btn btn-dark btn-sm" onclick="return confirm('Do you confirm this ACTION??');">Cancel</button>
                         </form>
                     </div>
                 {% endif %}
@@ -76,8 +121,12 @@
         <tr>
             <td colspan="6" class="text-center py-4">No estimates found</td>
         </tr>
+
         {% endfor %}
     </tbody>
 </table>
+
+
+
 
 

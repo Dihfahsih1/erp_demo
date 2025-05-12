@@ -44,6 +44,9 @@ urlpatterns = [
      path('estimates/search/', views.estimate_search, name='estimate_search'),
      path('estimates/<int:pk>/action/', views.estimate_action, name='estimate-action'),
      path('estimates/<int:pk>/', views.estimate_detail, name='estimate-detail'),
+    
+     path('record-billing/<int:estimate_id>/', views.record_billing, name='record_billing'),
+     path('billed-estimates/', views.all_billed_estimates, name='billed_estimates_list'),
 
 
 

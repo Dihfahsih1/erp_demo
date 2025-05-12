@@ -199,14 +199,16 @@ class SparePart(models.Model):
 # ----------------------------
 class Estimate(models.Model):
     class Status(models.TextChoices):
-        DRAFT = 'draft', _('Draft (Sales)')
+        DRAFT = 'draft', _('Draft')
         SUBMITTED = 'submitted', _('Submitted')
         VERIFIED = 'verified', _('Verified')
-        DISPATCHED = 'dispatched', _('Dispatched')
-        DELIVERED = 'delivered', _('Delivered (Signed)')
         ON_HOLD = 'on-hold', _('On Hold') 
         REJECTED = 'rejected', _('Rejected')
         CANCELLED = 'cancelled', _('Cancelled')
+        BILLED = 'billed', _('Billed')
+        DISPATCHED = 'dispatched', _('Dispatched')
+        DELIVERED = 'delivered', _('Delivered (Signed)')
+        
     created_date = models.DateField(
         null=True,  
         blank=True,
@@ -265,6 +267,28 @@ class Estimate(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Last Updated"))
     history = AuditlogHistoryField()
+    
+    billing_officer = models.ForeignKey(
+        Employee,
+        null=True,   
+        blank=True,
+        on_delete=models.PROTECT,
+        limit_choices_to={'role__name': 'billing Officer'},
+        related_name='billing_officer_estimates'
+    )
+    verified_by = models.ForeignKey(
+        Employee,
+        null=True,   
+        blank=True,
+        on_delete=models.PROTECT,
+        limit_choices_to={'role__name': 'Credit Officer'},
+        related_name='verifying_officer_estimates'
+    )
+    invoice_number = models.CharField(max_length=100, blank=True, null=True)
+    invoice_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    date_verified = models.DateField(blank=True, null=True)
+    date_billed = models.DateField(blank=True, null=True)
+    
 
     class Meta:
         ordering = ['-created_at']
@@ -273,7 +297,7 @@ class Estimate(models.Model):
         
 
     def __str__(self):
-        return f"Estimate #{self.bk_estimate_id} - {self.customer} ({self.get_status_display()})"
+        return f"Estimate #{self.bk_estimate_id} - {self.customer_name} ({self.get_status_display()})"
 
     def get_absolute_url(self):
         return reverse('estimate-detail', kwargs={'pk': self.pk})

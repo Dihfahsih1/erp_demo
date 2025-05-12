@@ -284,6 +284,22 @@ class Estimate(models.Model):
         limit_choices_to={'role__name': 'Credit Officer'},
         related_name='verifying_officer_estimates'
     )
+    packaging_verified_by = models.ForeignKey(
+        Employee,
+        null=True,   
+        blank=True,
+        on_delete=models.PROTECT,
+        limit_choices_to={'department__name': 'Stores'},
+        related_name='verifying_officer_stores'
+    )
+    dispatch_authorized_by = models.ForeignKey(
+        Employee,
+        null=True,   
+        blank=True,
+        on_delete=models.PROTECT,
+        limit_choices_to={'department__name': 'Stores'},
+        related_name='authorizing_officer_stores'
+    )
     invoice_number = models.CharField(max_length=100, blank=True, null=True)
     invoice_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     date_verified = models.DateField(blank=True, null=True)

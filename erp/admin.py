@@ -79,9 +79,8 @@ class EstimateItemInline(admin.TabularInline):
 
 @admin.register(Estimate)
 class EstimateAdmin(admin.ModelAdmin):
-    list_display = ('bk_estimate_id', 'customer_name', 'sales_person', 'status', 'receiver', 'amount')
-    list_filter = ('status', 'created_at')
-    search_fields = ('bk_estimate_id', 'customer_name__name')
+    list_display = ('bk_estimate_id', 'status', 'receiver', 'amount')
+    list_filter = ('status', 'created_at') 
     inlines = [EstimateItemInline]
     date_hierarchy = 'created_at'
     readonly_fields = ('created_at', 'updated_at')
@@ -107,7 +106,7 @@ class DispatchAdmin(admin.ModelAdmin):
     list_display = ('customer_name', 'invoice_no') 
 @admin.register(DeliveryNote)
 class DeliveryNoteAdmin(admin.ModelAdmin):
-    list_display = ('delivery_note_number', 'customer_name','status','sales_person',)  
+    list_display = ('delivery_note_number', 'status',)  
 
     # def mark_as_verified(self, request, queryset):
     #     queryset.update(is_verified=True)

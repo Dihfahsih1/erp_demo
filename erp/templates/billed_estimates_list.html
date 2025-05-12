@@ -34,7 +34,7 @@
                 <td>{{ estimate.invoice_number }}</td>
                 
                 <td>{{ estimate.sales_person }}</td>
-                <td>{{ estimate.invoice_amount }}</td>
+                <td>{{ estimate.invoice_amount |floatformat:0|intcomma  }}</td>
                 <td>UGX {{ estimate.invoice_amount|floatformat:0|intcomma }}</td>
                 <td>{{ estimate.date_verified|date:"M d, Y" }}</td>
                 <td>{{ estimate.date_billed|date:"M d, Y" }}</td>

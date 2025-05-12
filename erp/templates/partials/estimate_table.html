@@ -113,6 +113,72 @@
                         </form>
                     </div>
                 {% endif %}
+
+                {% if request.user.role.name == "Delivery Officer" and estimate.status == "billed" %}
+                    <button type="button"
+                            class="btn btn-info btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#deliveryModal{{ estimate.id }}">
+                        <i class="bi bi-truck"></i> Record Delivery 
+                    </button>
+
+                    <!-- Delivery Modal -->
+                    <div class="modal fade" id="deliveryModal{{ estimate.id }}" tabindex="-1" aria-labelledby="deliveryModalLabel{{ estimate.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                        <form method="POST" action="{% url 'record_delivery' estimate.id %}">
+                            {% csrf_token %}
+                            <div class="modal-header">
+                            <h5 class="modal-title" id="deliveryModalLabel{{ estimate.id }}">Delivery Details</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="mb-3">
+                                <label for="invoice_number" class="form-label">Delivery Note Number</label>
+                                <input type="text" class="form-control" name="invoice_number" required>
+                            </div>
+                            <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Delivery Person</label>
+                                <select name="delivery_person" class="form-select" required>
+                                <option value="">Select...</option>
+                                {% for emp in employees %}
+                                    <option value="{{ emp.id }}">{{ emp.name }}</option>
+                                {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Dispatch Date</label>
+                                <input type="date" name="dispatch_date" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Packaging Verified By (Stores)</label>
+                                <select name="packaging_verified_by" class="form-select" required>
+                                <option value="">Select...</option>
+                                {% for emp in store_employees %}
+                                    <option value="{{ emp.id }}">{{ emp.name }}</option>
+                                {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Dispatch Authorized By (Stores)</label>
+                                <select name="dispatch_authorized_by" class="form-select" required>
+                                <option value="">Select...</option>
+                                {% for emp in store_employees %}
+                                    <option value="{{ emp.id }}">{{ emp.name }}</option>
+                                {% endfor %}
+                                </select>
+                            </div>
+                            </div>
+                            <div class="modal-footer">
+                            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button class="btn btn-success" type="submit">Save Delivery</button>
+                            </div>
+                        </form>
+                        </div>
+                    </div>
+                    </div>
+                {% endif %}
+
             </td>
             
               

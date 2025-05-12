@@ -235,8 +235,8 @@ def record_billing(request, estimate_id):
             billing.status = 'billed'
             billing.date_billed = timezone.now()  # set billing date automatically
             billing.save()
-            return redirect('all_billed_estimates')
-    return redirect('all_billed_estimates') 
+            return redirect('billed_estimates_list')
+    return redirect('billed_estimates_list') 
 
 @login_required
 def all_billed_estimates(request):

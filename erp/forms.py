@@ -89,9 +89,16 @@ class DeliveryNoteForm(forms.ModelForm):
         self.fields['sales_person'].queryset = Employee.objects.filter(role__name='Sales Officer')
         
 class EstimateForm(forms.ModelForm):
+    # customer_name = forms.ModelChoiceField(
+    #     queryset=Customer.objects.all(),
+    #     required=True,
+    #     label="Customer",
+    #     widget=forms.Select(attrs={'class': 'form-control'})
+    # )
     class Meta:
         model = Estimate
         fields = '__all__'
+        exclude = ['created_at', 'updated_at']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

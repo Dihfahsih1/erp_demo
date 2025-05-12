@@ -14,9 +14,8 @@
     <div class="card mb-4">
         <div class="card-header">
             <div class="row">
-                <div class="col-md-6">
-                    <form method="get" class="row g-2">
-                        <div class="col-md-5">
+                <div class="col-md-6"> 
+                        {% comment %} <div class="col-md-5">
                             <select name="status" class="form-select">
                                 <option value="">All Statuses</option>
                                 {% for value, label in status_choices %}
@@ -25,64 +24,15 @@
                                 </option>
                                 {% endfor %}
                             </select>
-                        </div>
+                        </div> {% endcomment %}
                         <div class="col-md-5">
-                            <input type="text" name="customer" class="form-control" 
-                                   placeholder="Search customer..." value="{{ request.GET.customer }}">
-                        </div>
-                        <div class="col-md-2">
-                            <button type="submit" class="btn btn-outline-primary w-100">
-                                Filter
-                            </button>
-                        </div>
-                    </form>
+                            <input type="text" id="search-input" class="form-control" placeholder="Search...">
+                        </div> 
                 </div>
             </div>
         </div>
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Estimate #</th>
-                            <th>Customer</th>
-                            <th>CRM Officer</th>
-                            <th>Status</th>
-                            <th>Created</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for estimate in page_obj %}
-                        <tr>
-                            <td>{{ estimate.bk_estimate_id }}</td>
-                            <td>{{ estimate.customer }}</td>
-                            <td>{{ estimate.sales_agent }}</td>
-                            <td>
-                                <span style="color: black;" class="badge bg-{{ estimate.get_status_badge_color }}">
-                                    {{ estimate.get_status_display }}
-                                </span>
-                            </td>
-                            <td>{{ estimate.created_at|date:"Y-m-d" }}</td>
-                            <td>
-                                {% if perms.estimates.change_estimate %}
-                                <a href="#" 
-                                   class="btn btn-sm btn-outline-primary"
-                                   title="Edit">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center py-4">No estimates found</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            
+             
             {% if page_obj.paginator.num_pages > 1 %}
             <nav aria-label="Page navigation">
                 <ul class="pagination justify-content-center">
@@ -112,7 +62,26 @@
                 </ul>
             </nav>
             {% endif %}
+
+            <div id="estimate-table">
+                {% include 'partials/estimate_table.html' %}
+            </div>
         </div>
     </div>
 </div>
+<script>
+    document.getElementById('search-input').addEventListener('keyup', function () {
+        const query = this.value;
+        fetch(`/estimates/search/?q=${query}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('estimate-table').innerHTML = html;
+        });
+    });
+    </script>
+    
 {% endblock %}

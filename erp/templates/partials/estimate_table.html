@@ -1,0 +1,38 @@
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Estimate #</th>
+            <th>Customer</th>
+            <th>Sales Officer</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for estimate in page_obj %}
+        <tr>
+            <td>{{ estimate.bk_estimate_id }}</td>
+            <td>{{ estimate.customer_name }}</td>
+            <td>{{ estimate.sales_person }}</td>
+            <td>
+                <span style="color: black;" class="badge bg-{{ estimate.get_status_badge_color }}">
+                    {{ estimate.get_status_display }}
+                </span>
+            </td>
+            <td>{{ estimate.created_at|date:"Y-m-d" }}</td>
+            <td>
+                {% if perms.estimates.change_estimate %}
+                <a href="#" class="btn btn-sm btn-outline-primary" title="Edit">
+                    <i class="fas fa-edit"></i>
+                </a>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" class="text-center py-4">No estimates found</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

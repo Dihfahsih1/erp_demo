@@ -3,237 +3,326 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4"><i class="fas fa-file-invoice-dollar me-2"></i>Record Estimates</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="fas fa-file-invoice-dollar text-primary me-2"></i>
+            <span class="text-gradient">Record New Estimate</span>
+        </h2>
+        <a href="{% url 'list_estimates' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-list me-2"></i>View All Estimates
+        </a>
+    </div>
     
-    
-    <!-- Manual Form Section -->
-    <div class="card shadow-lg">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Single Estimate Entry</h5>
-            <span class="badge bg-light text-primary">Detailed Entry</span>
+    <!-- Main Form Card -->
+    <div class="card border-0 shadow-lg overflow-hidden">
+        <div class="card-header bg-gradient-primary text-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-pen-fancy me-2"></i>Estimate Details
+                </h5>
+                <span class="badge bg-white text-primary fs-6 py-2 px-3">
+                    <i class="fas fa-star me-1"></i> New Entry
+                </span>
+            </div>
         </div>
-        <div class="card-body">
+        
+        <div class="card-body p-0">
             <form method="post" class="needs-validation" novalidate id="estimate-form">
                 {% csrf_token %}
                 
-                <!-- Debugging info -->
-                <div class="d-none">
-                    <p>Form Errors: {{ form.errors }}</p>
-                    <p>Form Data: {{ form.data }}</p>
+                <!-- Form Progress Indicator -->
+                <div class="progress rounded-0" style="height: 4px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: 0%" id="form-progress"></div>
                 </div>
                 
-                <!-- Section 1: Basic Information -->
-                <div class="mb-4 p-3 border rounded bg-light">
-                    <h6 class="mb-3 text-primary"><i class="fas fa-info-circle me-2"></i>Basic Information</h6>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Estimate Number*</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-hashtag"></i></span>
-                                <input type="text" 
-                                       class="form-control" 
-                                       name="bk_estimate_id" 
-                                       id="bk_estimate_id"
-                                       value="{{ form.bk_estimate_id.value|default:'' }}"
-                                       required
-                                       placeholder="EST-2023-0001">
-                            </div>
-                            <small class="form-text text-muted">Unique reference ID from bookkeeping system</small>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Status*</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-tasks"></i></span>
-                                <select class="form-select" name="status" id="status" required>
-                                    {% for value, label in form.fields.status.choices %}
-                                        <option value="{{ value }}" {% if form.status.value == value %}selected{% endif %}>
-                                            {{ label }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Section 2: Dates -->
-                <div class="mb-4 p-3 border rounded bg-light">
-                    <h6 class="mb-3 text-primary"><i class="far fa-calendar-alt me-2"></i>Dates</h6>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Estimate Date*</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="far fa-calendar"></i></span>
-                                <input type="date" 
-                                       class="form-control" 
-                                       name="created_date" 
-                                       id="created_date"
-                                       value="{{ form.created_date.value|default:'' }}"
-                                       required
-                                       autocomplete="off">
-                            </div>
-                        </div>
-                        <div class="col-md-6" style="display: none;">
-                            <label class="form-label fw-bold" for="received_date">Received in Stores</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-warehouse"></i></span>
-                                <input type="date" 
-                                       class="form-control" 
-                                       name="received_date" 
-                                       id="received_date"
-                                       value="{{ form.received_date.value|default:'' }}"
-                                       autocomplete="off">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Section 3: People -->
-                <div class="mb-4 p-3 border rounded bg-light">
-                    <h6 class="mb-3 text-primary"><i class="fas fa-users me-2"></i>People</h6>
-                    <div class="row g-3">
-                        <label class="form-label fw-bold">Customer*</label>
-                        <select class="form-select" name="owner_name" id="customer-select" required>
-                            {% if form.owner_name.value %}
-                                <option value="{{ form.owner_name.value }}" selected>
-                                    {{ form.owner_name.selected_label }}
-                                </option>
-                            {% endif %}
-                        </select>
-                        
-                        <!-- Sales Person -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Sales Person*</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-user-check"></i></span>
-                                <select class="form-select {% if form.sales_person.errors %}is-invalid{% endif %}"
-                                        name="sales_person" id="sales_person" required>
-                                    {% for option in form.sales_person.field.queryset %}
-                                        <option value="{{ option.id }}"
-                                                {% if form.sales_person.value|stringformat:"s" == option.id|stringformat:"s" %}selected{% endif %}>
-                                            {{ option.first_name }} {{ option.last_name }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            {% if form.sales_person.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in form.sales_person.errors %}
-                                        {{ error }}
-                                    {% endfor %}
+                <!-- Form Sections -->
+                <div class="p-4">
+                    <!-- Section 1: Basic Information -->
+                    <div class="mb-5">
+                        <div class="row g-4 ps-5">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" 
+                                           class="form-control border-start-3 border-primary" 
+                                           name="bk_estimate_id" 
+                                           id="bk_estimate_id"
+                                           value="{{ form.bk_estimate_id.value|default:'' }}"
+                                           required
+                                           placeholder="EST-2023-0001">
+                                    <label for="bk_estimate_id" class="fw-bold">Estimate Number *</label> 
                                 </div>
-                            {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6" style="display: none;">
+                                <div class="form-floating">
+                                    <select class="form-select border-start-3 border-primary" 
+                                            name="status" 
+                                            id="status" 
+                                            required>
+                                        {% for value, label in form.fields.status.choices %}
+                                            <option value="{{ value }}" {% if form.status.value == value %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <label for="status" class="fw-bold">Status *</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Section 4: Financial -->
-                <div class="mb-4 p-3 border rounded bg-light">
-                    <h6 class="mb-3 text-primary"><i class="fas fa-money-bill-wave me-2"></i>Financial Details</h6>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Amount*</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-                                <input type="number" 
-                                       class="form-control" 
-                                       name="amount" 
-                                       id="amount"
-                                       step="0.01"
-                                       min="0"
-                                       value="{{ form.amount.value|default:'0.00' }}"
-                                       required>
+                    
+                    <!-- Section 2: Dates -->
+                    <div class="mb-5">
+                                                
+                        <div class="row g-4 ps-5">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="date" 
+                                           class="form-control border-start-3 border-info" 
+                                           name="created_date" 
+                                           id="created_date"
+                                           value="{{ form.created_date.value|default:'' }}"
+                                           required
+                                           autocomplete="off">
+                                    <label for="created_date" class="fw-bold">Estimate Date *</label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6" style="display: none;">
+                                <div class="form-floating">
+                                    <input type="date" 
+                                           class="form-control border-start-3 border-info" 
+                                           name="received_date" 
+                                           id="received_date"
+                                           value="{{ form.received_date.value|default:'' }}"
+                                           autocomplete="off">
+                                    <label for="received_date" class="fw-bold">Received in Stores</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Section 3: People -->
+                    <div class="mb-5">
+                        <div class="ps-5">
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold d-block mb-2">Customer *</label>
+                                    <select class="form-select border-start-3 border-success select2-custom" 
+                                            name="customer_name" 
+                                            id="customer-select" 
+                                            required>
+                                        {% if form.customer_name.value %}
+                                            <option value="{{ form.customer_name.value }}" selected>
+                                                {{ form.customer_name.selected_label }}
+                                            </option>
+                                        {% endif %}
+                                    </select>
+                                    <small class="text-muted mt-1 d-block">Start typing to search customers</small>
+                                </div>
+                            </div>
+                            
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <select class="form-select border-start-3 border-success {% if form.sales_person.errors %}is-invalid{% endif %}"
+                                                name="sales_person" 
+                                                id="sales_person" 
+                                                required>
+                                            {% for option in form.sales_person.field.queryset %}
+                                                <option value="{{ option.id }}"
+                                                        {% if form.sales_person.value|stringformat:"s" == option.id|stringformat:"s" %}selected{% endif %}>
+                                                    {{ option.first_name }} {{ option.last_name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <label for="sales_person" class="fw-bold">Sales Person *</label>
+                                        {% if form.sales_person.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.sales_person.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Section 4: Financial -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon-circle bg-warning-light text-warning me-3">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <h5 class="mb-0 text-dark">Estimate Value</h5>
+                        </div>
+                        
+                        <div class="row g-4 ps-5">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-end-0">
+                                            <select class="form-select border-0 bg-transparent currency-select" style="width: auto;">
+                                                <option value="USD" selected>SHS</option> 
+                                            </select>
+                                        </span>
+                                        <input type="number" 
+                                               class="form-control border-start-0 border-warning ps-0" 
+                                               name="amount" 
+                                               id="amount"
+                                               step="0.01"
+                                               min="0"
+                                               value="{{ form.amount.value|default:'0.00' }}"
+                                               required
+                                               placeholder="0.00"> 
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Form Actions -->
-                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                    <a href="{% url 'list_estimates' %}" class="btn btn-outline-secondary me-md-2">
-                        <i class="fas fa-times me-2"></i>Cancel
-                    </a>
-                    <button type="submit" name="form_submit" class="btn btn-primary" id="submit-btn">
-                        <i class="fas fa-save me-2"></i>Save Estimate
-                    </button>
+                <!-- Form Footer -->
+                <div class="card-footer bg-light py-3 px-4 border-top">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="form-check form-switch">
+                            <div>
+                                <a href="{% url 'list_estimates' %}" class="btn btn-outline-danger me-2">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </a>
+                                <button type="submit" name="form_submit" class="btn btn-primary px-4" id="submit-btn">
+                                    <i class="fas fa-save me-2"></i>Save Estimate
+                                </button>
+                            </div>
+                        </div>
+                        
+                    </div>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<!-- Styles -->
+<style>
+    .text-gradient {
+        background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .icon-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+    
+    .border-start-3 {
+        border-left: 3px solid !important;
+    }
+    
+    .bg-primary-light {
+        background-color: rgba(103, 58, 183, 0.1);
+    }
+    
+    .bg-info-light {
+        background-color: rgba(0, 188, 212, 0.1);
+    }
+    
+    .bg-success-light {
+        background-color: rgba(76, 175, 80, 0.1);
+    }
+    
+    .bg-warning-light {
+        background-color: rgba(255, 193, 7, 0.1);
+    }
+    
+    .select2-custom .select2-selection {
+        min-height: 58px;
+        display: flex;
+        align-items: center;
+        border-left: 3px solid #4CAF50 !important;
+    }
+    
+    .form-floating label {
+        color: #495057;
+        font-weight: 500;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        box-shadow: 0 0 0 0.25rem rgba(103, 58, 183, 0.15);
+    }
+    
+    .currency-select {
+        cursor: pointer;
+        appearance: none;
+        background: transparent;
+        border: none;
+        outline: none;
+    }
+</style>
+
+<!-- Scripts -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
-    document.getElementById("myDiv").classList.add("d-none");
-</script>
-<script>
 $(document).ready(function() {
-    console.log('Document ready - initializing form');
+    // Initialize Select2 with custom styling
+    $('#customer-select').select2({
+        placeholder: 'Search for customer...',
+        minimumInputLength: 1,
+        ajax: {
+            url: '{% url "autocomplete_customers" %}',
+            dataType: 'json',
+            delay: 250,
+            data: function(params) {
+                return { term: params.term, page: params.page };
+            },
+            processResults: function(data) {
+                return { results: data.results };
+            },
+            cache: true
+        },
+        templateResult: formatCustomer,
+        templateSelection: formatCustomer
+    }).addClass('select2-custom');
     
-    // Initialize Select2 for customer search
-   
-    $(document).ready(function() {
-        $('#customer-select').select2({
-            placeholder: 'Search for customer...',
-            minimumInputLength: 2,
-            ajax: {
-                url: '{% url "autocomplete_customers" %}',
-                dataType: 'json',
-                delay: 250,
-                data: function (params) {
-                    return {
-                        term: params.term,
-                        page: params.page
-                    };
-                },
-                processResults: function (data, params) {
-                    return {
-                        results: data.results
-                    };
-                },
-                cache: true
-            }
-        });
+    function formatCustomer(customer) {
+        if (!customer.id) return customer.text;
+        return $('<span class="d-flex align-items-center"><i class="fas fa-user-circle me-2 text-muted"></i>' + customer.text + '</span>');
+    }
+    
+    // Update progress bar as user fills the form
+    $('#estimate-form').on('input change', function() {
+        const filledFields = $(this).find('input, select, textarea').filter(function() {
+            return $(this).val() !== '' && $(this).val() !== null;
+        }).length;
+        const totalFields = $(this).find('input, select, textarea').not('[type=hidden]').length;
+        const progress = (filledFields / totalFields) * 100;
+        $('#form-progress').css('width', progress + '%');
     });
     
-    
-
+    // Currency switcher effect
+    $('.currency-select').change(function() {
+        const currency = $(this).val();
+        const symbol = $('option:selected', this).text();
+        $(this).closest('.input-group').find('.input-group-text').first().html(
+            `<span class="currency-symbol">${symbol}</span>`
+        );
+    });
 });
 </script>
-
-<style>
-    .card {
-        border: none;
-        border-radius: 10px;
-    }
-    .card-header {
-        border-radius: 10px 10px 0 0 !important;
-    }
-    .form-control, .form-select, .select2-selection {
-        border-radius: 5px !important;
-        padding: 10px !important;
-        height: auto !important;
-    }
-    .input-group-text {
-        background-color: #f8f9fa;
-    }
-    .bg-light {
-        background-color: #f8fafc !important;
-    }
-    .was-validated .form-control:invalid, 
-    .was-validated .form-select:invalid,
-    .was-validated .select2-selection:invalid {
-        border-color: #dc3545 !important;
-    }
-    .was-validated .form-control:valid, 
-    .was-validated .form-select:valid,
-    .was-validated .select2-selection:valid {
-        border-color: #28a745 !important;
-    }
-    .select2-container {
-        width: 100% !important;
-    }
-</style>
 {% endblock %}

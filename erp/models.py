@@ -267,10 +267,7 @@ class Estimate(models.Model):
         ordering = ['-created_at']
         verbose_name = _("Estimate")
         verbose_name_plural = _("Estimates")
-        permissions = [
-            ("change_estimate_status", "Can modify estimate status"),
-            ("view_all_estimates", "Can view all estimates"),
-        ]
+        
 
     def __str__(self):
         return f"Estimate #{self.bk_estimate_id} - {self.customer} ({self.get_status_display()})"

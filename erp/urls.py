@@ -41,6 +41,7 @@ urlpatterns = [
      
      path('update-note-status/', views.update_note_status, name='update_note_status'),
      path('customers/autocomplete/', views.autocomplete_customers, name='autocomplete_customers'),
+     path('estimates/search/', views.estimate_search, name='estimate_search'),
 
     
 ]

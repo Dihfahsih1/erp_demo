@@ -224,15 +224,12 @@ def dispatch_list_view(request):
 @login_required
 def record_estimate(request):
     sales_persons = Employee.objects.filter(role__name='Sales Officer')
-    print(sales_persons)
-    if request.method == 'POST':
+    if request.method == 'POST': 
         form = EstimateForm(request.POST)
-        print(form.errors)
         if form.is_valid():
             try:
                 estimate = form.save(commit=False)
-                estimate.created_by = request.user
-                
+                estimate.created_by = request.user 
                 # Ensure sales person is properly assigned
                 if hasattr(form, 'cleaned_data') and 'sales_person' in form.cleaned_data:
                     estimate.sales_person = form.cleaned_data['sales_person']
@@ -341,23 +338,9 @@ def generate_estimate_id(request):
 
 @login_required
 def list_estimates(request):
-    # Get filter parameters
-    status_filter = request.GET.get('status')
-    customer_filter = request.GET.get('customer')
-    
-    # Base queryset
-    estimates = Estimate.objects.all().order_by('-created_at')
-    
-    # Apply filters
-    if status_filter:
-        estimates = estimates.filter(status=status_filter)
-    if customer_filter:
-        estimates = estimates.filter(customer__icontains=customer_filter)
-    
-    # Restrict view based on permissions
-    if not request.user.has_perm('estimates.view_all_estimates'):
-        estimates = estimates.filter(sales_person=request.user.get_full_name() or request.user.username)
-    
+
+    estimates = Estimate.objects.all().order_by('-created_at') 
+
     # Pagination
     paginator = Paginator(estimates, 25)
     page_number = request.GET.get('page')
@@ -370,7 +353,27 @@ def list_estimates(request):
     }
     return render(request, 'list_estimates.html', context)
 
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from django.db.models import Q
+from .models import Estimate
 
+def estimate_search(request):
+    query = request.GET.get('q', '')
+    estimates = Estimate.objects.filter(
+        Q(bk_estimate_id__icontains=query) |
+        Q(customer_name__owner_name__icontains=query) |
+        Q(sales_person__username__icontains=query)  # or .first_name if you prefer
+    ).order_by('-created_at')
+
+    paginator = Paginator(estimates, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return render(request, 'partials/estimate_table.html', {'page_obj': page_obj})
+    else:
+        return render(request, 'your_main_template.html', {'page_obj': page_obj})
 
 @login_required
 def download_estimate_template(request):
@@ -684,4 +687,6 @@ def update_note_status(request):
         return JsonResponse({'success': False, 'error': 'Delivery note not found'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+
 

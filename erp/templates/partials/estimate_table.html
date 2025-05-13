@@ -14,8 +14,8 @@
         {% for estimate in page_obj %}
         <tr>
             <td>{{ estimate.bk_estimate_id }}</td>
-            <td>{{ estimate.customer_name }}</td>
-            <td>{{ estimate.sales_person }}</td>
+            <td>{{ estimate.customer_name.owner_name }}</td>
+            <td>{{ estimate.sales_person.first_name }}</td>
             <td>{{ estimate.amount }}</td>
             <td>
                 <span style="color: black;" class="badge bg-{{ estimate.get_status_badge_color }}">

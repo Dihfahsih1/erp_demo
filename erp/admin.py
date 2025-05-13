@@ -1,7 +1,7 @@
 import json
 from django import forms
 from django.contrib import admin
-from .models import Department, Employee, Customer, RegionOfOperation, SparePart, Estimate, EstimateItem, Verification, Dispatch, DeliveryNote, StoresReconciliation, UserRole
+from .models import Department, Employee, Customer, RegionOfOperation, SparePart, Estimate, EstimateItem, Verification, Dispatch, Delivery, StoresReconciliation, UserRole
 
 from django.utils.html import format_html
 from django.contrib import admin
@@ -97,11 +97,11 @@ class EstimateAdmin(admin.ModelAdmin):
 
 @admin.register(Dispatch)
 class DispatchAdmin(admin.ModelAdmin):
-    list_display = ('estimate_number', 'date_of_dispatch') 
+    list_display = ('estimate_number', 'store_gate_pass') 
     
     
-@admin.register(DeliveryNote)
-class DeliveryNoteAdmin(admin.ModelAdmin):
+@admin.register(Delivery)
+class DeliveryAdmin(admin.ModelAdmin):
     list_display = ('delivery_note_number', 'delivery_date')  
 
 @admin.register(StoresReconciliation)

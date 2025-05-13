@@ -34,7 +34,7 @@
                 <td>{{ estimate.bk_estimate_id }}</td>
                 <td>{{ estimate.invoice_number }}</td>
                 
-                <td>{{ estimate.sales_person }}</td>
+                <td>{{ estimate.sales_person.username }}</td>
                 <td>{{ estimate.invoice_amount |floatformat:0|intcomma  }}</td>
                 <td>UGX {{ estimate.invoice_amount|floatformat:0|intcomma }}</td>
                 {% comment %} <td>{{ estimate.date_verified|date:"M d, Y" }}</td> {% endcomment %}
@@ -42,13 +42,36 @@
                 <td>{{ estimate.billing_officer.get_full_name|default:estimate.billing_officer.username }}</td>
 
                 <td>
-                  <button type="button"
-                    class="btn btn-outline-primary"
-                    data-bs-target="#deliveryNoteModal{{ estimate.id }}"
-                    data-bs-toggle="modal"
-                    data-bs-dismiss="modal">  <!-- this closes the current estimate modal -->
-                    Create Delivery Note
-                  </button>
+                  {% if request.user.role.name == "Delivery Officer" and estimate.status == "billed" %}
+                    <button type="button"
+                      class="btn btn-outline-primary"
+                      data-bs-target="#dispatchModal{{ estimate.id }}"
+                      data-bs-toggle="modal"
+                      data-bs-dismiss="modal">   Record Dispatch Details
+                    </button>
+
+                    {% else %}
+
+                    <span style="color: black;" class="badge bg-{{ estimate.get_status_badge_color }}">
+                      {{ estimate.get_status_display }}
+                    </span>
+                  {% endif %}
+
+                  {% if request.user.role.name == "Dipatch Officer" and estimate.status == "packaged" %}
+                    <button type="button"
+                      class="btn btn-outline-primary"
+                      data-bs-target="#deliveryNoteModal{{ estimate.id }}"
+                      data-bs-toggle="modal"
+                      data-bs-dismiss="modal">   Create Delivery Details
+                    </button>
+
+                    {% else %}
+
+                    <span style="color: black;" class="badge bg-{{ estimate.get_status_badge_color }}">
+                      {{ estimate.get_status_display }}
+                    </span>
+                  {% endif %}
+
                </td>
               </tr>
               <div class="modal fade" id="deliveryNoteModal{{ estimate.id }}" tabindex="-1" aria-labelledby="deliveryNoteLabel{{ estimate.id }}" aria-hidden="true">
@@ -63,6 +86,11 @@
                       <div class="modal-body">
                         <p style="text-align: center;"><strong>Estimate Number:</strong> {{ estimate.bk_estimate_id }}</p>
                         <p style="text-align: center;">Invoice Number:{{ estimate.invoice_number }}</p>
+
+                        <div class="mb-3">
+                          <label for="invoice_number" class="form-label">Delivery Note Number</label>
+                          <input type="text" class="form-control" name="delivery_note_number" required>
+                        </div>
                         <div class="mb-3">
                           <label>Dispatch Date</label>
                           <input type="date" name="dispatch_date" class="form-control" required>
@@ -71,16 +99,17 @@
                         <div class="mb-3">
                           <label>Delivery Person</label>
                           <select name="delivery_person" class="form-select" required>
-                            {% for emp in employees %}
+                            {% for emp in delivery_persons %}
+                            <p>{{ emp }}</p>
                               <option value="{{ emp.id }}">{{ emp.name }}</option>
                             {% endfor %}
                           </select>
                         </div>
               
                         <div class="mb-3">
-                          <label>Verified By</label>
+                          <label>Packaging Verified By</label>
                           <select name="packaging_verified_by" class="form-select" required>
-                            {% for emp in store_employees %}
+                            {% for emp in packaging_verified_by %}
                               <option value="{{ emp.id }}">{{ emp.name }}</option>
                             {% endfor %}
                           </select>
@@ -89,7 +118,7 @@
                         <div class="mb-3">
                           <label>Authorized By</label>
                           <select name="dispatch_authorized_by" class="form-select" required>
-                            {% for emp in store_employees %}
+                            {% for emp in delivery_authorization %}
                               <option value="{{ emp.id }}">{{ emp.name }}</option>
                             {% endfor %}
                           </select>
@@ -99,6 +128,39 @@
                       <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-success">Generate Note</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+
+              <div class="modal fade" id="dispatchModal{{ estimate.id }}" tabindex="-1" aria-labelledby="dispatchLabel{{ estimate.id }}" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <form method="POST" action="{% url 'create_dispatch_details' estimate.id %}">
+                      {% csrf_token %}
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="deliveryNoteLabel{{ estimate.id }}">Create Dispatch Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body">
+                        <p style="text-align: center;"><strong>Estimate Number:</strong> {{ estimate.bk_estimate_id }}</p>
+                        <p style="text-align: center;">Invoice Number:{{ estimate.invoice_number }}</p>
+
+                        <div class="mb-3">
+                          <label for="invoice_number" class="form-label">Stores Gate Pass</label>
+                          <input type="text" class="form-control" name="store_gate_pass" required>
+                        </div>
+                        <div class="mb-3">
+                          <label>Office Gate Pass</label>
+                          <input type="date" name="office_gate_pass" class="form-control" required>
+                        </div> 
+                      </div>
+              
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Submit</button>
                       </div>
                     </form>
                   </div>

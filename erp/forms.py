@@ -1,7 +1,7 @@
 # dispatch/forms.py
 from django import forms
 from django.utils.translation import gettext_lazy as _
-from .models import Dispatch,DeliveryNote, Estimate, UserRole
+from .models import Dispatch,Delivery, Estimate, UserRole
 
 from .models import Customer,Employee,Department,UserRole
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
@@ -50,9 +50,9 @@ class DispatchForm(forms.ModelForm):
         model = Dispatch
         fields = "__all__"
         
-class DeliveryNoteUploadForm(forms.ModelForm):
+class DeliveryUploadForm(forms.ModelForm):
     class Meta:
-        model = DeliveryNote
+        model = Delivery
         fields = "__all__"
         
     def __init__(self, *args, **kwargs):
@@ -69,21 +69,13 @@ class DeliveryNoteUploadForm(forms.ModelForm):
         return instance
     
     exclude = ['created_at', 'updated_at']
-class DeliveryNoteForm(forms.ModelForm):
+class DeliveryForm(forms.ModelForm):
     
 
     class Meta:
-        model = DeliveryNote
+        model = Delivery
         fields = "__all__"
-        widgets = {
-            'delivery_date': forms.DateInput(attrs={'type': 'date'}), 
-            'sales_person': forms.Select(attrs={'class': 'form-control', 'required': True}),
-             
-        }
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['sales_person'].queryset = Employee.objects.filter(role__name='Sales Officer')
-        
+        exclude = ['created_at', 'updated_at']
 class EstimateForm(forms.ModelForm):
     # customer_name = forms.ModelChoiceField(
     #     queryset=Customer.objects.all(),
@@ -130,10 +122,10 @@ class DispatchVerificationForm(forms.ModelForm):
         
 class SalesAgentNoteForm(forms.ModelForm):
     class Meta:
-        model = DeliveryNote
+        model = Delivery
         fields = ['image', 'extracted_text', 'receiver_name', 'receiver_contact', 'date_goods_received']
 
 class OfficerReviewForm(forms.ModelForm):
     class Meta:
-        model = DeliveryNote
+        model = Delivery
         fields = ['delivery_status', 'remarks']

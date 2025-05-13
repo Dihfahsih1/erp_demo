@@ -207,7 +207,8 @@ class Estimate(models.Model):
         CANCELLED = 'cancelled', _('Cancelled')
         BILLED = 'billed', _('Billed')
         DISPATCHED = 'dispatched', _('Dispatched')
-        DELIVERED = 'delivered', _('Delivered (Signed)')
+        DELIVERED = 'delivered', _('Delivered (Signed)'),
+        PACKAGED = 'packaged', _('ready for pickup')
         
     created_date = models.DateField(
         null=True,  
@@ -314,7 +315,10 @@ class Estimate(models.Model):
             'delivered': 'success',
             'on-hold': 'warning',
             'rejected': 'danger',
-            'cancelled': 'warning'
+            'cancelled': 'warning',
+            'packaged': 'secondary',
+            'billed': 'success',
+            'in-transit': 'success',
         }
         return colors.get(self.status, 'light')
 
@@ -391,31 +395,14 @@ class Dispatch(models.Model):
         related_name='Dispatches')
     
     office_gate_pass = models.CharField(max_length=100, null=True, blank=True)
-    store_gate_pass = models.CharField(max_length=100, null=True, blank=True)
-    date_of_dispatch = models.DateField(null=True, blank=True)    
+    store_gate_pass = models.CharField(max_length=100, null=True, blank=True)  
   
-    packaging_verified_by = models.ForeignKey(
-        Employee,
-        null=True,   
-        blank=True,
-        on_delete=models.PROTECT,
-        limit_choices_to={'department__name': 'Stores'},
-        related_name='verifying_officer_stores'
-    )
-    dispatch_authorized_by = models.ForeignKey(
-        Employee,
-        null=True,   
-        blank=True,
-        on_delete=models.PROTECT,
-        limit_choices_to={'department__name': 'Stores'},
-        related_name='authorizing_officer_stores'
-    )
-    
     def __str__(self):
         return f"Dispatch for {self.customer_name} - {self.invoice_no}"
         
 
-class DeliveryNote(models.Model):
+
+class Delivery(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('being_processed', 'Being Processed'),
@@ -427,7 +414,7 @@ class DeliveryNote(models.Model):
         null=True, 
         blank=True, 
         on_delete=models.PROTECT,
-        related_name='DeliveryNotes')
+        related_name='Deliverys')
     
     delivery_note_number = models.CharField(max_length=100, null=True, blank=True)
     delivery_date = models.DateField(null=True, blank=True)
@@ -436,7 +423,7 @@ class DeliveryNote(models.Model):
     receiver_contact = models.CharField(max_length=20, null=True, blank=True)
     date_goods_received = models.DateField(null=True, blank=True)
  
-    delivery_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending') 
+    delivery_status = models.CharField(max_length=20, null=True, blank=True, choices=STATUS_CHOICES, default='pending') 
  
     sales_person = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
     delivery_person = models.CharField(max_length=100, null=True, blank=True)
@@ -472,9 +459,11 @@ class DeliveryNote(models.Model):
             return ">45"
         else:
             return f">{(days // 15) * 15}"  # general case
- 
-class DeliveryNoteItem(models.Model):
-    delivery_note = models.ForeignKey(DeliveryNote, related_name='items', on_delete=models.CASCADE)
+
+
+
+class DeliveryItem(models.Model):
+    delivery_note = models.ForeignKey(Delivery, related_name='items', on_delete=models.CASCADE)
     item_code = models.CharField(max_length=100, null=True, blank=True)  # Added for codes like "REV-OF-TR-BK"
     item_description = models.CharField(max_length=255)
     quantity = models.FloatField(default=1)  # Default quantity is 1

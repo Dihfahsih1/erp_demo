@@ -49,6 +49,7 @@ urlpatterns = [
      path('billed-estimates/', views.all_billed_estimates, name='billed_estimates_list'),
      
      path('create-delivery-note/<int:pk>/', views.create_delivery_note, name='create_delivery_note'),
+     path('create-dispatch/<int:pk>/', views.create_dispatch_details, name='create_dispatch_details'),
 
 
 

@@ -79,7 +79,7 @@ class EstimateItemInline(admin.TabularInline):
 
 @admin.register(Estimate)
 class EstimateAdmin(admin.ModelAdmin):
-    list_display = ('bk_estimate_id', 'status', 'receiver', 'amount')
+    list_display = ('bk_estimate_id', 'status',  'amount')
     list_filter = ('status', 'created_at') 
     inlines = [EstimateItemInline]
     date_hierarchy = 'created_at'
@@ -95,22 +95,14 @@ class EstimateAdmin(admin.ModelAdmin):
         return sum(item.line_total() for item in obj.items.all())
     total_value.short_description = 'Total Value'
 
-# @admin.register(Verification)
-# class VerificationAdmin(admin.ModelAdmin):
-#     list_display = ('estimate', 'verified_by', 'verification_date', 'is_approved')
-#     list_filter = ('verification_date', 'is_approved')
-#     raw_id_fields = ('estimate',)
-
 @admin.register(Dispatch)
 class DispatchAdmin(admin.ModelAdmin):
-    list_display = ('customer_name', 'invoice_no') 
+    list_display = ('estimate_number', 'date_of_dispatch') 
+    
+    
 @admin.register(DeliveryNote)
 class DeliveryNoteAdmin(admin.ModelAdmin):
-    list_display = ('delivery_note_number', 'status',)  
-
-    # def mark_as_verified(self, request, queryset):
-    #     queryset.update(is_verified=True)
-    # mark_as_verified.short_description = "Mark selected as verified"
+    list_display = ('delivery_note_number', 'delivery_date')  
 
 @admin.register(StoresReconciliation)
 class StoresReconciliationAdmin(admin.ModelAdmin):

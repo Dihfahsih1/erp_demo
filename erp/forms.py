@@ -51,15 +51,9 @@ class DispatchForm(forms.ModelForm):
         fields = "__all__"
         
 class DeliveryNoteUploadForm(forms.ModelForm):
-    date_of_delivery = forms.DateField(
-        label="Receiving Date",
-        widget=forms.DateInput(attrs={'type': 'date'}),
-        required=False
-    )
-
     class Meta:
         model = DeliveryNote
-        fields = ['image', 'receiver_name', 'receiver_contact', 'date_of_delivery', 'delivery_note_number']
+        fields = "__all__"
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -73,6 +67,8 @@ class DeliveryNoteUploadForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+    
+    exclude = ['created_at', 'updated_at']
 class DeliveryNoteForm(forms.ModelForm):
     
 
@@ -140,4 +136,4 @@ class SalesAgentNoteForm(forms.ModelForm):
 class OfficerReviewForm(forms.ModelForm):
     class Meta:
         model = DeliveryNote
-        fields = ['status', 'remarks']
+        fields = ['delivery_status', 'remarks']

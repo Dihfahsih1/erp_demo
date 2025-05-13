@@ -624,31 +624,25 @@ def confirm_delivery(request, pk):
     return JsonResponse({'success': True})
 
 
+
 sales_exec_role = UserRole.objects.filter(name='Sales Executive').first()
 @login_required
-def create_delivery_note(request):
-    
+def create_delivery_note(request,pk):
+    estimate = get_object_or_404(Estimate, pk=pk)
+
     if request.method == 'POST':
-        form = DeliveryNoteForm(request.POST, request.FILES)
-        form.fields['sales_person'].queryset = Employee.objects.filter(role=sales_exec_role)
+        estimate.delivery_person_id = request.POST.get('delivery_person')
+        estimate.dispatch_date = request.POST.get('dispatch_date')
+        estimate.packaging_verified_by_id = request.POST.get('packaging_verified_by')
+        estimate.dispatch_authorized_by_id = request.POST.get('dispatch_authorized_by')
+        estimate.save()
 
-        print(form.errors)
-        if form.is_valid():
-            note = form.save(commit=False)
-            note.status = 'pending'
-            note.created_at = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
-            note.updated_at = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
-            note.save()
-            messages.success(request, "Delivery note created successfully.")
-        else:
-            messages.error(request, "Please correct the errors in the form.")
-    else:
-        form = DeliveryNoteForm()
-        form.fields['sales_person'].queryset = Employee.objects.filter(role=sales_exec_role)
+        messages.success(request, "Delivery note created successfully.")
+        return redirect('delivery_estimates')   
+    
+    messages.error(request, "Invalid request.")
+    return redirect('delivery_estimates')
 
-        
-
-    return render(request, 'delivery_notes/create_delivery_details.html', {'form': form})
 
 
 @login_required

@@ -238,15 +238,13 @@ class Estimate(models.Model):
         limit_choices_to={'role__name': 'Sales Officer'},
         related_name='estimates_as_sales_person'
     )
-    receiver = models.ForeignKey(
-        Employee,
+    verified_by= models.ForeignKey(
+     Employee,
         null=True,   
         blank=True,
         on_delete=models.PROTECT,
-        limit_choices_to={'department__name': 'Stores'},  
-        related_name='estimates_received',
-        verbose_name='Stores Department Receiver'
-    )
+        limit_choices_to={'role__name': 'Credit Officer'},
+        related_name='Verifying_Customer_Credit_Worthiness')
     # received_date = models.DateField(
     #     null=True,   
     #     blank=True,
@@ -276,30 +274,7 @@ class Estimate(models.Model):
         limit_choices_to={'role__name': 'billing Officer'},
         related_name='billing_officer_estimates'
     )
-    verified_by = models.ForeignKey(
-        Employee,
-        null=True,   
-        blank=True,
-        on_delete=models.PROTECT,
-        limit_choices_to={'role__name': 'Credit Officer'},
-        related_name='verifying_officer_estimates'
-    )
-    packaging_verified_by = models.ForeignKey(
-        Employee,
-        null=True,   
-        blank=True,
-        on_delete=models.PROTECT,
-        limit_choices_to={'department__name': 'Stores'},
-        related_name='verifying_officer_stores'
-    )
-    dispatch_authorized_by = models.ForeignKey(
-        Employee,
-        null=True,   
-        blank=True,
-        on_delete=models.PROTECT,
-        limit_choices_to={'department__name': 'Stores'},
-        related_name='authorizing_officer_stores'
-    )
+
     invoice_number = models.CharField(max_length=100, blank=True, null=True)
     invoice_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     date_verified = models.DateField(blank=True, null=True)
@@ -408,12 +383,33 @@ class Verification(models.Model):
         return f"Verification for Estimate #{self.estimate.bk_estimate_id}"
 
 class Dispatch(models.Model):
-    billing_date = models.DateField(null=True, blank=True)
-    customer_name = models.CharField(max_length=200, null=True, blank=True)
-    invoice_no = models.CharField(max_length=100, null=True, blank=True)
-    invoice_amount = models.CharField(max_length=100, null=True, blank=True)
+    estimate_number = models.ForeignKey(
+        Estimate,
+        null=True, 
+        blank=True, 
+        on_delete=models.PROTECT,
+        related_name='Dispatches')
+    
     office_gate_pass = models.CharField(max_length=100, null=True, blank=True)
     store_gate_pass = models.CharField(max_length=100, null=True, blank=True)
+    date_of_dispatch = models.DateField(null=True, blank=True)    
+  
+    packaging_verified_by = models.ForeignKey(
+        Employee,
+        null=True,   
+        blank=True,
+        on_delete=models.PROTECT,
+        limit_choices_to={'department__name': 'Stores'},
+        related_name='verifying_officer_stores'
+    )
+    dispatch_authorized_by = models.ForeignKey(
+        Employee,
+        null=True,   
+        blank=True,
+        on_delete=models.PROTECT,
+        limit_choices_to={'department__name': 'Stores'},
+        related_name='authorizing_officer_stores'
+    )
     
     def __str__(self):
         return f"Dispatch for {self.customer_name} - {self.invoice_no}"
@@ -426,21 +422,22 @@ class DeliveryNote(models.Model):
         ('received', 'Received'),
         ('rejected', 'Rejected'),
     ]
-    estimate_number = models.CharField(max_length=200, null=True, blank=True)
+    estimate_number = models.ForeignKey(
+        Estimate,
+        null=True, 
+        blank=True, 
+        on_delete=models.PROTECT,
+        related_name='DeliveryNotes')
+    
     delivery_note_number = models.CharField(max_length=100, null=True, blank=True)
+    delivery_date = models.DateField(null=True, blank=True)
+    
     receiver_name = models.CharField(max_length=100, null=True, blank=True)
     receiver_contact = models.CharField(max_length=20, null=True, blank=True)
     date_goods_received = models.DateField(null=True, blank=True)
-
-    
-    customer_name = models.CharField(max_length=200, null=True, blank=True)  # typo fixed
-    date_of_billing = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    invoice_no = models.CharField(max_length=100, null=True, blank=True)
-    transaction_value = models.CharField(max_length=100, null=True, blank=True)
-
-    
-    customer_name_address = models.TextField(null=True, blank=True)
+ 
+    delivery_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending') 
+ 
     sales_person = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
     delivery_person = models.CharField(max_length=100, null=True, blank=True)
     remarks = models.TextField(null=True, blank=True)

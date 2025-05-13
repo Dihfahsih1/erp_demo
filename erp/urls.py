@@ -47,6 +47,9 @@ urlpatterns = [
     
      path('record-billing/<int:estimate_id>/', views.record_billing, name='record_billing'),
      path('billed-estimates/', views.all_billed_estimates, name='billed_estimates_list'),
+     
+     path('create-delivery-note/<int:pk>/', views.create_delivery_note, name='create_delivery_note'),
+
 
 
 

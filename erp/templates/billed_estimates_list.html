@@ -20,9 +20,10 @@
               <th>Sales Person</th>
               <th>Estimate Amount</th>
               <th>Invoice Amount</th>
-              <th>Date Received</th>
+              {% comment %} <th>Date Received</th> {% endcomment %}
               <th>Date Billed</th>
               <th>Recorded By</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -36,10 +37,74 @@
                 <td>{{ estimate.sales_person }}</td>
                 <td>{{ estimate.invoice_amount |floatformat:0|intcomma  }}</td>
                 <td>UGX {{ estimate.invoice_amount|floatformat:0|intcomma }}</td>
-                <td>{{ estimate.date_verified|date:"M d, Y" }}</td>
+                {% comment %} <td>{{ estimate.date_verified|date:"M d, Y" }}</td> {% endcomment %}
                 <td>{{ estimate.date_billed|date:"M d, Y" }}</td>
                 <td>{{ estimate.billing_officer.get_full_name|default:estimate.billing_officer.username }}</td>
+
+                <td>
+                  <button type="button"
+                    class="btn btn-outline-primary"
+                    data-bs-target="#deliveryNoteModal{{ estimate.id }}"
+                    data-bs-toggle="modal"
+                    data-bs-dismiss="modal">  <!-- this closes the current estimate modal -->
+                    Create Delivery Note
+                  </button>
+               </td>
               </tr>
+              <div class="modal fade" id="deliveryNoteModal{{ estimate.id }}" tabindex="-1" aria-labelledby="deliveryNoteLabel{{ estimate.id }}" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <form method="POST" action="{% url 'create_delivery_note' estimate.id %}">
+                      {% csrf_token %}
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="deliveryNoteLabel{{ estimate.id }}">Create Delivery Note</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body">
+                        <p style="text-align: center;"><strong>Estimate Number:</strong> {{ estimate.bk_estimate_id }}</p>
+                        <p style="text-align: center;">Invoice Number:{{ estimate.invoice_number }}</p>
+                        <div class="mb-3">
+                          <label>Dispatch Date</label>
+                          <input type="date" name="dispatch_date" class="form-control" required>
+                        </div>
+              
+                        <div class="mb-3">
+                          <label>Delivery Person</label>
+                          <select name="delivery_person" class="form-select" required>
+                            {% for emp in employees %}
+                              <option value="{{ emp.id }}">{{ emp.name }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
+              
+                        <div class="mb-3">
+                          <label>Verified By</label>
+                          <select name="packaging_verified_by" class="form-select" required>
+                            {% for emp in store_employees %}
+                              <option value="{{ emp.id }}">{{ emp.name }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
+              
+                        <div class="mb-3">
+                          <label>Authorized By</label>
+                          <select name="dispatch_authorized_by" class="form-select" required>
+                            {% for emp in store_employees %}
+                              <option value="{{ emp.id }}">{{ emp.name }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                      </div>
+              
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Generate Note</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+              
             {% empty %}
               <tr>
                 <td colspan="8" class="text-center text-muted">No billed estimates found.</td>

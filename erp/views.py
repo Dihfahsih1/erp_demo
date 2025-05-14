@@ -519,7 +519,7 @@ def create_delivery_note(request,pk):
         print(form.errors)
         if form.is_valid():
             delivery_note = form.save(commit=False)
-            delivery_note.estimate = estimate
+            delivery_note.estimate_number = estimate
             delivery_note.save() 
             estimate.delivery_note = delivery_note
             estimate.status = 'dispatched'

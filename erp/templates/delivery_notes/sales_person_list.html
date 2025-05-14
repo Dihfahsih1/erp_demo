@@ -14,7 +14,7 @@
             <th>Estimate No</th>
             <th>Invoice No</th>
             <th>Dispatch Date</th>
-            <th>Status</th>
+            <th>Note Status</th>
             <th>Signed Note</th>
             <th>Action</th>
         </tr>
@@ -41,7 +41,7 @@
             {% endif %}
             <td>
                 {% if note.delivery_status == 'pending' and not note.signed_note %}
-                    <a href="{% url 'upload_signed_note' note.id %}" class="btn btn-sm btn-primary">
+                    <a href="{% url 'upload_signed_note' note.id %}?estimate_number={{note.estimate_number_id}}" class="btn btn-sm btn-primary">
                         Upload Signed Note
                     </a>
                 {% elif note.delivery_status == 'being_processed' and note.signed_note %}

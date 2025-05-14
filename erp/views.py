@@ -551,17 +551,23 @@ def create_dispatch_details(request, pk):
 
 @login_required
 def upload_signed_note(request, note_id):
-    note = get_object_or_404(Delivery, id=note_id, sales_person=request.user.id)
+    estimate_number_id = request.GET.get('estimate_number')
+    estimate = Estimate.objects.get(id=int(estimate_number_id))
+    note = get_object_or_404(Delivery, id=note_id, estimate_number__sales_person=request.user.id)
 
     if request.method == 'POST':
         form = DeliveryUploadForm(request.POST, request.FILES, instance=note)
+        print(form.errors)
         if form.is_valid():
             updated_note = form.save(commit=False)
-            updated_note.status = 'being_processed'
+            updated_note.estimate_number = estimate
+            updated_note.delivery_status = 'being_processed'
+            updated_note.sales_person = request.user
+            updated_note.estimate_number.status = 'delivered'
             updated_note.save()
             return JsonResponse({
                 'success': True,
-                'message': f"Signed note for Invoice {note.invoice_no} uploaded successfully.",
+                'message': f"Signed note for Invoice {note.delivery_note_number} uploaded successfully.",
                 'redirect_url': '/my-deliveries/'
             })
         else:
@@ -580,7 +586,7 @@ def upload_signed_note(request, note_id):
     
 @login_required
 def delivery_note_list(request):
-    delivery_notes = Delivery.objects.all().order_by('-date_goods_received')
+    delivery_notes = Delivery.objects.all().order_by('-id')
     return render(request, 'delivery_notes/list.html', {'delivery_notes': delivery_notes})
 
 def delivery_note_details(request, note_id):
@@ -617,6 +623,7 @@ def delivery_note_list_by_sales_person(request):
      
     if user_role == "sales officer": 
         delivery_notes = Delivery.objects.filter(estimate_number__sales_person=request.user)
+        
     else: 
         delivery_notes = Delivery.objects.none() 
 
@@ -632,7 +639,10 @@ def update_note_status(request):
     
     try:
         note = Delivery.objects.get(id=note_id)
-        note.status = status
+        estimate = note.estimate_number
+        estimate.status = 'delivered'
+        estimate.save()
+        note.delivery_status = status
         note.save()
         return JsonResponse({'success': True})
     except Delivery.DoesNotExist:

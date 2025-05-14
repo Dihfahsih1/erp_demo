@@ -445,11 +445,16 @@ class Delivery(models.Model):
     
     receiver_name = models.CharField(max_length=100, null=True, blank=True)
     receiver_contact = models.CharField(max_length=20, null=True, blank=True)
+    date_of_receipt = models.DateField(null=True, blank=True)
     date_goods_received = models.DateField(null=True, blank=True)
     dispatch_date = models.DateField(null=True, blank=True)
     delivery_status = models.CharField(max_length=20, null=True, blank=True, choices=Status.choices, default=Status.PENDING) 
  
-    sales_person = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
+    sales_person = models.ForeignKey(
+        Employee, 
+        on_delete=models.SET_NULL, 
+        null=True, blank=True)
+    
     delivery_person = models.ForeignKey(
         Employee,
         null=True,   

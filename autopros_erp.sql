@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: May 13, 2025 at 03:16 PM
+-- Generation Time: May 14, 2025 at 02:52 PM
 -- Server version: 11.4.5-MariaDB-1
 -- PHP Version: 8.4.5
 
@@ -20,8 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `autopros_erp`
 --
-CREATE DATABASE IF NOT EXISTS `autopros_erp` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_uca1400_ai_ci;
-USE `autopros_erp`;
 
 -- --------------------------------------------------------
 
@@ -220,7 +218,9 @@ INSERT INTO `django_admin_log` (`id`, `action_time`, `object_id`, `object_repr`,
 (27, '2025-05-13 13:52:00.354582', '8', 'sales', 1, '[{\"added\": {}}]', 1, 1),
 (28, '2025-05-13 13:52:43.719995', '4', 'Northern', 1, '[{\"added\": {}}]', 6, 1),
 (29, '2025-05-13 13:52:45.488075', '8', 'sales', 2, '[{\"changed\": {\"fields\": [\"First name\", \"Role\", \"Region of Operation\"]}}]', 1, 1),
-(30, '2025-05-13 14:12:41.430396', '1', 'Delivery DEL---19309093 - None', 2, '[{\"changed\": {\"fields\": [\"Estimate number\", \"Delivery note number\"]}}]', 3, 1);
+(30, '2025-05-13 14:12:41.430396', '1', 'Delivery DEL---19309093 - None', 2, '[{\"changed\": {\"fields\": [\"Estimate number\", \"Delivery note number\"]}}]', 3, 1),
+(31, '2025-05-14 09:12:33.297867', '8', 'davies', 2, '[{\"changed\": {\"fields\": [\"Username\"]}}]', 1, 1),
+(32, '2025-05-14 10:33:51.274535', '2', 'Delivery DEL-122 - None', 2, '[{\"changed\": {\"fields\": [\"Estimate number\"]}}]', 3, 1);
 
 -- --------------------------------------------------------
 
@@ -312,7 +312,14 @@ INSERT INTO `django_migrations` (`id`, `app`, `name`, `applied`) VALUES
 (32, 'auditlog', '0014_logentry_cid', '2025-05-13 13:30:42.384987'),
 (33, 'auditlog', '0015_alter_logentry_changes', '2025-05-13 13:30:42.508745'),
 (34, 'sessions', '0001_initial', '2025-05-13 13:30:42.540844'),
-(35, 'erp', '0002_remove_dispatch_authorized_by_and_more', '2025-05-13 15:15:24.589090');
+(35, 'erp', '0002_remove_dispatch_authorized_by_and_more', '2025-05-13 15:15:24.589090'),
+(36, 'erp', '0003_dispatch_dispatch_date', '2025-05-14 06:19:44.486204'),
+(37, 'erp', '0004_alter_estimate_status', '2025-05-14 06:53:01.423765'),
+(38, 'erp', '0005_delivery_dispatch_authorized_by_and_more', '2025-05-14 08:06:58.278526'),
+(39, 'erp', '0006_delivery_dispatch_date', '2025-05-14 09:25:46.093534'),
+(40, 'erp', '0007_remove_delivery_sales_person', '2025-05-14 10:25:34.429110'),
+(41, 'erp', '0008_delivery_sales_person', '2025-05-14 10:45:27.754672'),
+(42, 'erp', '0009_delivery_date_of_receipt', '2025-05-14 11:21:24.827014');
 
 -- --------------------------------------------------------
 
@@ -331,7 +338,7 @@ CREATE TABLE `django_session` (
 --
 
 INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES
-('11bq8es486zim0rqjefa66s3r62aigil', '.eJxVjDsOwjAQBe_iGlnxP6ak5wzW7nqDA8iW4qRC3B0ipYD2zcx7iQTbWtLWeUlzFmfhxOl3Q6AH1x3kO9Rbk9Tquswod0UetMtry_y8HO7fQYFevjUoi9lEsOAGRV5NHiloDZY46sg4KrbkYkR2yoNzYBAxjBMZDjYMRrw_8uo4LA:1uEqnw:N5WNF7v3fE1Ma0a3t0SBHiGC_0sLqOhU14luVq9BTBc', '2025-05-27 14:40:24.904706');
+('x55a2bt589qy7gh6u2vwysykeh5op9rc', '.eJxVjDsOwjAQBe_iGlnxP6ak5wzW7nqDA8iW4qRC3B0ipYD2zcx7iQTbWtLWeUlzFmfhxOl3Q6AH1x3kO9Rbk9Tquswod0UetMtry_y8HO7fQYFevjUoi9lEsOAGRV5NHiloDZY46sg4KrbkYkR2yoNzYBAxjBMZDjYMRrw_8uo4LA:1uFCbk:MTCG0X24hQRDowMjP0_iZucaqmDWYQYmqSgJ_9pQj58', '2025-05-28 13:57:16.153658');
 
 -- --------------------------------------------------------
 
@@ -369,7 +376,8 @@ CREATE TABLE `erp_customer` (
 --
 
 INSERT INTO `erp_customer` (`id`, `name_of_business`, `district`, `road_location`, `town_division`, `nearest_landmark`, `tel_1`, `tel_2`, `owner_name`, `owner_tel`, `next_of_kin`, `next_of_kin_tel`, `approved_by`, `prepared_by`, `prepared_date`, `remarks`, `location`, `certificate_of_incorporation`, `passport_photo`, `trading_license`, `national_id`, `date_filled`) VALUES
-(1, 'Muchuba Auto Spares Ltd', 'Gulu', 'nmri rd', 'gulu town', 'Stabex-RDw', '084840040443333', NULL, 'Opiyo Nicholas', '084980058', 'Ochaiya', '08495005800', NULL, NULL, '2025-05-15', '', 'North', 'documents/certificates/Logo.png', 'photos/passports/Logo.png', 'photos/license/Logo.png', 'photos/national_id/Logo.png', '2025-05-13 13:56:27.283295');
+(1, 'Muchuba Auto Spares Ltd', 'Gulu', 'nmri rd', 'gulu town', 'Stabex-RDw', '084840040443333', NULL, 'Opiyo Nicholas', '084980058', 'Ochaiya', '08495005800', NULL, NULL, '2025-05-15', '', 'North', 'documents/certificates/Logo.png', 'photos/passports/Logo.png', 'photos/license/Logo.png', 'photos/national_id/Logo.png', '2025-05-13 13:56:27.283295'),
+(2, 'Kawempe Motor Spares', 'Kampala', 'Mbogo Rd', 'Kawempe Central', 'mbogo mosque', '074848847', '0748494987', 'Muhammed', '0849005880', 'Nasif', '08857007599', NULL, NULL, '2025-05-13', 'New customer', 'Kawempe Mbogo, Kawempe, Kampala, Central Region, Uganda', 'documents/certificates/IMG_5102_HbFTWGZ.jpg', 'photos/passports/IMG_5102_KtdmMm5.jpg', 'photos/license/Screenshot_From_2025-04-29_16-45-54_LJ10sl8.png', 'photos/national_id/ant_9.jpg', '2025-05-14 11:39:16.817984');
 
 -- --------------------------------------------------------
 
@@ -385,22 +393,30 @@ CREATE TABLE `erp_delivery` (
   `receiver_contact` varchar(20) DEFAULT NULL,
   `date_goods_received` date DEFAULT NULL,
   `delivery_status` varchar(20) DEFAULT NULL,
-  `delivery_person` varchar(100) DEFAULT NULL,
+  `delivery_person_id` bigint(20) DEFAULT NULL,
   `remarks` longtext DEFAULT NULL,
   `image` varchar(100) DEFAULT NULL,
   `extracted_text` longtext DEFAULT NULL,
   `created_at` varchar(100) DEFAULT NULL,
   `updated_at` varchar(100) DEFAULT NULL,
   `estimate_number_id` bigint(20) DEFAULT NULL,
-  `sales_person_id` bigint(20) DEFAULT NULL
+  `dispatch_authorized_by_id` bigint(20) DEFAULT NULL,
+  `packaging_verified_by_id` bigint(20) DEFAULT NULL,
+  `dispatch_date` date DEFAULT NULL,
+  `sales_person_id` bigint(20) DEFAULT NULL,
+  `date_of_receipt` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 --
 -- Dumping data for table `erp_delivery`
 --
 
-INSERT INTO `erp_delivery` (`id`, `delivery_note_number`, `delivery_date`, `receiver_name`, `receiver_contact`, `date_goods_received`, `delivery_status`, `delivery_person`, `remarks`, `image`, `extracted_text`, `created_at`, `updated_at`, `estimate_number_id`, `sales_person_id`) VALUES
-(1, 'DEL---19309093', NULL, NULL, NULL, NULL, 'pending', '5', '', '', '', NULL, NULL, 1, 4);
+INSERT INTO `erp_delivery` (`id`, `delivery_note_number`, `delivery_date`, `receiver_name`, `receiver_contact`, `date_goods_received`, `delivery_status`, `delivery_person_id`, `remarks`, `image`, `extracted_text`, `created_at`, `updated_at`, `estimate_number_id`, `dispatch_authorized_by_id`, `packaging_verified_by_id`, `dispatch_date`, `sales_person_id`, `date_of_receipt`) VALUES
+(1, 'DEL---19309093', NULL, 'Martin', '0785243728', NULL, 'pending', NULL, '', 'delivery_notes/IMG_5102_KtdmMm5_hdSThv9.jpg', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(2, 'DEL-122', NULL, 'urwi9ore', '7y8oy8re', NULL, 'received', NULL, '', 'delivery_notes/IMG_5102_KtdmMm5_ipVw0Dc.jpg', '', NULL, NULL, 3, NULL, NULL, '2025-05-13', 8, NULL),
+(3, 'DEL-123EF', NULL, 'Sachin', NULL, NULL, 'received', NULL, '', 'delivery_notes/IMG_5102_KtdmMm5_hdSThv9_JJ24o8q.jpg', '', NULL, NULL, 4, NULL, NULL, NULL, 8, '2025-05-15'),
+(4, 'TODAY-DEL-NOTE', NULL, NULL, NULL, NULL, 'pending', 5, '', '', '', NULL, NULL, 5, 5, 5, '2025-05-14', 8, NULL),
+(5, 'DEL8739', NULL, NULL, NULL, NULL, 'pending', 6, '', '', '', NULL, NULL, NULL, 5, 4, '2025-05-15', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -448,8 +464,19 @@ CREATE TABLE `erp_dispatch` (
   `id` bigint(20) NOT NULL,
   `office_gate_pass` varchar(100) DEFAULT NULL,
   `store_gate_pass` varchar(100) DEFAULT NULL,
-  `estimate_number_id` bigint(20) DEFAULT NULL
+  `estimate_number_id` bigint(20) DEFAULT NULL,
+  `dispatch_date` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+--
+-- Dumping data for table `erp_dispatch`
+--
+
+INSERT INTO `erp_dispatch` (`id`, `office_gate_pass`, `store_gate_pass`, `estimate_number_id`, `dispatch_date`) VALUES
+(1, '5g54g', 'tgg4', 2, '2025-05-08'),
+(2, '893988973ee', 'dey037839', 4, '2025-05-14'),
+(3, 'TODAY-GATE-PASS-2', 'TODAY-GATE-PASS', 5, '2025-05-14'),
+(4, '83ye893e8', '87499uru', 6, '2025-05-13');
 
 -- --------------------------------------------------------
 
@@ -481,14 +508,14 @@ CREATE TABLE `erp_employee` (
 --
 
 INSERT INTO `erp_employee` (`id`, `password`, `last_login`, `is_superuser`, `username`, `first_name`, `last_name`, `email`, `is_staff`, `is_active`, `date_joined`, `phone`, `is_verified`, `department_id`, `region_of_operation_id`, `role_id`) VALUES
-(1, 'pbkdf2_sha256$390000$Cy3u530hpkn7cnDAKdQDff$xETmmHAwZp4G5U1HKGBY41mvj275Sq09U+CdnMDqTgg=', '2025-05-13 14:10:33.049653', 1, 'admin', '', '', '', 1, 1, '2025-05-13 13:34:03.152720', '', 0, NULL, NULL, NULL),
-(2, 'pbkdf2_sha256$390000$vutHk9XebuTTuTnyrBxqJe$cde9HbGDxBd6/rhkKRRkj3Zd9axJMTH+tPPxZOnPuYQ=', '2025-05-13 14:20:53.801939', 0, 'estimates', 'Jolly', '', '', 0, 1, '2025-05-13 13:41:06.695663', '', 0, 1, 1, 1),
-(3, 'pbkdf2_sha256$390000$0ge24fRi4iectOn4wz83Yc$GV+RG7TwrSVNw0VIEnCiDQeaY4G1Q86Ekfh5RS7mzjc=', '2025-05-13 14:28:14.493514', 0, 'outstanding', 'Scovia', '', '', 0, 1, '2025-05-13 13:43:05.329088', '', 0, 3, 1, 4),
-(4, 'pbkdf2_sha256$390000$v5E1iv0FLz0yiL229jY5ks$RW3vlHOYiPGzCrc0EEOCrqtYiYmQJ6liF99JQssXhL0=', '2025-05-13 14:29:03.025948', 0, 'billing', 'Maria', '', '', 0, 1, '2025-05-13 13:45:09.586899', '', 0, 4, 1, 5),
-(5, 'pbkdf2_sha256$390000$XOJfhfYqNXomz3DhY52aGc$3YHAMJ3YidMG+3DnoPtpJRusRJVCly+xj7eXwa0BCkY=', '2025-05-13 14:40:24.902371', 0, 'delivery', 'Ali', '', '', 0, 1, '2025-05-13 13:46:21.040539', '', 0, 4, 1, 6),
-(6, 'pbkdf2_sha256$390000$NURtR93txiVLYJOe4ZEVAA$g4x4QSPRyLaIRV1sI+sErK9f0NEHge57xFzORzFrPxI=', NULL, 0, 'dispatch', 'Yma', '', '', 0, 1, '2025-05-13 13:47:45.327171', '', 0, 4, 1, 7),
-(7, 'pbkdf2_sha256$390000$T6dvNp8mWYTnnqKuRExibr$S1VKJPtrHuzgb28jfPd2rXHoRIJAxYJHz01iBH3yU5Q=', '2025-05-13 13:53:26.337434', 0, 'crm', 'Christine', '', '', 0, 1, '2025-05-13 13:50:36.576003', '', 0, 1, 1, 2),
-(8, 'pbkdf2_sha256$390000$ithvEVrgEfUeNSx7GZJvji$T42WN68swkSmMxELeOmNTivOfawcTCuGuq94t29vmKc=', NULL, 0, 'sales', 'Davies', '', '', 0, 1, '2025-05-13 13:52:00.229119', '', 0, 2, 4, 3);
+(1, 'pbkdf2_sha256$390000$Cy3u530hpkn7cnDAKdQDff$xETmmHAwZp4G5U1HKGBY41mvj275Sq09U+CdnMDqTgg=', '2025-05-14 10:21:24.445655', 1, 'admin', '', '', '', 1, 1, '2025-05-13 13:34:03.152720', '', 0, NULL, NULL, NULL),
+(2, 'pbkdf2_sha256$390000$vutHk9XebuTTuTnyrBxqJe$cde9HbGDxBd6/rhkKRRkj3Zd9axJMTH+tPPxZOnPuYQ=', '2025-05-14 13:39:16.821348', 0, 'estimates', 'Jolly', '', '', 0, 1, '2025-05-13 13:41:06.695663', '', 0, 1, 1, 1),
+(3, 'pbkdf2_sha256$390000$0ge24fRi4iectOn4wz83Yc$GV+RG7TwrSVNw0VIEnCiDQeaY4G1Q86Ekfh5RS7mzjc=', '2025-05-14 13:40:48.701283', 0, 'outstanding', 'Scovia', '', '', 0, 1, '2025-05-13 13:43:05.329088', '', 0, 3, 1, 4),
+(4, 'pbkdf2_sha256$390000$v5E1iv0FLz0yiL229jY5ks$RW3vlHOYiPGzCrc0EEOCrqtYiYmQJ6liF99JQssXhL0=', '2025-05-14 13:43:25.304681', 0, 'billing', 'Maria', '', '', 0, 1, '2025-05-13 13:45:09.586899', '', 0, 4, 1, 5),
+(5, 'pbkdf2_sha256$390000$XOJfhfYqNXomz3DhY52aGc$3YHAMJ3YidMG+3DnoPtpJRusRJVCly+xj7eXwa0BCkY=', '2025-05-14 13:57:16.151809', 0, 'delivery', 'Ali', '', '', 0, 1, '2025-05-13 13:46:21.040539', '', 0, 4, 1, 6),
+(6, 'pbkdf2_sha256$390000$NURtR93txiVLYJOe4ZEVAA$g4x4QSPRyLaIRV1sI+sErK9f0NEHge57xFzORzFrPxI=', '2025-05-14 13:44:31.138119', 0, 'dispatch', 'Yma', '', '', 0, 1, '2025-05-13 13:47:45.327171', '', 0, 4, 1, 7),
+(7, 'pbkdf2_sha256$390000$T6dvNp8mWYTnnqKuRExibr$S1VKJPtrHuzgb28jfPd2rXHoRIJAxYJHz01iBH3yU5Q=', '2025-05-14 11:36:40.114920', 0, 'crm', 'Christine', '', '', 0, 1, '2025-05-13 13:50:36.576003', '', 0, 1, 1, 2),
+(8, 'pbkdf2_sha256$390000$ithvEVrgEfUeNSx7GZJvji$T42WN68swkSmMxELeOmNTivOfawcTCuGuq94t29vmKc=', '2025-05-14 13:54:15.056967', 0, 'davies', 'Davies', '', '', 0, 1, '2025-05-13 13:52:00.229119', '', 0, 2, 4, 3);
 
 -- --------------------------------------------------------
 
@@ -543,8 +570,12 @@ CREATE TABLE `erp_estimate` (
 --
 
 INSERT INTO `erp_estimate` (`id`, `created_date`, `bk_estimate_id`, `amount`, `status`, `created_at`, `updated_at`, `invoice_number`, `invoice_amount`, `date_verified`, `date_billed`, `billing_officer_id`, `customer_name_id`, `sales_person_id`, `verified_by_id`) VALUES
-(1, '2025-05-14', 'EST-2025-0001', 200000.00, 'dispatched', '2025-05-13 14:04:37.968834', '2025-05-13 14:07:36.956088', 'INV-1039', 2400000.00, '2025-05-13', '2025-05-13', 4, 1, 8, 3),
-(2, '2025-05-14', 'EST-2025-0002', 300000.00, 'billed', '2025-05-13 14:21:21.529016', '2025-05-13 14:30:23.852400', 'INV-208393', 2039489.00, '2025-05-13', '2025-05-13', 4, 1, 8, 3);
+(1, '2025-05-14', 'EST-2025-0001', 200000.00, 'delivered', '2025-05-13 14:04:37.968834', '2025-05-13 14:07:36.956088', 'INV-1039', 2400000.00, '2025-05-13', '2025-05-13', 4, 1, 8, 3),
+(2, '2025-05-14', 'EST-2025-0002', 300000.00, 'delivered', '2025-05-13 14:21:21.529016', '2025-05-14 08:19:23.733210', 'INV-208393', 2039489.00, '2025-05-13', '2025-05-13', 4, 1, 8, 3),
+(3, '2025-05-15', 'EST-2025-0003', 30000000.00, 'delivered', '2025-05-14 06:08:49.894930', '2025-05-14 06:22:16.388512', 'INVO-123', 2000000.00, '2025-05-14', '2025-05-14', 4, 1, 8, 3),
+(4, '2025-05-14', 'EST-2025-0004', 3000000.00, 'delivered', '2025-05-14 11:55:25.362106', '2025-05-14 13:58:05.879474', 'INV-1000', 2000000.00, '2025-05-14', '2025-05-14', 4, 2, 8, 3),
+(5, '2025-05-15', 'EST-2025-0005', 1000000.00, 'dispatched', '2025-05-14 12:26:47.974709', '2025-05-14 12:36:24.612136', 'TODAY INV', 200000.00, '2025-05-14', '2025-05-14', 4, 2, 8, 3),
+(6, '2025-05-14', '5636287', 500000.00, 'dispatched', '2025-05-14 13:40:05.849331', '2025-05-14 13:52:57.072181', 'INV 038984', 400000.00, '2025-05-14', '2025-05-14', 4, 2, 8, 3);
 
 -- --------------------------------------------------------
 
@@ -743,6 +774,9 @@ ALTER TABLE `erp_customer`
 ALTER TABLE `erp_delivery`
   ADD PRIMARY KEY (`id`),
   ADD KEY `erp_delivery_estimate_number_id_5617a4f0_fk_erp_estimate_id` (`estimate_number_id`),
+  ADD KEY `erp_delivery_dispatch_authorized__7e9f0825_fk_erp_emplo` (`dispatch_authorized_by_id`),
+  ADD KEY `erp_delivery_packaging_verified_b_10f9db7e_fk_erp_emplo` (`packaging_verified_by_id`),
+  ADD KEY `erp_delivery_delivery_person_id_cd0341e7` (`delivery_person_id`),
   ADD KEY `erp_delivery_sales_person_id_a52a2dbc_fk_erp_employee_id` (`sales_person_id`);
 
 --
@@ -888,7 +922,7 @@ ALTER TABLE `auth_permission`
 -- AUTO_INCREMENT for table `django_admin_log`
 --
 ALTER TABLE `django_admin_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `django_content_type`
@@ -900,19 +934,19 @@ ALTER TABLE `django_content_type`
 -- AUTO_INCREMENT for table `django_migrations`
 --
 ALTER TABLE `django_migrations`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
 
 --
 -- AUTO_INCREMENT for table `erp_customer`
 --
 ALTER TABLE `erp_customer`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `erp_delivery`
 --
 ALTER TABLE `erp_delivery`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `erp_deliveryitem`
@@ -930,7 +964,7 @@ ALTER TABLE `erp_department`
 -- AUTO_INCREMENT for table `erp_dispatch`
 --
 ALTER TABLE `erp_dispatch`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `erp_employee`
@@ -954,7 +988,7 @@ ALTER TABLE `erp_employee_user_permissions`
 -- AUTO_INCREMENT for table `erp_estimate`
 --
 ALTER TABLE `erp_estimate`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `erp_estimateitem`
@@ -1033,7 +1067,10 @@ ALTER TABLE `django_admin_log`
 -- Constraints for table `erp_delivery`
 --
 ALTER TABLE `erp_delivery`
+  ADD CONSTRAINT `erp_delivery_delivery_person_id_cd0341e7_fk_erp_employee_id` FOREIGN KEY (`delivery_person_id`) REFERENCES `erp_employee` (`id`),
+  ADD CONSTRAINT `erp_delivery_dispatch_authorized__7e9f0825_fk_erp_emplo` FOREIGN KEY (`dispatch_authorized_by_id`) REFERENCES `erp_employee` (`id`),
   ADD CONSTRAINT `erp_delivery_estimate_number_id_5617a4f0_fk_erp_estimate_id` FOREIGN KEY (`estimate_number_id`) REFERENCES `erp_estimate` (`id`),
+  ADD CONSTRAINT `erp_delivery_packaging_verified_b_10f9db7e_fk_erp_emplo` FOREIGN KEY (`packaging_verified_by_id`) REFERENCES `erp_employee` (`id`),
   ADD CONSTRAINT `erp_delivery_sales_person_id_a52a2dbc_fk_erp_employee_id` FOREIGN KEY (`sales_person_id`) REFERENCES `erp_employee` (`id`);
 
 --
@@ -1106,450 +1143,6 @@ ALTER TABLE `erp_storesreconciliation`
 ALTER TABLE `erp_verification`
   ADD CONSTRAINT `erp_verification_estimate_id_b8c99898_fk_erp_estimate_id` FOREIGN KEY (`estimate_id`) REFERENCES `erp_estimate` (`id`),
   ADD CONSTRAINT `erp_verification_verified_by_id_b5516b77_fk_erp_employee_id` FOREIGN KEY (`verified_by_id`) REFERENCES `erp_employee` (`id`);
---
--- Database: `phpmyadmin`
---
-CREATE DATABASE IF NOT EXISTS `phpmyadmin` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_uca1400_ai_ci;
-USE `phpmyadmin`;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pma__bookmark`
---
-
-CREATE TABLE `pma__bookmark` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `dbase` varchar(255) NOT NULL DEFAULT '',
-  `user` varchar(255) NOT NULL DEFAULT '',
-  `label` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT '',
-  `query` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin COMMENT='Bookmarks';
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pma__central_columns`
---
-
-CREATE TABLE `pma__central_columns` (
-  `db_name` varchar(64) NOT NULL,
-  `col_name` varchar(64) NOT NULL,
-  `col_type` varchar(64) NOT NULL,
-  `col_length` text DEFAULT NULL,
-  `col_collation` varchar(64) NOT NULL,
-  `col_isNull` tinyint(1) NOT NULL,
-  `col_extra` varchar(255) DEFAULT '',
-  `col_default` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin COMMENT='Central list of columns';
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pma__column_info`
---
-
-CREATE TABLE `pma__column_info` (
-  `id` int(5) UNSIGNED NOT NULL,
-  `db_name` varchar(64) NOT NULL DEFAULT '',
-  `table_name` varchar(64) NOT NULL DEFAULT '',
-  `column_name` varchar(64) NOT NULL DEFAULT '',
-  `comment` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT '',
-  `mimetype` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT '',
-  `transformation` varchar(255) NOT NULL DEFAULT '',
-  `transformation_options` varchar(255) NOT NULL DEFAULT '',
-  `input_transformation` varchar(255) NOT NULL DEFAULT '',
-  `input_transformation_options` varchar(255) NOT NULL DEFAULT ''
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin COMMENT='Column information for phpMyAdmin';
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pma__designer_settings`
---
-
-CREATE TABLE `pma__designer_settings` (
-  `username` varchar(64) NOT NULL,
-  `settings_data` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin COMMENT='Settings related to Designer';
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pma__export_templates`
---
-
-CREATE TABLE `pma__export_templates` (
-  `id` int(5) UNSIGNED NOT NULL,
-  `username` varchar(64) NOT NULL,
-  `export_type` varchar(10) NOT NULL,
-  `template_name` varchar(64) NOT NULL,
-  `template_data` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin COMMENT='Saved export templates';
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pma__favorite`
---
-
-CREATE TABLE `pma__favorite` (
-  `username` varchar(64) NOT NULL,
-  `tables` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin COMMENT='Favorite tables';
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pma__history`
---
-
-CREATE TABLE `pma__history` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `username` varchar(64) NOT NULL DEFAULT '',
-  `db` varchar(64) NOT NULL DEFAULT '',
-  `table` varchar(64) NOT NULL DEFAULT '',
-  `timevalue` timestamp NOT NULL DEFAULT current_timestamp(),
-  `sqlquery` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin COMMENT='SQL history for phpMyAdmin';
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pma__navigationhiding`
---
-
-CREATE TABLE `pma__navigationhiding` (
-  `username` varchar(64) NOT NULL,
-  `item_name` varchar(64) NOT NULL,
-  `item_type` varchar(64) NOT NULL,
-  `db_name` varchar(64) NOT NULL,
-  `table_name` varchar(64) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin COMMENT='Hidden items of navigation tree';
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pma__pdf_pages`
---
-
-CREATE TABLE `pma__pdf_pages` (
-  `db_name` varchar(64) NOT NULL DEFAULT '',
-  `page_nr` int(10) UNSIGNED NOT NULL,
-  `page_descr` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT ''
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin COMMENT='PDF relation pages for phpMyAdmin';
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pma__recent`
---
-
-CREATE TABLE `pma__recent` (
-  `username` varchar(64) NOT NULL,
-  `tables` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin COMMENT='Recently accessed tables';
-
---
--- Dumping data for table `pma__recent`
---
-
-INSERT INTO `pma__recent` (`username`, `tables`) VALUES
-('root', '[{\"db\":\"autopros_erp\",\"table\":\"erp_customer\"},{\"db\":\"autopros_erp\",\"table\":\"erp_userrole\"},{\"db\":\"autopros_erp\",\"table\":\"erp_delivery\"},{\"db\":\"autopros_erp\",\"table\":\"erp_employee\"},{\"db\":\"autopros_erp\",\"table\":\"erp_dispatch\"},{\"db\":\"autopros_erp\",\"table\":\"erp_deliverynote\"},{\"db\":\"autopros_erp\",\"table\":\"erp_department\"},{\"db\":\"autopros_erp\",\"table\":\"erp_estimate\"}]');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pma__relation`
---
-
-CREATE TABLE `pma__relation` (
-  `master_db` varchar(64) NOT NULL DEFAULT '',
-  `master_table` varchar(64) NOT NULL DEFAULT '',
-  `master_field` varchar(64) NOT NULL DEFAULT '',
-  `foreign_db` varchar(64) NOT NULL DEFAULT '',
-  `foreign_table` varchar(64) NOT NULL DEFAULT '',
-  `foreign_field` varchar(64) NOT NULL DEFAULT ''
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin COMMENT='Relation table';
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pma__savedsearches`
---
-
-CREATE TABLE `pma__savedsearches` (
-  `id` int(5) UNSIGNED NOT NULL,
-  `username` varchar(64) NOT NULL DEFAULT '',
-  `db_name` varchar(64) NOT NULL DEFAULT '',
-  `search_name` varchar(64) NOT NULL DEFAULT '',
-  `search_data` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin COMMENT='Saved searches';
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pma__table_coords`
---
-
-CREATE TABLE `pma__table_coords` (
-  `db_name` varchar(64) NOT NULL DEFAULT '',
-  `table_name` varchar(64) NOT NULL DEFAULT '',
-  `pdf_page_number` int(11) NOT NULL DEFAULT 0,
-  `x` float UNSIGNED NOT NULL DEFAULT 0,
-  `y` float UNSIGNED NOT NULL DEFAULT 0
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin COMMENT='Table coordinates for phpMyAdmin PDF output';
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pma__table_info`
---
-
-CREATE TABLE `pma__table_info` (
-  `db_name` varchar(64) NOT NULL DEFAULT '',
-  `table_name` varchar(64) NOT NULL DEFAULT '',
-  `display_field` varchar(64) NOT NULL DEFAULT ''
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin COMMENT='Table information for phpMyAdmin';
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pma__table_uiprefs`
---
-
-CREATE TABLE `pma__table_uiprefs` (
-  `username` varchar(64) NOT NULL,
-  `db_name` varchar(64) NOT NULL,
-  `table_name` varchar(64) NOT NULL,
-  `prefs` text NOT NULL,
-  `last_update` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin COMMENT='Tables'' UI preferences';
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pma__tracking`
---
-
-CREATE TABLE `pma__tracking` (
-  `db_name` varchar(64) NOT NULL,
-  `table_name` varchar(64) NOT NULL,
-  `version` int(10) UNSIGNED NOT NULL,
-  `date_created` datetime NOT NULL,
-  `date_updated` datetime NOT NULL,
-  `schema_snapshot` text NOT NULL,
-  `schema_sql` text DEFAULT NULL,
-  `data_sql` longtext DEFAULT NULL,
-  `tracking` set('UPDATE','REPLACE','INSERT','DELETE','TRUNCATE','CREATE DATABASE','ALTER DATABASE','DROP DATABASE','CREATE TABLE','ALTER TABLE','RENAME TABLE','DROP TABLE','CREATE INDEX','DROP INDEX','CREATE VIEW','ALTER VIEW','DROP VIEW') DEFAULT NULL,
-  `tracking_active` int(1) UNSIGNED NOT NULL DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin COMMENT='Database changes tracking for phpMyAdmin';
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pma__userconfig`
---
-
-CREATE TABLE `pma__userconfig` (
-  `username` varchar(64) NOT NULL,
-  `timevalue` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `config_data` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin COMMENT='User preferences storage for phpMyAdmin';
-
---
--- Dumping data for table `pma__userconfig`
---
-
-INSERT INTO `pma__userconfig` (`username`, `timevalue`, `config_data`) VALUES
-('root', '2025-05-13 15:16:19', '{\"Console\\/Mode\":\"collapse\"}');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pma__usergroups`
---
-
-CREATE TABLE `pma__usergroups` (
-  `usergroup` varchar(64) NOT NULL,
-  `tab` varchar(64) NOT NULL,
-  `allowed` enum('Y','N') NOT NULL DEFAULT 'N'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin COMMENT='User groups with configured menu items';
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pma__users`
---
-
-CREATE TABLE `pma__users` (
-  `username` varchar(64) NOT NULL,
-  `usergroup` varchar(64) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin COMMENT='Users and their assignments to user groups';
-
---
--- Indexes for dumped tables
---
-
---
--- Indexes for table `pma__bookmark`
---
-ALTER TABLE `pma__bookmark`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `pma__central_columns`
---
-ALTER TABLE `pma__central_columns`
-  ADD PRIMARY KEY (`db_name`,`col_name`);
-
---
--- Indexes for table `pma__column_info`
---
-ALTER TABLE `pma__column_info`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `db_name` (`db_name`,`table_name`,`column_name`);
-
---
--- Indexes for table `pma__designer_settings`
---
-ALTER TABLE `pma__designer_settings`
-  ADD PRIMARY KEY (`username`);
-
---
--- Indexes for table `pma__export_templates`
---
-ALTER TABLE `pma__export_templates`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `u_user_type_template` (`username`,`export_type`,`template_name`);
-
---
--- Indexes for table `pma__favorite`
---
-ALTER TABLE `pma__favorite`
-  ADD PRIMARY KEY (`username`);
-
---
--- Indexes for table `pma__history`
---
-ALTER TABLE `pma__history`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `username` (`username`,`db`,`table`,`timevalue`);
-
---
--- Indexes for table `pma__navigationhiding`
---
-ALTER TABLE `pma__navigationhiding`
-  ADD PRIMARY KEY (`username`,`item_name`,`item_type`,`db_name`,`table_name`);
-
---
--- Indexes for table `pma__pdf_pages`
---
-ALTER TABLE `pma__pdf_pages`
-  ADD PRIMARY KEY (`page_nr`),
-  ADD KEY `db_name` (`db_name`);
-
---
--- Indexes for table `pma__recent`
---
-ALTER TABLE `pma__recent`
-  ADD PRIMARY KEY (`username`);
-
---
--- Indexes for table `pma__relation`
---
-ALTER TABLE `pma__relation`
-  ADD PRIMARY KEY (`master_db`,`master_table`,`master_field`),
-  ADD KEY `foreign_field` (`foreign_db`,`foreign_table`);
-
---
--- Indexes for table `pma__savedsearches`
---
-ALTER TABLE `pma__savedsearches`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `u_savedsearches_username_dbname` (`username`,`db_name`,`search_name`);
-
---
--- Indexes for table `pma__table_coords`
---
-ALTER TABLE `pma__table_coords`
-  ADD PRIMARY KEY (`db_name`,`table_name`,`pdf_page_number`);
-
---
--- Indexes for table `pma__table_info`
---
-ALTER TABLE `pma__table_info`
-  ADD PRIMARY KEY (`db_name`,`table_name`);
-
---
--- Indexes for table `pma__table_uiprefs`
---
-ALTER TABLE `pma__table_uiprefs`
-  ADD PRIMARY KEY (`username`,`db_name`,`table_name`);
-
---
--- Indexes for table `pma__tracking`
---
-ALTER TABLE `pma__tracking`
-  ADD PRIMARY KEY (`db_name`,`table_name`,`version`);
-
---
--- Indexes for table `pma__userconfig`
---
-ALTER TABLE `pma__userconfig`
-  ADD PRIMARY KEY (`username`);
-
---
--- Indexes for table `pma__usergroups`
---
-ALTER TABLE `pma__usergroups`
-  ADD PRIMARY KEY (`usergroup`,`tab`,`allowed`);
-
---
--- Indexes for table `pma__users`
---
-ALTER TABLE `pma__users`
-  ADD PRIMARY KEY (`username`,`usergroup`);
-
---
--- AUTO_INCREMENT for dumped tables
---
-
---
--- AUTO_INCREMENT for table `pma__bookmark`
---
-ALTER TABLE `pma__bookmark`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `pma__column_info`
---
-ALTER TABLE `pma__column_info`
-  MODIFY `id` int(5) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `pma__export_templates`
---
-ALTER TABLE `pma__export_templates`
-  MODIFY `id` int(5) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `pma__history`
---
-ALTER TABLE `pma__history`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `pma__pdf_pages`
---
-ALTER TABLE `pma__pdf_pages`
-  MODIFY `page_nr` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `pma__savedsearches`
---
-ALTER TABLE `pma__savedsearches`
-  MODIFY `id` int(5) UNSIGNED NOT NULL AUTO_INCREMENT;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

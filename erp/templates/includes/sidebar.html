@@ -83,7 +83,7 @@
               </li>
           {% endif %}
           {% endif %}  
-          {% if request.user.role and request.user.role.name == 'CRM Officer' or request.user.role.name == 'Estimates Officer' or request.user.role.name == 'Billing Officer' or request.user.role.name == 'Credit Officer' or request.user.role.name == 'Delivery Officer' %}
+          {% if request.user.role and request.user.role.name == 'CRM Officer' or request.user.role.name == 'Estimates Officer' or request.user.role.name == 'Billing Officer' or request.user.role.name == 'Credit Officer' or request.user.role.name == 'Dispatch Officer' %}
           <li class="nav-item">
             <a href="{% url 'list_estimates' %}" class="nav-link">
               <i class="nav-icon bi bi-list-ul"></i>

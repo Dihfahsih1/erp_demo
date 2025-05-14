@@ -42,7 +42,7 @@
                 <td>{{ estimate.billing_officer.get_full_name|default:estimate.billing_officer.username }}</td>
 
                 <td>
-                  {% if request.user.role.name == "Delivery Officer" and estimate.status == "billed" %}
+                  {% if request.user.role.name == "Dispatch Officer" and estimate.status == "billed" %}
                     <button type="button"
                       class="btn btn-outline-primary"
                       data-bs-target="#dispatchModal{{ estimate.id }}"
@@ -57,7 +57,7 @@
                     </span>
                   {% endif %}
 
-                  {% if request.user.role.name == "Dipatch Officer" and estimate.status == "packaged" %}
+                  {% if request.user.role.name == "Delivery Officer" and estimate.status == "packaged" %}
                     <button type="button"
                       class="btn btn-outline-primary"
                       data-bs-target="#deliveryNoteModal{{ estimate.id }}"
@@ -65,11 +65,11 @@
                       data-bs-dismiss="modal">   Create Delivery Details
                     </button>
 
-                    {% else %}
+                    {% comment %} {% else %}
 
                     <span style="color: black;" class="badge bg-{{ estimate.get_status_badge_color }}">
                       {{ estimate.get_status_display }}
-                    </span>
+                    </span> {% endcomment %}
                   {% endif %}
 
                </td>
@@ -154,8 +154,12 @@
                         </div>
                         <div class="mb-3">
                           <label>Office Gate Pass</label>
-                          <input type="date" name="office_gate_pass" class="form-control" required>
+                          <input type="text" name="office_gate_pass" class="form-control" required>
                         </div> 
+                        <div class="mb-3">
+                          <label>Date of Dispatch</label>
+                          <input type="date" name="dispatch_date" class="form-control" required>
+                        </div>
                       </div>
               
                       <div class="modal-footer">

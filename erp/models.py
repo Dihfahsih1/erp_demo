@@ -396,6 +396,7 @@ class Dispatch(models.Model):
     
     office_gate_pass = models.CharField(max_length=100, null=True, blank=True)
     store_gate_pass = models.CharField(max_length=100, null=True, blank=True)  
+    dispatch_date = models.DateField(null=True, blank=True)
   
     def __str__(self):
         return f"Dispatch for {self.customer_name} - {self.invoice_no}"

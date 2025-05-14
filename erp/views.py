@@ -243,7 +243,7 @@ def all_billed_estimates(request):
     delivery_persons = Employee.objects.filter(department__name='Stores')
     packaging_verified_by = Employee.objects.filter(department__name='Stores')
     delivery_authorization = Employee.objects.filter(department__name='Stores')
-    billed_estimates = Estimate.objects.filter(status='billed').order_by('-date_billed')
+    billed_estimates = Estimate.objects.filter(status__in=['billed', 'dispatchready', 'dispatched']).order_by('-date_billed')
   
     return render(request, 'billed_estimates_list.html', 
                   {'billed_estimates': billed_estimates,
@@ -500,18 +500,13 @@ def verify_dispatch(request, dispatch_id):
         'now': timezone.now().strftime("%Y-%m-%d %H:%M"),
     }
     return render(request, 'verify_dispatch.html', context)
-
-
-
-
-
+ 
 @require_POST
 def confirm_delivery(request, pk):
     note = get_object_or_404(Delivery, pk=pk)
     note.status = 'confirmed'
     note.save()
     return JsonResponse({'success': True})
-
 
 
 sales_exec_role = UserRole.objects.filter(name='Sales Executive').first()
@@ -525,10 +520,9 @@ def create_delivery_note(request,pk):
         if form.is_valid():
             delivery_note = form.save(commit=False)
             delivery_note.estimate = estimate
-            delivery_note.delivery_status = 'pending'
             delivery_note.save() 
             estimate.delivery_note = delivery_note
-            estimate.status = 'in-transit'
+            estimate.status = 'dispatched'
             estimate.save()
             messages.success(request, "Delivery note created successfully.")
             return redirect('delivery_note_list')
@@ -536,23 +530,24 @@ def create_delivery_note(request,pk):
     messages.error(request, "Invalid request.")
     return redirect('delivery_estimates')
 
-@login_required
-def create_dispatch_details(request,pk):
-    estimate = get_object_or_404(Estimate, pk=pk)
-
+@csrf_exempt
+def create_dispatch_details(request, pk):
     if request.method == 'POST':
-        form=DispatchForm(request.POST) 
+        form = DispatchForm(request.POST)
         if form.is_valid():
             dispatch = form.save(commit=False)
-            dispatch.estimate = estimate   
-            estimate.status = 'packaged'
+            estimate = get_object_or_404(Estimate, pk=pk)
+            dispatch.estimate_number = estimate
+            dispatch.save()
+            estimate.status = 'dispatchready'
             estimate.save()
-            messages.success(request, "Dispatch Details created successfully.")
-            return redirect('delivery_note_list')
-           
-    messages.error(request, "Invalid request.")
-    return redirect('delivery_estimates')
 
+            return redirect("billed_estimates_list")
+        else:
+            print("❌ Form validation failed:", form.errors)
+            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+
+    return JsonResponse({'status': 'invalid method'}, status=405)
 
 @login_required
 def upload_signed_note(request, note_id):
@@ -616,23 +611,19 @@ def confirm_delivery_note(request, pk):
     
     return render(request, 'delivery_notes/confirm.html', {'form': form, 'note': note})
 
-
-
 @login_required
 def delivery_note_list_by_sales_person(request):
     user_role = request.user.role.name.lower() if request.user.role else ""
      
     if user_role == "sales officer": 
-        delivery_notes = Delivery.objects.filter(sales_person=request.user)
+        delivery_notes = Delivery.objects.filter(estimate_number__sales_person=request.user)
     else: 
         delivery_notes = Delivery.objects.none() 
 
     return render(request, 'delivery_notes/sales_person_list.html', {
         'delivery_notes': delivery_notes
     })
-    
-    
-
+ 
 @require_POST
 @csrf_exempt  # Only use this if you're having CSRF issues - better to properly handle CSRF
 def update_note_status(request):

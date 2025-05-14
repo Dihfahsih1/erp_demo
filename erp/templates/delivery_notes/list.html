@@ -25,19 +25,16 @@
         {% for note in delivery_notes %}
         <tr id="note-row-{{ note.id }}">
             <td>{{ note.delivery_note_number }}</td>
-            <td>{{ note.invoice_no }}</td>
-            <td>{{ note.customer_name }}</td>
-            <td>{{ note.delivery_person }}</td>
-            <td>{{ note.receiver_name }}</td>
+            <td>{{ note.estimate_number }}</td>
+            <td>{{ note.estimate_number.customer_name }}</td>
+            <td>{{ note.delivery_person.first_name }}</td>
+            <td>{{ note.receiver_name|default:"----" }}</td>
+
             <td>{{ note.date_goods_received|date:"Y-m-d" }}</td>
             <td class="status-cell">
-                <span class="badge 
-                    {% if note.status == 'received' %}bg-success
-                    {% elif note.status == 'being_processed' %}bg-info
-                    {% elif note.status == 'rejected' %}bg-danger
-                    {% else %}bg-warning{% endif %}">
-                    {{ note.get_status_display }}
-                </span>
+                <span style="color: black;" class="badge bg-{{ note.get_status_badge_color }}">
+                    {{ note.delivery_status }}
+                  </span>
             </td> 
             <td>
                 {% if note.image %}

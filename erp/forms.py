@@ -70,12 +70,12 @@ class DeliveryUploadForm(forms.ModelForm):
     
     exclude = ['created_at', 'updated_at']
 class DeliveryForm(forms.ModelForm):
-    
-
     class Meta:
         model = Delivery
         fields = "__all__"
         exclude = ['created_at', 'updated_at']
+        
+        
 class EstimateForm(forms.ModelForm):
     # customer_name = forms.ModelChoiceField(
     #     queryset=Customer.objects.all(),

@@ -57,19 +57,13 @@
                     </span>
                   {% endif %}
 
-                  {% if request.user.role.name == "Delivery Officer" and estimate.status == "packaged" %}
+                  {% if request.user.role.name == "Delivery Officer" and estimate.status == "dispatchready" %}
                     <button type="button"
                       class="btn btn-outline-primary"
                       data-bs-target="#deliveryNoteModal{{ estimate.id }}"
                       data-bs-toggle="modal"
                       data-bs-dismiss="modal">   Create Delivery Details
-                    </button>
-
-                    {% comment %} {% else %}
-
-                    <span style="color: black;" class="badge bg-{{ estimate.get_status_badge_color }}">
-                      {{ estimate.get_status_display }}
-                    </span> {% endcomment %}
+                    </button> 
                   {% endif %}
 
                </td>
@@ -101,7 +95,7 @@
                           <select name="delivery_person" class="form-select" required>
                             {% for emp in delivery_persons %}
                             <p>{{ emp }}</p>
-                              <option value="{{ emp.id }}">{{ emp.name }}</option>
+                              <option value="{{ emp.id }}">{{ emp.first_name }}</option>
                             {% endfor %}
                           </select>
                         </div>
@@ -110,7 +104,7 @@
                           <label>Packaging Verified By</label>
                           <select name="packaging_verified_by" class="form-select" required>
                             {% for emp in packaging_verified_by %}
-                              <option value="{{ emp.id }}">{{ emp.name }}</option>
+                              <option value="{{ emp.id }}">{{ emp.first_name }}</option>
                             {% endfor %}
                           </select>
                         </div>
@@ -119,7 +113,7 @@
                           <label>Authorized By</label>
                           <select name="dispatch_authorized_by" class="form-select" required>
                             {% for emp in delivery_authorization %}
-                              <option value="{{ emp.id }}">{{ emp.name }}</option>
+                              <option value="{{ emp.id }}">{{ emp.first_name }}</option>
                             {% endfor %}
                           </select>
                         </div>
@@ -127,7 +121,7 @@
               
                       <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success">Generate Note</button>
+                        <button type="submit" class="btn btn-success">Create Details</button>
                       </div>
                     </form>
                   </div>
@@ -138,7 +132,7 @@
               <div class="modal fade" id="dispatchModal{{ estimate.id }}" tabindex="-1" aria-labelledby="dispatchLabel{{ estimate.id }}" aria-hidden="true">
                 <div class="modal-dialog">
                   <div class="modal-content">
-                    <form method="POST" action="{% url 'create_dispatch_details' estimate.id %}">
+                    <form method="POST"  action="{% url 'create_dispatch_details' estimate.id %}">
                       {% csrf_token %}
                       <div class="modal-header">
                         <h5 class="modal-title" id="deliveryNoteLabel{{ estimate.id }}">Create Dispatch Details</h5>

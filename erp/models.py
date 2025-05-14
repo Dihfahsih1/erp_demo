@@ -127,6 +127,12 @@ class Employee(AbstractUser):
                 self
             )
         super().delete(*args, **kwargs)
+        
+        
+    def __str__(self):
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        return self.username  # fallback if names are not filled
 
 class Customer(models.Model):
     name_of_business = models.CharField(max_length=200, blank=True, null=True)
@@ -208,7 +214,7 @@ class Estimate(models.Model):
         BILLED = 'billed', _('Billed')
         DISPATCHED = 'dispatched', _('Dispatched')
         DELIVERED = 'delivered', _('Delivered (Signed)'),
-        PACKAGED = 'packaged', _('ready for pickup')
+        DISPATCHREADY = 'dispatchready', _('ready for delivery')
         
     created_date = models.DateField(
         null=True,  
@@ -289,7 +295,7 @@ class Estimate(models.Model):
         
 
     def __str__(self):
-        return f"Estimate #{self.bk_estimate_id} - {self.customer_name} ({self.get_status_display()})"
+        return self.bk_estimate_id
 
     def get_absolute_url(self):
         return reverse('estimate-detail', kwargs={'pk': self.pk})
@@ -308,19 +314,21 @@ class Estimate(models.Model):
 
     def get_status_badge_color(self):
         colors = {
-            'draft': 'secondary',
-            'submitted': 'info',
-            'verified': 'primary',
-            'dispatched': 'success',
-            'delivered': 'success',
-            'on-hold': 'warning',
-            'rejected': 'danger',
-            'cancelled': 'warning',
-            'packaged': 'secondary',
-            'billed': 'success',
-            'in-transit': 'success',
+            'draft': 'secondary',      # Gray
+            'submitted': 'info',       # Light blue
+            'verified': 'primary',     # Blue
+            'dispatched': 'success',   # Green
+            'delivered': 'success',    # Green
+            'on-hold': 'warning',      # Yellow
+            'rejected': 'danger',      # Red
+            'cancelled': 'warning',    # Yellow
+            'packaged': 'secondary',   # Gray
+            'billed': 'dark',          # Dark gray
+            'dispatchready': 'warning',# Yellow
+            'in-transit': 'primary',   # Blue
         }
-        return colors.get(self.status, 'light')
+        return colors.get(self.status, 'light')  # Default to 'light' if status not found
+
 
 
 class EstimateItem(models.Model):
@@ -399,17 +407,14 @@ class Dispatch(models.Model):
     dispatch_date = models.DateField(null=True, blank=True)
   
     def __str__(self):
-        return f"Dispatch for {self.customer_name} - {self.invoice_no}"
-        
-
-
+        return f"Dispatch for {self.estimate_number.customer_name} - {self.estimate_number.invoice_number}"
 class Delivery(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('being_processed', 'Being Processed'),
-        ('received', 'Received'),
-        ('rejected', 'Rejected'),
-    ]
+    class Status(models.TextChoices):
+        PENDING = 'pending', _('Pending')
+        BEING_PROCESSED = 'being_processed', _('Being Processed')
+        RECEIVED = 'received', _('Received')
+        REJECTED = 'rejected', _('Rejected')
+   
     estimate_number = models.ForeignKey(
         Estimate,
         null=True, 
@@ -417,17 +422,42 @@ class Delivery(models.Model):
         on_delete=models.PROTECT,
         related_name='Deliverys')
     
+    dispatch_authorized_by = models.ForeignKey(
+        Employee,
+        null=True,   
+        blank=True,
+        on_delete=models.PROTECT,
+        limit_choices_to={'department__name': 'Stores'},
+        related_name='dispatch_authorizing_officer_estimates'
+    )
+    
+    packaging_verified_by = models.ForeignKey(
+        Employee,
+        null=True,   
+        blank=True,
+        on_delete=models.PROTECT,
+        limit_choices_to={'department__name': 'Stores'},
+        related_name='package_verifying_officer_estimates'
+    )
+    
     delivery_note_number = models.CharField(max_length=100, null=True, blank=True)
     delivery_date = models.DateField(null=True, blank=True)
     
     receiver_name = models.CharField(max_length=100, null=True, blank=True)
     receiver_contact = models.CharField(max_length=20, null=True, blank=True)
     date_goods_received = models.DateField(null=True, blank=True)
- 
-    delivery_status = models.CharField(max_length=20, null=True, blank=True, choices=STATUS_CHOICES, default='pending') 
+    dispatch_date = models.DateField(null=True, blank=True)
+    delivery_status = models.CharField(max_length=20, null=True, blank=True, choices=Status.choices, default=Status.PENDING) 
  
     sales_person = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
-    delivery_person = models.CharField(max_length=100, null=True, blank=True)
+    delivery_person = models.ForeignKey(
+        Employee,
+        null=True,   
+        blank=True,
+        on_delete=models.PROTECT,
+        limit_choices_to={'department__name': 'Stores'},
+        related_name='delivery_officer_estimates'
+    )
     remarks = models.TextField(null=True, blank=True)
     
 
@@ -460,7 +490,19 @@ class Delivery(models.Model):
             return ">45"
         else:
             return f">{(days // 15) * 15}"  # general case
-
+        
+    def get_status_badge_color(self):
+        colors = {
+            'pending': 'info',
+            'being_processed': 'warning',
+            'received': 'success',
+            'rejected': 'danger',
+        } 
+        
+        return colors.get(self.delivery_status, 'light')
+        
+        
+    
 
 
 class DeliveryItem(models.Model):

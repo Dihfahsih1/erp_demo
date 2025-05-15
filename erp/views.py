@@ -515,8 +515,7 @@ def create_delivery_note(request,pk):
     estimate = get_object_or_404(Estimate, pk=pk)
 
     if request.method == 'POST':
-        form=DeliveryForm(request.POST)
-        print(form.errors)
+        form=DeliveryForm(request.POST) 
         if form.is_valid():
             delivery_note = form.save(commit=False)
             delivery_note.estimate_number = estimate

@@ -402,6 +402,7 @@ class Dispatch(models.Model):
         on_delete=models.PROTECT,
         related_name='Dispatches')
     
+    camera_number = models.CharField(max_length=100, null=True, blank=True)
     office_gate_pass = models.CharField(max_length=100, null=True, blank=True)
     store_gate_pass = models.CharField(max_length=100, null=True, blank=True)  
     dispatch_date = models.DateField(null=True, blank=True)
@@ -494,7 +495,7 @@ class Delivery(models.Model):
         elif 45 <= days < 60:
             return ">45"
         else:
-            return f">{(days // 15) * 15}"  # general case
+            return f">{(days // 15) * 15}"   
         
     def get_status_badge_color(self):
         colors = {
@@ -505,7 +506,6 @@ class Delivery(models.Model):
         } 
         
         return colors.get(self.delivery_status, 'light')
-        
         
     
 

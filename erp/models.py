@@ -329,8 +329,6 @@ class Estimate(models.Model):
         }
         return colors.get(self.status, 'light')  # Default to 'light' if status not found
 
-
-
 class EstimateItem(models.Model):
     estimate = models.ForeignKey(
         Estimate,
@@ -365,7 +363,6 @@ class EstimateItem(models.Model):
 
     def line_total(self):
         return self.quantity * self.negotiated_price
-
 
 # ----------------------------
 # 3. Verification & Stores
@@ -506,10 +503,42 @@ class Delivery(models.Model):
         } 
         
         return colors.get(self.delivery_status, 'light')
-        
+    
     
 
+class DeliveryImage(models.Model):
+    delivery = models.ForeignKey(
+        Delivery, 
+        on_delete=models.CASCADE,
+        related_name='images'
+    )
+    delivery_note_image = models.ImageField(
+        upload_to='delivery_notes/%Y/%m/%d/',
+        verbose_name='Delivery Note Image'
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+   
+    is_primary = models.BooleanField(
+        default=False,
+        help_text="Mark as primary image"
+    )
 
+    class Meta:
+        ordering = ['-uploaded_at']
+        verbose_name = 'Delivery Image'
+        verbose_name_plural = 'Delivery Images'
+
+    def __str__(self):
+        return f"Image for {self.delivery.delivery_note_number}"
+
+    def save(self, *args, **kwargs):
+        # Ensure only one primary image exists
+        if self.is_primary:
+            DeliveryImage.objects.filter(
+                delivery=self.delivery
+            ).exclude(pk=self.pk).update(is_primary=False)
+        super().save(*args, **kwargs)
+ 
 class DeliveryItem(models.Model):
     delivery_note = models.ForeignKey(Delivery, related_name='items', on_delete=models.CASCADE)
     item_code = models.CharField(max_length=100, null=True, blank=True)  # Added for codes like "REV-OF-TR-BK"
@@ -545,9 +574,8 @@ class StoresReconciliation(models.Model):
     def __str__(self):
         return f"Reconciliation for Estimate #{self.estimate.bk_estimate_id}"
 
-
 # ----------------------------
-# 6. Notifications
+# 6. Notifications     
 # ----------------------------
 class Notification(models.Model):
     estimate = models.ForeignKey(

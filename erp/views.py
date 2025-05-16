@@ -551,36 +551,78 @@ def create_dispatch_details(request, pk):
 @login_required
 def upload_signed_note(request, note_id):
     estimate_number_id = request.GET.get('estimate_number')
-    estimate = Estimate.objects.get(id=int(estimate_number_id))
+    estimate = get_object_or_404(Estimate, id=int(estimate_number_id))
     note = get_object_or_404(Delivery, id=note_id, estimate_number__sales_person=request.user.id)
 
     if request.method == 'POST':
-        form = DeliveryUploadForm(request.POST, request.FILES, instance=note)
-        print(form.errors)
-        if form.is_valid():
-            updated_note = form.save(commit=False)
-            updated_note.estimate_number = estimate
-            updated_note.delivery_status = 'being_processed'
-            updated_note.sales_person = request.user
-            updated_note.estimate_number.status = 'delivered'
-            updated_note.save()
-            return JsonResponse({
-                'success': True,
-                'message': f"Signed note for Invoice {note.delivery_note_number} uploaded successfully.",
-                'redirect_url': '/my-deliveries/'
-            })
-        else:
+        # Handle both form data and file uploads
+        receiver_name = request.POST.get('receiver_name')
+        receiver_contact = request.POST.get('receiver_contact')
+        date_of_receipt = request.POST.get('date_of_receipt')
+        delivery_status = request.POST.get('delivery_status', 'being_processed')
+        
+        # Validate required fields
+        errors = {}
+        if not receiver_name:
+            errors['receiver_name'] = 'Receiver name is required'
+        if not date_of_receipt:
+            errors['date_of_receipt'] = 'Receiving date is required'
+        
+        # Check if files were uploaded
+        if 'images' not in request.FILES:
+            errors['images'] = 'At least one image is required'
+        
+        if errors:
             return JsonResponse({
                 'success': False,
-                'errors': form.errors,
+                'errors': errors,
                 'message': "Please correct the errors in the form."
             })
-    else:
-        form = DeliveryUploadForm(instance=note)
-
-    return render(request, 'delivery_notes/upload_signed_delivery.html', {
-        'note': note,
-        'form': form
+        
+        try:
+            # Update the delivery note
+            note.receiver_name = receiver_name
+            note.receiver_contact = receiver_contact
+            note.date_of_receipt = date_of_receipt
+            note.delivery_status = delivery_status
+            note.estimate_number = estimate
+            note.sales_person = request.user
+            
+            # Update estimate status
+            note.estimate_number.status = 'delivered'
+            note.estimate_number.save()
+            
+            # Save the note first to get the ID
+            note.save()
+            
+            # Handle multiple file uploads
+            images = request.FILES.getlist('images')
+            for image_file in images:
+                # Create a DeliveryImage instance (assuming you have this model)
+                Delivery.objects.create(
+                    delivery_note=note,
+                    image=image_file,
+                    uploaded_by=request.user
+                )
+            
+            return JsonResponse({
+                'success': True,
+                'message': f"Signed note for Delivery {note.delivery_note_number} uploaded successfully.",
+                'redirect_url': reverse('my-deliveries')
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f"An error occurred: {str(e)}"
+            }, status=500)
+    
+    # For GET requests, return the form data
+    return JsonResponse({
+        'note': {
+            'delivery_note_number': note.delivery_note_number,
+            'date_goods_received': note.date_goods_received.strftime('%Y-%m-%d') if note.date_goods_received else None,
+        }
     })
     
 @login_required

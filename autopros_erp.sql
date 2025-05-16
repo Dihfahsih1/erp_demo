@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: May 14, 2025 at 02:52 PM
+-- Generation Time: May 15, 2025 at 02:20 PM
 -- Server version: 11.4.5-MariaDB-1
 -- PHP Version: 8.4.5
 
@@ -319,7 +319,8 @@ INSERT INTO `django_migrations` (`id`, `app`, `name`, `applied`) VALUES
 (39, 'erp', '0006_delivery_dispatch_date', '2025-05-14 09:25:46.093534'),
 (40, 'erp', '0007_remove_delivery_sales_person', '2025-05-14 10:25:34.429110'),
 (41, 'erp', '0008_delivery_sales_person', '2025-05-14 10:45:27.754672'),
-(42, 'erp', '0009_delivery_date_of_receipt', '2025-05-14 11:21:24.827014');
+(42, 'erp', '0009_delivery_date_of_receipt', '2025-05-14 11:21:24.827014'),
+(43, 'erp', '0010_dispatch_camera_number', '2025-05-15 13:39:15.822203');
 
 -- --------------------------------------------------------
 
@@ -338,7 +339,7 @@ CREATE TABLE `django_session` (
 --
 
 INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES
-('x55a2bt589qy7gh6u2vwysykeh5op9rc', '.eJxVjDsOwjAQBe_iGlnxP6ak5wzW7nqDA8iW4qRC3B0ipYD2zcx7iQTbWtLWeUlzFmfhxOl3Q6AH1x3kO9Rbk9Tquswod0UetMtry_y8HO7fQYFevjUoi9lEsOAGRV5NHiloDZY46sg4KrbkYkR2yoNzYBAxjBMZDjYMRrw_8uo4LA:1uFCbk:MTCG0X24hQRDowMjP0_iZucaqmDWYQYmqSgJ_9pQj58', '2025-05-28 13:57:16.153658');
+('919mtrcf4rxmkuau6qol0m9od9wncixu', '.eJxVjDsOwjAQBe_iGlm7_oBDSc8ZovWujQPIluKkQtwdIqWA9s3Me6mR1qWMa0_zOIk6q6AOv1skfqS6AblTvTXNrS7zFPWm6J12fW2Snpfd_Tso1Mu3ZhjQugwODScEzEOAow8ZI3NiEe8pongwaGwmQUuYHWdmBhKPJ_X-AONWOGY:1uFYuf:n5AZ1CAJ-88fmjWPGPwwHUr29USHZ-MEhi_OyA6IInk', '2025-05-29 13:46:17.187469');
 
 -- --------------------------------------------------------
 
@@ -415,7 +416,7 @@ INSERT INTO `erp_delivery` (`id`, `delivery_note_number`, `delivery_date`, `rece
 (1, 'DEL---19309093', NULL, 'Martin', '0785243728', NULL, 'pending', NULL, '', 'delivery_notes/IMG_5102_KtdmMm5_hdSThv9.jpg', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (2, 'DEL-122', NULL, 'urwi9ore', '7y8oy8re', NULL, 'received', NULL, '', 'delivery_notes/IMG_5102_KtdmMm5_ipVw0Dc.jpg', '', NULL, NULL, 3, NULL, NULL, '2025-05-13', 8, NULL),
 (3, 'DEL-123EF', NULL, 'Sachin', NULL, NULL, 'received', NULL, '', 'delivery_notes/IMG_5102_KtdmMm5_hdSThv9_JJ24o8q.jpg', '', NULL, NULL, 4, NULL, NULL, NULL, 8, '2025-05-15'),
-(4, 'TODAY-DEL-NOTE', NULL, NULL, NULL, NULL, 'pending', 5, '', '', '', NULL, NULL, 5, 5, 5, '2025-05-14', 8, NULL),
+(4, 'TODAY-DEL-NOTE', NULL, 'Nakimuli', 'Lydia', NULL, 'received', NULL, '', 'delivery_notes/IMG_5102_KtdmMm5_hdSThv9_JJ24o8q_zQoNqte.jpg', '', NULL, NULL, 5, NULL, NULL, NULL, 8, '2025-05-16'),
 (5, 'DEL8739', NULL, NULL, NULL, NULL, 'pending', 6, '', '', '', NULL, NULL, NULL, 5, 4, '2025-05-15', NULL, NULL);
 
 -- --------------------------------------------------------
@@ -465,18 +466,19 @@ CREATE TABLE `erp_dispatch` (
   `office_gate_pass` varchar(100) DEFAULT NULL,
   `store_gate_pass` varchar(100) DEFAULT NULL,
   `estimate_number_id` bigint(20) DEFAULT NULL,
-  `dispatch_date` date DEFAULT NULL
+  `dispatch_date` date DEFAULT NULL,
+  `camera_number` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 --
 -- Dumping data for table `erp_dispatch`
 --
 
-INSERT INTO `erp_dispatch` (`id`, `office_gate_pass`, `store_gate_pass`, `estimate_number_id`, `dispatch_date`) VALUES
-(1, '5g54g', 'tgg4', 2, '2025-05-08'),
-(2, '893988973ee', 'dey037839', 4, '2025-05-14'),
-(3, 'TODAY-GATE-PASS-2', 'TODAY-GATE-PASS', 5, '2025-05-14'),
-(4, '83ye893e8', '87499uru', 6, '2025-05-13');
+INSERT INTO `erp_dispatch` (`id`, `office_gate_pass`, `store_gate_pass`, `estimate_number_id`, `dispatch_date`, `camera_number`) VALUES
+(1, '5g54g', 'tgg4', 2, '2025-05-08', NULL),
+(2, '893988973ee', 'dey037839', 4, '2025-05-14', NULL),
+(3, 'TODAY-GATE-PASS-2', 'TODAY-GATE-PASS', 5, '2025-05-14', NULL),
+(4, '83ye893e8', '87499uru', 6, '2025-05-13', NULL);
 
 -- --------------------------------------------------------
 
@@ -509,13 +511,13 @@ CREATE TABLE `erp_employee` (
 
 INSERT INTO `erp_employee` (`id`, `password`, `last_login`, `is_superuser`, `username`, `first_name`, `last_name`, `email`, `is_staff`, `is_active`, `date_joined`, `phone`, `is_verified`, `department_id`, `region_of_operation_id`, `role_id`) VALUES
 (1, 'pbkdf2_sha256$390000$Cy3u530hpkn7cnDAKdQDff$xETmmHAwZp4G5U1HKGBY41mvj275Sq09U+CdnMDqTgg=', '2025-05-14 10:21:24.445655', 1, 'admin', '', '', '', 1, 1, '2025-05-13 13:34:03.152720', '', 0, NULL, NULL, NULL),
-(2, 'pbkdf2_sha256$390000$vutHk9XebuTTuTnyrBxqJe$cde9HbGDxBd6/rhkKRRkj3Zd9axJMTH+tPPxZOnPuYQ=', '2025-05-14 13:39:16.821348', 0, 'estimates', 'Jolly', '', '', 0, 1, '2025-05-13 13:41:06.695663', '', 0, 1, 1, 1),
+(2, 'pbkdf2_sha256$390000$vutHk9XebuTTuTnyrBxqJe$cde9HbGDxBd6/rhkKRRkj3Zd9axJMTH+tPPxZOnPuYQ=', '2025-05-15 06:11:17.513567', 0, 'estimates', 'Jolly', '', '', 0, 1, '2025-05-13 13:41:06.695663', '', 0, 1, 1, 1),
 (3, 'pbkdf2_sha256$390000$0ge24fRi4iectOn4wz83Yc$GV+RG7TwrSVNw0VIEnCiDQeaY4G1Q86Ekfh5RS7mzjc=', '2025-05-14 13:40:48.701283', 0, 'outstanding', 'Scovia', '', '', 0, 1, '2025-05-13 13:43:05.329088', '', 0, 3, 1, 4),
 (4, 'pbkdf2_sha256$390000$v5E1iv0FLz0yiL229jY5ks$RW3vlHOYiPGzCrc0EEOCrqtYiYmQJ6liF99JQssXhL0=', '2025-05-14 13:43:25.304681', 0, 'billing', 'Maria', '', '', 0, 1, '2025-05-13 13:45:09.586899', '', 0, 4, 1, 5),
-(5, 'pbkdf2_sha256$390000$XOJfhfYqNXomz3DhY52aGc$3YHAMJ3YidMG+3DnoPtpJRusRJVCly+xj7eXwa0BCkY=', '2025-05-14 13:57:16.151809', 0, 'delivery', 'Ali', '', '', 0, 1, '2025-05-13 13:46:21.040539', '', 0, 4, 1, 6),
+(5, 'pbkdf2_sha256$390000$XOJfhfYqNXomz3DhY52aGc$3YHAMJ3YidMG+3DnoPtpJRusRJVCly+xj7eXwa0BCkY=', '2025-05-15 13:44:35.274838', 0, 'delivery', 'Ali', '', '', 0, 1, '2025-05-13 13:46:21.040539', '', 0, 4, 1, 6),
 (6, 'pbkdf2_sha256$390000$NURtR93txiVLYJOe4ZEVAA$g4x4QSPRyLaIRV1sI+sErK9f0NEHge57xFzORzFrPxI=', '2025-05-14 13:44:31.138119', 0, 'dispatch', 'Yma', '', '', 0, 1, '2025-05-13 13:47:45.327171', '', 0, 4, 1, 7),
 (7, 'pbkdf2_sha256$390000$T6dvNp8mWYTnnqKuRExibr$S1VKJPtrHuzgb28jfPd2rXHoRIJAxYJHz01iBH3yU5Q=', '2025-05-14 11:36:40.114920', 0, 'crm', 'Christine', '', '', 0, 1, '2025-05-13 13:50:36.576003', '', 0, 1, 1, 2),
-(8, 'pbkdf2_sha256$390000$ithvEVrgEfUeNSx7GZJvji$T42WN68swkSmMxELeOmNTivOfawcTCuGuq94t29vmKc=', '2025-05-14 13:54:15.056967', 0, 'davies', 'Davies', '', '', 0, 1, '2025-05-13 13:52:00.229119', '', 0, 2, 4, 3);
+(8, 'pbkdf2_sha256$390000$ithvEVrgEfUeNSx7GZJvji$T42WN68swkSmMxELeOmNTivOfawcTCuGuq94t29vmKc=', '2025-05-15 13:46:17.185717', 0, 'davies', 'Davies', '', '', 0, 1, '2025-05-13 13:52:00.229119', '', 0, 2, 4, 3);
 
 -- --------------------------------------------------------
 
@@ -574,7 +576,7 @@ INSERT INTO `erp_estimate` (`id`, `created_date`, `bk_estimate_id`, `amount`, `s
 (2, '2025-05-14', 'EST-2025-0002', 300000.00, 'delivered', '2025-05-13 14:21:21.529016', '2025-05-14 08:19:23.733210', 'INV-208393', 2039489.00, '2025-05-13', '2025-05-13', 4, 1, 8, 3),
 (3, '2025-05-15', 'EST-2025-0003', 30000000.00, 'delivered', '2025-05-14 06:08:49.894930', '2025-05-14 06:22:16.388512', 'INVO-123', 2000000.00, '2025-05-14', '2025-05-14', 4, 1, 8, 3),
 (4, '2025-05-14', 'EST-2025-0004', 3000000.00, 'delivered', '2025-05-14 11:55:25.362106', '2025-05-14 13:58:05.879474', 'INV-1000', 2000000.00, '2025-05-14', '2025-05-14', 4, 2, 8, 3),
-(5, '2025-05-15', 'EST-2025-0005', 1000000.00, 'dispatched', '2025-05-14 12:26:47.974709', '2025-05-14 12:36:24.612136', 'TODAY INV', 200000.00, '2025-05-14', '2025-05-14', 4, 2, 8, 3),
+(5, '2025-05-15', 'EST-2025-0005', 1000000.00, 'delivered', '2025-05-14 12:26:47.974709', '2025-05-15 13:45:27.611058', 'TODAY INV', 200000.00, '2025-05-14', '2025-05-14', 4, 2, 8, 3),
 (6, '2025-05-14', '5636287', 500000.00, 'dispatched', '2025-05-14 13:40:05.849331', '2025-05-14 13:52:57.072181', 'INV 038984', 400000.00, '2025-05-14', '2025-05-14', 4, 2, 8, 3);
 
 -- --------------------------------------------------------
@@ -934,7 +936,7 @@ ALTER TABLE `django_content_type`
 -- AUTO_INCREMENT for table `django_migrations`
 --
 ALTER TABLE `django_migrations`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
 
 --
 -- AUTO_INCREMENT for table `erp_customer`

@@ -18,11 +18,11 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="receiver_name" class="form-label">Receiver Name</label>
-                                <input type="text" class="form-control" id="receiver_name" name="receiver_name"required>
+                                <input type="text" class="form-control" id="receiver_name" name="receiver_name" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="receiver_contact" class="form-label">Receiver Contact</label>
-                                <input type="text" class="form-control" id="receiver_contact" name="receiver_contact"  >
+                                <input type="text" class="form-control" id="receiver_contact" name="receiver_contact">
                             </div>
                         </div>
 
@@ -39,22 +39,35 @@
                         </div>
 
                         <!-- Image Upload Section -->
-                        <div class="mb-4 text-center">
-                            <label for="image" class="form-label">Select or Drag & Drop Delivery Note Image:</label>
-                            <div class="border border-3 rounded p-5 bg-light" 
-                                 style="cursor:pointer; position:relative;"
-                                 onclick="document.getElementById('image').click();">
-                                <input type="file" name="image" id="image" accept="image/*" 
-                                       class="d-none" required onchange="previewImage(event)">
-                                <div id="preview-container">
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <label class="form-label">Delivery Note Images</label>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="document.getElementById('images').click()">
+                                    <i class="fas fa-plus me-1"></i> Add Files
+                                </button>
+                            </div>
+                            
+                            <div class="border border-2 rounded p-4 bg-light text-center" 
+                                 id="drop-area"
+                                 style="cursor:pointer; min-height: 150px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                                <input type="file" name="images" id="images" accept="image/*" 
+                                       class="d-none" multiple onchange="handleFiles(this.files)">
+                                <div id="upload-prompt">
                                     <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
-                                    <p>Click here or drag an image to upload</p>
+                                    <p class="mb-1">Drag & drop files here or</p>
+                                    <button type="button" class="btn btn-sm btn-outline-primary">
+                                        Browse Files
+                                    </button>
                                 </div>
-                                <img id="preview-image" src="#" alt="Preview" class="img-fluid rounded d-none" style="max-height: 300px;"/>
+                            </div>
+                            
+                            <!-- File preview cards -->
+                            <div id="file-previews" class="mt-3">
+                                <div class="row gy-3" id="file-cards-container"></div>
                             </div>
                         </div>
 
-                        <div class="d-grid gap-2">
+                        <div class="d-grid gap-2 mt-4">
                             <button type="button" class="btn btn-primary btn-preview" onclick="showPreview()">
                                 <i class="fas fa-eye me-2"></i>Preview
                             </button>
@@ -91,9 +104,9 @@
                     </div>
                 </div>
                 
-                <div class="mb-4 text-center">
-                    <h5>Uploaded Image</h5>
-                    <img id="modal-preview-image" src="#" class="img-fluid rounded border" style="max-height: 400px;">
+                <div class="mb-4">
+                    <h5 class="text-center mb-3">Uploaded Images</h5>
+                    <div id="modal-preview-images" class="row g-3"></div>
                 </div>
             </div>
             
@@ -104,29 +117,147 @@
         </div>
     </div>
 </div>
- <script>
-    // Preview uploaded image in form
-    function previewImage(event) {
-        console.log('previewImage function called');
-        const fileInput = event.target;
-        const previewContainer = document.getElementById('preview-container');
-        const previewImage = document.getElementById('preview-image');
+
+<script>
+    // Global variable to store uploaded files
+    let uploadedFiles = [];
     
-        if (fileInput.files && fileInput.files[0]) {
-            console.log('File selected:', fileInput.files[0].name);
+    // Handle file selection
+    function handleFiles(files) {
+        console.log('handleFiles function called with', files.length, 'files');
+        
+        if (files.length === 0) return;
+        
+        // Add new files to existing ones
+        uploadedFiles = [...uploadedFiles, ...Array.from(files)];
+        renderFileCards();
+    }
+    
+    // Render file cards
+    function renderFileCards() {
+        const container = document.getElementById('file-cards-container');
+        const dropArea = document.getElementById('drop-area');
+        const uploadPrompt = document.getElementById('upload-prompt');
+        
+        // Clear previous cards
+        container.innerHTML = '';
+        
+        if (uploadedFiles.length === 0) {
+            dropArea.style.minHeight = '150px';
+            uploadPrompt.classList.remove('d-none');
+            return;
+        }
+        
+        // Hide the upload prompt if we have files
+        uploadPrompt.classList.add('d-none');
+        dropArea.style.minHeight = 'auto';
+        
+        // Create cards for each file
+        uploadedFiles.forEach((file, index) => {
             const reader = new FileReader();
             reader.onload = function(e) {
-                console.log('File preview loaded');
-                previewContainer.classList.add('d-none');
-                previewImage.classList.remove('d-none');
-                previewImage.src = e.target.result;
-            }
-            reader.onerror = function(e) {
-                console.error('Error reading file:', e.target.error);
-            }
-            reader.readAsDataURL(fileInput.files[0]);
-        }
+                const col = document.createElement('div');
+                col.className = 'col-12 col-md-6 col-lg-4';
+                
+                const card = document.createElement('div');
+                card.className = 'card h-100';
+                
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'card-img-top';
+                img.style.height = '150px';
+                img.style.objectFit = 'contain';
+                img.style.backgroundColor = '#f8f9fa';
+                
+                const cardBody = document.createElement('div');
+                cardBody.className = 'card-body p-3';
+                
+                const fileName = document.createElement('p');
+                fileName.className = 'card-text text-truncate mb-1';
+                fileName.textContent = file.name;
+                
+                const fileSize = document.createElement('small');
+                fileSize.className = 'text-muted';
+                fileSize.textContent = formatFileSize(file.size);
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'btn btn-danger btn-sm w-100 mt-2';
+                removeBtn.innerHTML = '<i class="fas fa-trash me-1"></i> Remove';
+                removeBtn.onclick = (e) => {
+                    e.preventDefault();
+                    removeFile(index);
+                };
+                
+                cardBody.appendChild(fileName);
+                cardBody.appendChild(fileSize);
+                cardBody.appendChild(removeBtn);
+                
+                card.appendChild(img);
+                card.appendChild(cardBody);
+                col.appendChild(card);
+                container.appendChild(col);
+            };
+            reader.readAsDataURL(file);
+        });
     }
+    
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+    
+    // Remove file from list
+    function removeFile(index) {
+        uploadedFiles.splice(index, 1);
+        renderFileCards();
+    }
+    
+    // Drag and drop functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropArea = document.getElementById('drop-area');
+        
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        // Highlight drop area when item is dragged over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        // Handle dropped files
+        dropArea.addEventListener('drop', handleDrop, false);
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        function highlight() {
+            dropArea.classList.add('border-primary');
+            dropArea.style.backgroundColor = 'rgba(13, 110, 253, 0.1)';
+        }
+        
+        function unhighlight() {
+            dropArea.classList.remove('border-primary');
+            dropArea.style.backgroundColor = '';
+        }
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+    });
     
     // Show preview modal
     function showPreview() {
@@ -136,21 +267,20 @@
         const customerName = document.getElementById('receiver_name').value;
         const estimateNumber = document.getElementById('delivery_note_number').value;
         const deliveryDate = document.getElementById('date_of_receipt').value;
-        const image = document.getElementById('image').files[0];
         
         console.log('Form values:', {
             customerName,
             estimateNumber,
             deliveryDate,
-            image: image ? image.name : 'No image selected'
+            files: uploadedFiles.length
         });
         
-        if (!customerName || !deliveryDate || !estimateNumber || !image) {
+        if (!customerName || !deliveryDate || !estimateNumber || uploadedFiles.length === 0) {
             const missingFields = [];
             if (!customerName) missingFields.push('Receiver Name');
             if (!deliveryDate) missingFields.push('Delivery Date');
             if (!estimateNumber) missingFields.push('Delivery Note Number');
-            if (!image) missingFields.push('Image');
+            if (uploadedFiles.length === 0) missingFields.push('Images');
             
             console.warn('Missing required fields:', missingFields);
             alert('Please fill all required fields: ' + missingFields.join(', '));
@@ -163,24 +293,38 @@
         document.getElementById('preview-estimate-number').textContent = estimateNumber;
         document.getElementById('preview-delivery-date').textContent = deliveryDate;
         
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            console.log('Modal preview image loaded');
-            document.getElementById('modal-preview-image').src = e.target.result;
-            
-            // Show modal only after image is loaded
-            try {
-                const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
-                previewModal.show();
-                console.log('Preview modal shown');
-            } catch (e) {
-                console.error('Error showing preview modal:', e);
-            }
+        // Clear previous images in modal
+        const modalPreviewContainer = document.getElementById('modal-preview-images');
+        modalPreviewContainer.innerHTML = '';
+        
+        // Add images to modal
+        uploadedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const col = document.createElement('div');
+                col.className = 'col-md-6';
+                
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'img-fluid rounded border';
+                img.style.maxHeight = '300px';
+                img.style.width = '100%';
+                img.style.objectFit = 'contain';
+                
+                col.appendChild(img);
+                modalPreviewContainer.appendChild(col);
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        // Show modal
+        try {
+            const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+            previewModal.show();
+            console.log('Preview modal shown');
+        } catch (e) {
+            console.error('Error showing preview modal:', e);
         }
-        reader.onerror = function(e) {
-            console.error('Error loading modal preview image:', e.target.error);
-        }
-        reader.readAsDataURL(image);
         
         return false; // Prevent default form submission
     }
@@ -189,13 +333,20 @@
     function confirmSubmission() {
         console.log('confirmSubmission function called');
         try {
-            // Trigger the actual form submission
+            // Create FormData and append all fields
             const form = document.getElementById('upload-form');
             const formData = new FormData(form);
             
+            // Append all files
+            uploadedFiles.forEach((file, index) => {
+                formData.append('images', file);
+            });
+            
             // Hide modal first
             const previewModal = bootstrap.Modal.getInstance(document.getElementById('previewModal'));
-            previewModal.hide();
+            if (previewModal) {
+                previewModal.hide();
+            }
             
             // Submit form via fetch
             submitFormData(form.action, formData);
@@ -266,27 +417,29 @@
             }
         }
     }
-
-    // Initialize form event listeners
-    document.addEventListener('DOMContentLoaded', function() {
-        // Preview button
-        document.querySelector('.btn-preview').addEventListener('click', showPreview);
-        
-        // Form submission
-        const form = document.getElementById('upload-form');
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            console.log('Main form submission intercepted');
-        });
-        
-        // Submit button
-        const submitBtn = document.getElementById('submit-btn');
-        if (submitBtn) {
-            submitBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                console.log('Submit button clicked directly');
-            });
-        }
-    });
 </script>
+
+<style>
+    #drop-area {
+        transition: all 0.3s ease;
+        border-style: dashed;
+    }
+    
+    #drop-area.highlight {
+        border-color: #0d6efd !important;
+        background-color: rgba(13, 110, 253, 0.1) !important;
+    }
+    
+    .card-img-top {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    
+    #file-previews {
+        display: none;
+    }
+    
+    #file-previews:not(:empty) {
+        display: block;
+    }
+</style>
 {% endblock %}

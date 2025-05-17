@@ -215,9 +215,14 @@ class Estimate(models.Model):
         DISPATCHED = 'dispatched', _('Dispatched')
         DELIVERED = 'delivered', _('Delivered (Signed)'),
         DISPATCHREADY = 'dispatchready', _('ready for delivery')
-        STOCKOUT = 'stockout', _('Stock Out')
-        STOCKIN = 'stockin', _('Stock In')
-        
+    
+    
+    class StockStatus(models.TextChoices):
+        PENDING = 'pending', _('Pending Check')
+        IN_STOCK = 'in_stock', _('In Stock')
+        OUT_OF_STOCK = 'out_of_stock', _('Out of Stock')
+        PARTIAL = 'partial', _('Partial Stock')
+         
     created_date = models.DateField(
         null=True,  
         blank=True,
@@ -271,6 +276,15 @@ class Estimate(models.Model):
         default=Status.DRAFT,
         verbose_name=_("Status")
     )
+    
+    stock_status = models.CharField(
+        max_length=20,
+        choices=StockStatus.choices,
+        default=StockStatus.PENDING,
+        verbose_name=_("Stock Status")
+    )
+    
+    
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Last Updated"))
     history = AuditlogHistoryField()
@@ -373,9 +387,7 @@ class EstimateItem(models.Model):
     def line_total(self):
         return self.quantity * self.negotiated_price
 
-# ----------------------------
-# 3. Verification & Stores
-# ----------------------------
+ 
 class Verification(models.Model):
     estimate = models.OneToOneField(
         Estimate,
@@ -513,7 +525,7 @@ class Delivery(models.Model):
         
         return colors.get(self.delivery_status, 'light')
     
-    
+
 
 class DeliveryImage(models.Model):
     delivery = models.ForeignKey(

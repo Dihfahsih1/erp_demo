@@ -25,26 +25,41 @@
             <td>{{ forloop.counter }}</td>
             <td>{{ note.estimate_number }}</td>
             <td>{{ note.estimate_number.invoice_number }}</td>
-            <td>{{ note.dispatch_date }}</td>
+            <td>{{ note.dispatch_date|date:"Y-m-d" }}</td>
             <td>
-                <span style="color: black;" class="badge bg-{{ note.get_status_badge_color }}">
-                    {{ note.delivery_status }}
-                  </span>
+                <span class="badge bg-{{ note.get_status_badge_color }}">
+                    {{ note.get_delivery_status_display }}
+                </span>
             </td>
-           <td>
-            {% if note.image %}
-                <a href="{{ note.image.url }}" class="image-preview-link">
-                    <img src="{{ note.image.url }}" class="img-thumbnail" style="width: 100px; cursor: zoom-in;">
-                </a>
-            {% else %}
-                No image
-            {% endif %}
             <td>
-                {% if note.delivery_status == 'pending' and not note.signed_note %}
+                {% if note.images.exists %}
+                    <div class="delivery-images">
+                        {% for image in note.images.all|slice:":3" %}
+                            <div class="image-thumbnail-container" data-image-id="{{ image.id }}">
+                                <img src="{{ image.delivery_image.url }}" 
+                                     class="img-thumbnail" 
+                                     style="width: 30px; height: 30px; object-fit: cover; cursor: zoom-in;">
+                                {% if image.is_primary %}
+                                <span class="primary-badge">★</span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                        {% if note.images.count > 3 %}
+                            <span class="more-images-badge" data-note-id="{{ note.id }}">
+                                +{{ note.images.count|add:"-3" }}
+                            </span>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <span class="text-muted">No images</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if note.delivery_status == 'pending' and not note.images.exists %}
                     <a href="{% url 'upload_signed_note' note.id %}?estimate_number={{note.estimate_number_id}}" class="btn btn-sm btn-primary">
                         Upload Signed Note
                     </a>
-                {% elif note.delivery_status == 'being_processed' and note.signed_note %}
+                {% elif note.delivery_status == 'being_processed' and note.images.exists %}
                     <span class="text-info">In Process</span>
                 {% elif note.delivery_status == 'received' %}
                     <span class="text-success">Confirmed</span>
@@ -60,26 +75,34 @@
 </table>
 
 <!-- Image Modal -->
-<div id="imageModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;text-align:center;">
-    <span style="position:absolute;top:20px;right:30px;color:white;font-size:40px;cursor:pointer;" onclick="closeImageModal()">&times;</span>
-    <img id="modalImage" src="" style="max-height:90%;max-width:90%;margin-top:5%;">
-</div>
-
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-
-
-<!-- Add this modal HTML anywhere in your template (right before closing body tag is good) -->
 <div id="imageModal" class="modal-overlay">
     <div class="modal-content">
-        <span class="close-btn">&times;</span>
-        <img id="modalImage" class="modal-image">
+        <div class="modal-header">
+            <h5 class="modal-title">Delivery Note Image</h5>
+            <button type="button" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <img id="modalImage" class="modal-image">
+        </div>
+        <div class="modal-footer">
+            <button id="setPrimaryBtn" class="btn btn-sm btn-primary">Set as Primary</button>
+            <button id="deleteImageBtn" class="btn btn-sm btn-danger">Delete Image</button>
+        </div>
+    </div>
+</div>
+
+<!-- More Images Modal -->
+<div id="moreImagesModal" class="modal-overlay">
+    <div class="modal-content" style="width: 80%;">
+        <div class="modal-header">
+            <h5 class="modal-title">All Delivery Note Images</h5>
+            <button type="button" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="row" id="moreImagesContainer">
+                <!-- Images will be loaded here -->
+            </div>
+        </div>
     </div>
 </div>
 
@@ -94,37 +117,103 @@
         height: 100%;
         background-color: rgba(0, 0, 0, 0.9);
         z-index: 9999;
-        align-items: center;
-        justify-content: center;
+        overflow-y: auto;
     }
     
     .modal-content {
         position: relative;
+        background: white;
+        margin: 2% auto;
+        padding: 20px;
+        border-radius: 5px;
         max-width: 90%;
         max-height: 90%;
     }
     
     .modal-image {
-        max-height: 90vh;
-        max-width: 90vw;
+        max-height: 70vh;
+        max-width: 100%;
         display: block;
+        margin: 0 auto;
+    }
+    
+    .delivery-images {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .image-thumbnail-container {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .primary-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        color: gold;
+        background: rgba(0,0,0,0.7);
+        border-radius: 50%;
+        width: 15px;
+        height: 15px;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .more-images-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+    
+    .more-images-badge:hover {
+        background: #e9ecef;
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #dee2e6;
+        margin-bottom: 15px;
+    }
+    
+    .modal-title {
+        margin: 0;
     }
     
     .close-btn {
-        position: absolute;
-        top: -40px;
-        right: -40px;
-        color: white;
-        font-size: 40px;
-        font-weight: bold;
+        background: none;
+        border: none;
+        font-size: 24px;
         cursor: pointer;
-        transition: 0.3s;
     }
     
-    .close-btn:hover {
-        color: #ccc;
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding-top: 15px;
+        border-top: 1px solid #dee2e6;
+        margin-top: 15px;
     }
 </style>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
 
 <script>
     $(document).ready(function () {
@@ -134,10 +223,13 @@
             buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
         });
 
+        let currentImageId = null;
+        let currentNoteId = null;
+
         // Image preview modal logic
-        $(document).on('click', '.image-preview-link', function(e) {
-            e.preventDefault();
-            const imageUrl = $(this).attr('href') || $(this).data('image-url');
+        $(document).on('click', '.image-thumbnail-container', function() {
+            const imageUrl = $(this).find('img').attr('src');
+            currentImageId = $(this).data('image-id');
             
             // Set image source and show modal
             $('#modalImage').attr('src', imageUrl);
@@ -147,26 +239,84 @@
             $('body').css('overflow', 'hidden');
         });
 
-        // Close modal when clicking the X button
-        $('.close-btn').on('click', closeImageModal);
-        
-        // Close modal when clicking outside image
-        $('#imageModal').on('click', function(e) {
-            if (e.target === this) {
-                closeImageModal();
+        // More images modal logic
+        $(document).on('click', '.more-images-badge', function() {
+            currentNoteId = $(this).data('note-id');
+            $('#moreImagesContainer').empty();
+            
+            // Load additional images via AJAX
+            $.get(`/api/delivery-notes/${currentNoteId}/images/`, function(data) {
+                data.images.forEach(function(image, index) {
+                    if (index >= 3) { // Skip first 3 already shown
+                        $('#moreImagesContainer').append(`
+                            <div class="col-md-3 mb-3">
+                                <div class="image-thumbnail-container" data-image-id="${image.id}">
+                                    <img src="${image.url}" class="img-thumbnail w-100" style="cursor: zoom-in;">
+                                    ${image.is_primary ? '<span class="primary-badge">★</span>' : ''}
+                                </div>
+                            </div>
+                        `);
+                    }
+                });
+                
+                $('#moreImagesModal').fadeIn();
+                $('body').css('overflow', 'hidden');
+            });
+        });
+
+        // Set primary image
+        $('#setPrimaryBtn').click(function() {
+            if (currentImageId) {
+                $.post(`/api/delivery-images/${currentImageId}/set-primary/`, {
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                }, function(data) {
+                    if (data.success) {
+                        location.reload(); // Refresh to update UI
+                    }
+                });
+            }
+        });
+
+        // Delete image
+        $('#deleteImageBtn').click(function() {
+            if (currentImageId && confirm('Are you sure you want to delete this image?')) {
+                $.ajax({
+                    url: `/api/delivery-images/${currentImageId}/`,
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    success: function(data) {
+                        if (data.success) {
+                            location.reload(); // Refresh to update UI
+                        }
+                    }
+                });
+            }
+        });
+
+        // Close modals
+        $('.close-btn, .modal-overlay').on('click', function(e) {
+            if ($(e.target).hasClass('modal-overlay') || $(e.target).hasClass('close-btn')) {
+                closeModals();
             }
         });
         
         // Close modal with Escape key
         $(document).on('keyup', function(e) {
             if (e.key === "Escape") {
-                closeImageModal();
+                closeModals();
             }
+        });
+
+        // Prevent modal content from closing modal when clicked
+        $('.modal-content').on('click', function(e) {
+            e.stopPropagation();
         });
     });
 
-    function closeImageModal() {
-        $('#imageModal').fadeOut();
+    function closeModals() {
+        $('.modal-overlay').fadeOut();
         $('body').css('overflow', 'auto');
     }
 </script>

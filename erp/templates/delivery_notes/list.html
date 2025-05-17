@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-<h2>My Delivery Notes</h2>
+<h2>Delivery Notes By All Sales Team</h2>
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
@@ -199,7 +199,7 @@
     
     function updateNoteStatus(noteId, status) {
         $.ajax({
-            url: '/update-note-status/',  // You'll need to create this URL in your urls.py
+            url: '/update-note-status/',  
             method: 'POST',
             data: {
                 'note_id': noteId,

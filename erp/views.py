@@ -11,7 +11,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 from django.views .decorators.csrf import csrf_exempt
 from django.urls import reverse
 from erp.forms import BillingForm, DispatchForm, DeliveryForm, EstimateForm, DeliveryUploadForm, DispatchVerificationForm, EstimateUploadForm, OfficerReviewForm, SalesAgentNoteForm, CustomerForm, EmployeeLoginForm, EmployeeRegistrationForm
-from .models import Customer, Delivery, Dispatch, Employee, Estimate, UserRole
+from .models import Customer, Delivery, DeliveryImage, Dispatch, Employee, Estimate, UserRole
 import json
 import pandas as pd
 from io import BytesIO
@@ -548,82 +548,75 @@ def create_dispatch_details(request, pk):
 
     return JsonResponse({'status': 'invalid method'}, status=405)
 
+
+
 @login_required
 def upload_signed_note(request, note_id):
-    estimate_number_id = request.GET.get('estimate_number')
-    estimate = get_object_or_404(Estimate, id=int(estimate_number_id))
-    note = get_object_or_404(Delivery, id=note_id, estimate_number__sales_person=request.user.id)
+    delivery = get_object_or_404(
+        Delivery, 
+        id=note_id,
+        estimate_number__sales_person=request.user  # Assuming user is linked to Employee
+    )
 
     if request.method == 'POST':
-        # Handle both form data and file uploads
-        receiver_name = request.POST.get('receiver_name')
-        receiver_contact = request.POST.get('receiver_contact')
-        date_of_receipt = request.POST.get('date_of_receipt')
-        delivery_status = request.POST.get('delivery_status', 'being_processed')
+        # Handle form submission (existing code)
+        form_data = {
+            'receiver_name': request.POST.get('receiver_name'),
+            'receiver_contact': request.POST.get('receiver_contact'),
+            'date_of_receipt': request.POST.get('date_of_receipt'),
+            'delivery_status': 'being_processed'
+        }
         
-        # Validate required fields
-        errors = {}
-        if not receiver_name:
-            errors['receiver_name'] = 'Receiver name is required'
-        if not date_of_receipt:
-            errors['date_of_receipt'] = 'Receiving date is required'
+        # Update delivery info
+        for field, value in form_data.items():
+            if value:
+                setattr(delivery, field, value)
         
-        # Check if files were uploaded
-        if 'images' not in request.FILES:
-            errors['images'] = 'At least one image is required'
+        delivery.save()
         
-        if errors:
+        # Process images
+        images = request.FILES.getlist('images')
+        if not images:
             return JsonResponse({
                 'success': False,
-                'errors': errors,
-                'message': "Please correct the errors in the form."
-            })
+                'message': 'At least one image is required'
+            }, status=400)
         
         try:
-            # Update the delivery note
-            note.receiver_name = receiver_name
-            note.receiver_contact = receiver_contact
-            note.date_of_receipt = date_of_receipt
-            note.delivery_status = delivery_status
-            note.estimate_number = estimate
-            note.sales_person = request.user
+            for i, image_file in enumerate(images):
+                DeliveryImage.objects.create(
+                    delivery=delivery,
+                    delivery_image=image_file,
+                    uploaded_by=request.user,
+                    is_primary=(i == 0)  # Mark first image as primary
+                )
             
             # Update estimate status
-            note.estimate_number.status = 'delivered'
-            note.estimate_number.save()
-            
-            # Save the note first to get the ID
-            note.save()
-            
-            # Handle multiple file uploads
-            images = request.FILES.getlist('images')
-            for image_file in images:
-                # Create a DeliveryImage instance (assuming you have this model)
-                Delivery.objects.create(
-                    delivery_note=note,
-                    image=image_file,
-                    uploaded_by=request.user
-                )
+            delivery.estimate_number.status = 'delivered'
+            delivery.estimate_number.save()
             
             return JsonResponse({
                 'success': True,
-                'message': f"Signed note for Delivery {note.delivery_note_number} uploaded successfully.",
-                'redirect_url': reverse('my-deliveries')
+                'message': f'{len(images)} images uploaded successfully',
+                'redirect_url': reverse('delivery_note_list_by_sales_person')
             })
-            
+        
         except Exception as e:
             return JsonResponse({
                 'success': False,
-                'message': f"An error occurred: {str(e)}"
+                'message': f'Error uploading images: {str(e)}'
             }, status=500)
-    
-    # For GET requests, return the form data
-    return JsonResponse({
-        'note': {
-            'delivery_note_number': note.delivery_note_number,
-            'date_goods_received': note.date_goods_received.strftime('%Y-%m-%d') if note.date_goods_received else None,
+
+    else:
+        # GET request - render the form
+        context = {
+            'note': {
+                'delivery_note_number': delivery.delivery_note_number,
+                'date_goods_received': delivery.date_goods_received.strftime('%Y-%m-%d') if delivery.date_goods_received else None,
+                'delivery_status': delivery.delivery_status,
+            }
         }
-    })
+        return render(request, 'delivery_notes/upload_signed_delivery.html', context)
     
 @login_required
 def delivery_note_list(request):
@@ -658,22 +651,30 @@ def confirm_delivery_note(request, pk):
     
     return render(request, 'delivery_notes/confirm.html', {'form': form, 'note': note})
 
+
 @login_required
 def delivery_note_list_by_sales_person(request):
     user_role = request.user.role.name.lower() if request.user.role else ""
-     
-    if user_role == "sales officer": 
-        delivery_notes = Delivery.objects.filter(estimate_number__sales_person=request.user)
-        
-    else: 
-        delivery_notes = Delivery.objects.none() 
+    
+    if user_role == "sales officer":
+        # Use prefetch_related to optimize image loading
+        delivery_notes = Delivery.objects.filter(
+            estimate_number__sales_person=request.user
+        ).prefetch_related('images').select_related(
+            'estimate_number',
+            'sales_person'
+        ).order_by('-date_of_receipt')
+    else:
+        delivery_notes = Delivery.objects.none()
 
-    return render(request, 'delivery_notes/sales_person_list.html', {
-        'delivery_notes': delivery_notes
-    })
+    context = {
+        'delivery_notes': delivery_notes,
+        'user_role': user_role
+    }
+    return render(request, 'delivery_notes/sales_person_list.html', context)
  
 @require_POST
-@csrf_exempt  # Only use this if you're having CSRF issues - better to properly handle CSRF
+@csrf_exempt   
 def update_note_status(request):
     note_id = request.POST.get('note_id')
     status = request.POST.get('status')

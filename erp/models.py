@@ -215,6 +215,8 @@ class Estimate(models.Model):
         DISPATCHED = 'dispatched', _('Dispatched')
         DELIVERED = 'delivered', _('Delivered (Signed)'),
         DISPATCHREADY = 'dispatchready', _('ready for delivery')
+        STOCKOUT = 'stockout', _('Stock Out')
+        STOCKIN = 'stockin', _('Stock In')
         
     created_date = models.DateField(
         null=True,  
@@ -280,6 +282,13 @@ class Estimate(models.Model):
         on_delete=models.PROTECT,
         limit_choices_to={'role__name': 'billing Officer'},
         related_name='billing_officer_estimates'
+    )
+    
+    hold_reason = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_("Hold Reason"),
+        help_text=_("Explanation for why this estimate was put on hold")
     )
 
     invoice_number = models.CharField(max_length=100, blank=True, null=True)
@@ -512,12 +521,17 @@ class DeliveryImage(models.Model):
         on_delete=models.CASCADE,
         related_name='images'
     )
-    delivery_note_image = models.ImageField(
+    delivery_image = models.ImageField(
         upload_to='delivery_notes/%Y/%m/%d/',
         verbose_name='Delivery Note Image'
     )
     uploaded_at = models.DateTimeField(auto_now_add=True)
-   
+    uploaded_by = models.ForeignKey(
+        'Employee',  # Assuming you have an Employee model
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
     is_primary = models.BooleanField(
         default=False,
         help_text="Mark as primary image"

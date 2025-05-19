@@ -11,9 +11,10 @@
     <thead>
         <tr>
             <th>#</th>
-            <th>Estimate No</th>
+            <th>Delivery No</th>
             <th>Invoice No</th>
-            <th>Dispatch Date</th>
+            <th>Customer</th>
+            <th>Receiving Date</th>
             <th>Note Status</th>
             <th>Signed Note</th>
             <th>Action</th>
@@ -23,9 +24,10 @@
         {% for note in delivery_notes %}
         <tr>
             <td>{{ forloop.counter }}</td>
-            <td>{{ note.estimate_number }}</td>
+            <td>{{ note.delivery_note_number }}</td>
             <td>{{ note.estimate_number.invoice_number }}</td>
-            <td>{{ note.dispatch_date|date:"Y-m-d" }}</td>
+            <td>{{ note.estimate_number.customer_name.owner_name}}</td>
+            <td>{{ note.date_of_receipt|date:"Y-m-d" }}</td>
             <td>
                 <span class="badge bg-{{ note.get_status_badge_color }}">
                     {{ note.get_delivery_status_display }}

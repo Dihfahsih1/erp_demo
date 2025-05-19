@@ -426,6 +426,22 @@ class Dispatch(models.Model):
     office_gate_pass = models.CharField(max_length=100, null=True, blank=True)
     store_gate_pass = models.CharField(max_length=100, null=True, blank=True)  
     dispatch_date = models.DateField(null=True, blank=True)
+    picker = models.ForeignKey(
+        Employee,
+        null=True,   
+        blank=True,
+        on_delete=models.PROTECT,
+        limit_choices_to={'department__name': 'Stores'},
+        related_name='dispatch_picking'
+    )
+    packer = models.ForeignKey(
+        Employee,
+        null=True,   
+        blank=True,
+        on_delete=models.PROTECT,
+        limit_choices_to={'department__name': 'Stores'},
+        related_name='dispatch_packing'
+    )
   
     def __str__(self):
         return f"Dispatch for {self.estimate_number.customer_name} - {self.estimate_number.invoice_number}"

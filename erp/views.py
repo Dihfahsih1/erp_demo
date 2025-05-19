@@ -240,16 +240,12 @@ def record_billing(request, estimate_id):
 
 @login_required
 def all_billed_estimates(request):
-    delivery_persons = Employee.objects.filter(department__name='Stores')
-    packaging_verified_by = Employee.objects.filter(department__name='Stores')
-    delivery_authorization = Employee.objects.filter(department__name='Stores')
+    employees = Employee.objects.filter(department__name='Stores')
     billed_estimates = Estimate.objects.filter(status__in=['billed', 'dispatchready', 'dispatched']).order_by('-date_billed')
   
     return render(request, 'billed_estimates_list.html', 
                   {'billed_estimates': billed_estimates,
-                   'delivery_persons': delivery_persons,
-                   'packaging_verified_by': packaging_verified_by,
-                   'delivery_authorization': delivery_authorization
+                   'delivery_authorization': employees
                   }) 
 
 @login_required

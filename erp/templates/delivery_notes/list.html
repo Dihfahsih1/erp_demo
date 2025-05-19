@@ -58,7 +58,7 @@
                             <span class="more-images-badge">+{{ note.images.count|add:"-3" }}</span>
                         {% endif %}
                     </div>
-                {% else %}
+                {% else %} <!-- if the images are not yet loaded -->
                     <span class="text-muted">No images</span>
                 {% endif %}
             </td>

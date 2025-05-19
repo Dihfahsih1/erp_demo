@@ -66,7 +66,7 @@
                         </div>
                     </div>
 
-                    {% elif request.user.role.name == "Billing Officer" and estimate.status == "verified" and estimate.stock_status == "pending" %}
+                    {% elif request.user.role.name == "Billing Officer" and estimate.status == "verified" %}
                             
                             <span class="badge bg-{% if estimate.stock_status == 'in_stock' %}success
                                                 {% elif estimate.stock_status == 'out_of_stock' %}danger
@@ -76,145 +76,93 @@
                                 {{ estimate.get_stock_status_display }}
                             </span> 
                         </div>
-                        
-                        <!-- Action Buttons --> 
-                        <div class="btn-group btn-group-sm mt-1">
-                            <button class="btn btn-sm btn-success stock-btn"
-                                    data-estimate-id="{{ estimate.id }}"
-                                    data-stock-status="in_stock" onclick="return confirm('Do you confirm this ACTION??');">
-                                In Stock
-                            </button>
-                            <button class="btn btn-sm btn-warning stock-btn"
-                                    data-estimate-id="{{ estimate.id }}"
-                                    data-stock-status="partial" onclick="return confirm('Do you confirm this ACTION??');">
-                                Partial
-                            </button>
-                            <button class="btn btn-sm btn-danger stock-btn"
-                                    data-estimate-id="{{ estimate.id }}"
-                                    data-stock-status="out_of_stock" onclick="return confirm('Do you confirm this ACTION??');">
-                                Out of Stock
-                            </button>
-                        </div> 
-                    <!-- Success Toast (add this once at the top of your template) -->
-                    <div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
-                        <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                            <div class="d-flex">
-                                <div class="toast-body">
-                                    Stock status updated successfully!
-                                </div>
-                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        {% if estimate.stock_status is not  "in_stock"%}
+                     <!-- Action Buttons -->
+                            <div class="btn-group btn-group-sm mt-1 stock-btn-group">
+                                <button class="btn btn-success stock-btn stock-btn-success"
+                                        data-estimate-id="{{ estimate.id }}"
+                                        data-stock-status="in_stock">
+                                    <i class="fas fa-boxes"></i> In Stock
+                                </button>
+                                <button class="btn btn-warning stock-btn stock-btn-warning"
+                                        data-estimate-id="{{ estimate.id }}"
+                                        data-stock-status="partial">
+                                    <i class="fas fa-box-half"></i> Partial
+                                </button>
+                                <button class="btn btn-danger stock-btn stock-btn-danger"
+                                        data-estimate-id="{{ estimate.id }}"
+                                        data-stock-status="out_of_stock">
+                                    <i class="fas fa-box-open"></i> Out of Stock
+                                </button>
                             </div>
-                        </div>
-                    </div> 
+
+
+                        {% endif %}
+                   
                 {% endif %}
             
                 {% if request.user.role.name == "Credit Officer" and estimate.status == "submitted" %}
-                    <div class="btn-group btn-group-sm mt-1" role="group">
-                        <form method="post" action="{% url 'estimate-action' estimate.pk %}">
+                    <div class="credit-action-buttons">
+                        <form method="post" action="{% url 'estimate-action' estimate.pk %}" class="d-inline">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="verify">
-                            <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Do you confirm this ACTION??');">Verify</button>
+                            <button type="submit" class="btn btn-action btn-verify" onclick="return confirmAction('verify')">
+                                <i class="fas fa-check-circle"></i> Verify
+                            </button>
                         </form>
-                        <form method="post" action="{% url 'estimate-action' estimate.pk %}">
+                        
+                        <form method="post" action="{% url 'estimate-action' estimate.pk %}" class="d-inline">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="on-hold">
-                            <button type="submit" class="btn btn-warning btn-sm" onclick="return confirm('Do you confirm this ACTION??');">Hold</button>
+                            <button type="submit" class="btn btn-action btn-hold" onclick="return confirmAction('place on hold')">
+                                <i class="fas fa-pause-circle"></i> Hold
+                            </button>
                         </form>
-                        <form method="post" action="{% url 'estimate-action' estimate.pk %}">
+                        
+                        <form method="post" action="{% url 'estimate-action' estimate.pk %}" class="d-inline">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="reject">
-                            <button type="submit" class="btn btn-danger btn-sm mr-2" onclick="return confirm('Do you confirm this ACTION??');">Reject</button>
+                            <button type="submit" class="btn btn-action btn-reject" onclick="return confirmAction('reject')">
+                                <i class="fas fa-times-circle"></i> Reject
+                            </button>
                         </form>
-                        <form method="post" action="{% url 'estimate-action' estimate.pk %}">
+                        
+                        <form method="post" action="{% url 'estimate-action' estimate.pk %}" class="d-inline">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="cancel">
-                            <button type="submit" class="btn btn-dark btn-sm" onclick="return confirm('Do you confirm this ACTION??');">Cancel</button>
+                            <button type="submit" class="btn btn-action btn-cancel" onclick="return confirmAction('cancel')">
+                                <i class="fas fa-ban"></i> Cancel
+                            </button>
                         </form>
                     </div>
-                {% elif request.user.role.name == "Credit Officer" and estimate.status == "on-hold" %}
-                    <div class="btn-group btn-group-sm mt-1" role="group">
-                        <form method="post" action="{% url 'estimate-action' estimate.pk %}">
+
+                    {% elif request.user.role.name == "Credit Officer" and estimate.status == "on-hold" %}
+                    <div class="credit-action-buttons">
+                        <form method="post" action="{% url 'estimate-action' estimate.pk %}" class="d-inline">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="verify">
-                            <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Do you confirm this ACTION??');">Verify</button>
+                            <button type="submit" class="btn btn-action btn-verify" onclick="return confirmAction('verify')">
+                                <i class="fas fa-check-circle"></i> Verify
+                            </button>
                         </form>
-                        <form method="post" action="{% url 'estimate-action' estimate.pk %}">
+                        
+                        <form method="post" action="{% url 'estimate-action' estimate.pk %}" class="d-inline">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="reject">
-                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Do you confirm this ACTION??');">Reject</button>
+                            <button type="submit" class="btn btn-action btn-reject" onclick="return confirmAction('reject')">
+                                <i class="fas fa-times-circle"></i> Reject
+                            </button>
                         </form>
-                        <form method="post" action="{% url 'estimate-action' estimate.pk %}">
+                        
+                        <form method="post" action="{% url 'estimate-action' estimate.pk %}" class="d-inline">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="cancel">
-                            <button type="submit" class="btn btn-dark btn-sm" onclick="return confirm('Do you confirm this ACTION??');">Cancel</button>
+                            <button type="submit" class="btn btn-action btn-cancel" onclick="return confirmAction('cancel')">
+                                <i class="fas fa-ban"></i> Cancel
+                            </button>
                         </form>
                     </div>
-                {% endif %}
-
-                {% if request.user.role.name == "Delivery Officer" and estimate.status == "billed" %}
-                    <button type="button"
-                            class="btn btn-info btn-sm"
-                            data-bs-toggle="modal"
-                            data-bs-target="#deliveryModal{{ estimate.id }}">
-                        <i class="bi bi-truck"></i> Record Delivery 
-                    </button>
-
-                    <!-- Delivery Modal -->
-                    <div class="modal fade" id="deliveryModal{{ estimate.id }}" tabindex="-1" aria-labelledby="deliveryModalLabel{{ estimate.id }}" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                        <form method="POST" action="{% url 'record_delivery' estimate.id %}">
-                            {% csrf_token %}
-                            <div class="modal-header">
-                            <h5 class="modal-title" id="deliveryModalLabel{{ estimate.id }}">Delivery Details</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="mb-3">
-                                <label for="invoice_number" class="form-label">Delivery Note Number</label>
-                                <input type="text" class="form-control" name="invoice_number" required>
-                            </div>
-                            <div class="modal-body">
-                            <div class="mb-3">
-                                <label class="form-label">Delivery Person</label>
-                                <select name="delivery_person" class="form-select" required>
-                                <option value="">Select...</option>
-                                {% for emp in employees %}
-                                    <option value="{{ emp.id }}">{{ emp.name }}</option>
-                                {% endfor %}
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Dispatch Date</label>
-                                <input type="date" name="dispatch_date" class="form-control" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Packaging Verified By (Stores)</label>
-                                <select name="packaging_verified_by" class="form-select" required>
-                                <option value="">Select...</option>
-                                {% for emp in store_employees %}
-                                    <option value="{{ emp.id }}">{{ emp.name }}</option>
-                                {% endfor %}
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Dispatch Authorized By (Stores)</label>
-                                <select name="dispatch_authorized_by" class="form-select" required>
-                                <option value="">Select...</option>
-                                {% for emp in store_employees %}
-                                    <option value="{{ emp.id }}">{{ emp.name }}</option>
-                                {% endfor %}
-                                </select>
-                            </div>
-                            </div>
-                            <div class="modal-footer">
-                            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button class="btn btn-success" type="submit">Save Delivery</button>
-                            </div>
-                        </form>
-                        </div>
-                    </div>
-                    </div>
-                {% endif %}
+                    {% endif %}
 
             </td>
             
@@ -228,6 +176,240 @@
         {% endfor %}
     </tbody>
 </table>
+
+
+<style>
+    /* Base Button Styles */
+    .btn-action {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border-radius: 6px;
+        margin: 0 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border: none;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        padding: 8px 16px;
+        color: white;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+    }
+    
+    /* Specific Button Colors */
+    .btn-verify {
+        background: linear-gradient(135deg, #28a745 0%, #5cb85c 100%);
+    }
+    
+    .btn-hold {
+        background: linear-gradient(135deg, #ffc107 0%, #f0ad4e 100%);
+    }
+    
+    .btn-reject {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    }
+    
+    .btn-cancel {
+        background: linear-gradient(135deg, #343a40 0%, #6c757d 100%);
+    }
+    
+    /* Hover Effects */
+    .btn-action:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        filter: brightness(110%);
+    }
+    
+    .btn-action:active {
+        transform: translateY(1px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    /* Button Icons */
+    .btn-action i {
+        margin-right: 6px;
+        font-size: 1.1em;
+    }
+    
+    /* Button Group Container */
+    .credit-action-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding: 5px;
+        border-radius: 8px;
+        background: rgba(0,0,0,0.03);
+    }
+    
+    /* Pulse Animation for Important Actions */
+    .btn-verify {
+        animation: pulse-green 2s infinite;
+    }
+    
+    .btn-reject {
+        animation: pulse-red 2s infinite;
+    }
+    
+    @keyframes pulse-green {
+        0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+    }
+    
+    @keyframes pulse-red {
+        0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+    }
+</style>
+
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<script>
+// Enhanced confirmation dialog
+function confirmAction(action) {
+    return confirm(`Are you sure you want to ${action} this estimate?\nThis action will be recorded.`);
+}
+
+// Add ripple effect to buttons
+document.querySelectorAll('.btn-action').forEach(button => {
+    button.addEventListener('click', function(e) {
+        // Create ripple element
+        const ripple = document.createElement('span');
+        ripple.classList.add('ripple-effect');
+        
+        // Position ripple
+        const rect = this.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        ripple.style.width = ripple.style.height = `${size}px`;
+        ripple.style.left = `${e.clientX - rect.left - size/2}px`;
+        ripple.style.top = `${e.clientY - rect.top - size/2}px`;
+        
+        // Add and remove ripple
+        this.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+    });
+});
+</script>
+
+<style>
+    /* Ripple Effect */
+    .ripple-effect {
+        position: absolute;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.4);
+        transform: scale(0);
+        animation: ripple 0.6s linear;
+        pointer-events: none;
+    }
+    
+    @keyframes ripple {
+        to {
+            transform: scale(2.5);
+            opacity: 0;
+        }
+    }
+</style>
+<style>
+    
+    /* Base Button Styles */
+    .stock-btn {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border-radius: 6px;
+        margin: 0 3px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        border: none;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        padding: 6px 12px;
+    }
+    
+    /* Button Hover Effects */
+    .stock-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .stock-btn:active {
+        transform: translateY(1px);
+    }
+    
+    /* Specific Button Colors */
+    .stock-btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #5cb85c 100%);
+    }
+    
+    .stock-btn-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #f0ad4e 100%);
+    }
+    
+    .stock-btn-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    }
+    
+    /* Ripple Effect */
+    .stock-btn:after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 5px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.5);
+        opacity: 0;
+        border-radius: 100%;
+        transform: scale(1, 1) translate(-50%);
+        transform-origin: 50% 50%;
+    }
+    
+    .stock-btn:focus:not(:active)::after {
+        animation: ripple 0.6s ease-out;
+    }
+    
+    @keyframes ripple {
+        0% {
+            transform: scale(0, 0);
+            opacity: 0.5;
+        }
+        100% {
+            transform: scale(20, 20);
+            opacity: 0;
+        }
+    }
+    
+    /* Icons */
+    .stock-btn i {
+        margin-right: 5px;
+    }
+    
+    /* Button Group Container */
+    .stock-btn-group {
+        border-radius: 8px;
+        padding: 3px;
+        background: rgba(0,0,0,0.05);
+    }
+</style>
+
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<script>
+// Add click animation
+document.querySelectorAll('.stock-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        this.classList.add('clicked');
+        setTimeout(() => {
+            this.classList.remove('clicked');
+        }, 300);
+    });
+});
+</script>
+
+
+
 <!-- Load jQuery first -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 

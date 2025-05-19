@@ -104,12 +104,12 @@
         <li class="nav-header">DELIVERY NOTES</li>
         
           
-        <li class="nav-item">
+        {% comment %} <li class="nav-item">
           <a href="{% url 'create_delivery_note' %}" class="nav-link">
             <i class="nav-icon bi bi-truck"></i>
             <p>Record Delivery Details</p>
           </a>
-        </li>
+        </li> {% endcomment %}
 
         <li class="nav-item">
           <a href="{% url 'delivery_note_list' %}" class="nav-link">

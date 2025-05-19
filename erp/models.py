@@ -348,7 +348,7 @@ class Estimate(models.Model):
             'rejected': 'danger',      # Red
             'cancelled': 'warning',    # Yellow
             'packaged': 'secondary',   # Gray
-            'billed': 'dark',          # Dark gray
+            'billed': 'info',          # Dark gray
             'dispatchready': 'warning',# Yellow
             'in-transit': 'primary',   # Blue
         }

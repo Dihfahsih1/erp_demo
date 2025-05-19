@@ -7,20 +7,24 @@
   <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
     <div class="app-wrapper">
       {% include 'includes/navbar.html' %}
-      {% if messages %}
-        <div class="container mt-3">
-          {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-              {{ message }}
-              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
+     
       {% include 'includes/sidebar.html' %}
 
       <main class="app-main">
-        {% block content %}{% endblock %}
+        {% block content %}
+          {% if messages %}
+          <div class="container">
+            
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+        
+        {% endblock %}
       </main>
 
       {% include 'includes/footer.html' %}

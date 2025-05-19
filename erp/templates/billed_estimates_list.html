@@ -2,6 +2,7 @@
 {% load static %}
 {% block content %}
 {% load humanize %}
+
 <div class="container mt-5">
   <div class="card shadow border-0">
     <div class="card-header bg-primary text-white">
@@ -70,63 +71,113 @@
               </tr>
               <div class="modal fade" id="deliveryNoteModal{{ estimate.id }}" tabindex="-1" aria-labelledby="deliveryNoteLabel{{ estimate.id }}" aria-hidden="true">
                 <div class="modal-dialog">
-                  <div class="modal-content">
-                    <form method="POST" action="{% url 'create_delivery_note' estimate.id %}">
-                      {% csrf_token %}
-                      <div class="modal-header">
-                        <h5 class="modal-title" id="deliveryNoteLabel{{ estimate.id }}">Create Delivery Note</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                      </div>
-                      <div class="modal-body">
-                        <p style="text-align: center;"><strong>Estimate Number:</strong> {{ estimate.bk_estimate_id }}</p>
-                        <p style="text-align: center;">Invoice Number:{{ estimate.invoice_number }}</p>
-
-                        <div class="mb-3">
-                          <label for="invoice_number" class="form-label">Delivery Note Number</label>
-                          <input type="text" class="form-control" name="delivery_note_number" required>
-                        </div>
-                        <div class="mb-3">
-                          <label>Dispatch Date</label>
-                          <input type="date" name="dispatch_date" class="form-control" required>
-                        </div>
-              
-                        <div class="mb-3">
-                          <label>Delivery Person</label>
-                          <select name="delivery_person" class="form-select" required>
-                            {% for emp in delivery_persons %}
-                            <p>{{ emp }}</p>
-                              <option value="{{ emp.id }}">{{ emp.first_name }}</option>
-                            {% endfor %}
-                          </select>
-                        </div>
-              
-                        <div class="mb-3">
-                          <label>Packaging Verified By</label>
-                          <select name="packaging_verified_by" class="form-select" required>
-                            {% for emp in packaging_verified_by %}
-                              <option value="{{ emp.id }}">{{ emp.first_name }}</option>
-                            {% endfor %}
-                          </select>
-                        </div>
-              
-                        <div class="mb-3">
-                          <label>Authorized By</label>
-                          <select name="dispatch_authorized_by" class="form-select" required>
-                            {% for emp in delivery_authorization %}
-                              <option value="{{ emp.id }}">{{ emp.first_name }}</option>
-                            {% endfor %}
-                          </select>
-                        </div>
-                      </div>
-              
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success">Create Details</button>
-                      </div>
-                    </form>
-                  </div>
+                    <div class="modal-content">
+                        <form method="POST" action="{% url 'create_delivery_note' estimate.id %}">
+                            {% csrf_token %}
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="deliveryNoteLabel{{ estimate.id }}">Create Delivery Note</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p style="text-align: center;"><strong>Estimate Number:</strong> {{ estimate.bk_estimate_id }}</p>
+                                <p style="text-align: center;">Invoice Number: {{ estimate.invoice_number }}</p>
+            
+                                <div class="mb-3">
+                                    <label for="delivery_note_number" class="form-label">Delivery Note Number</label>
+                                    <input type="text" class="form-control" name="delivery_note_number" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label>Dispatch Date</label>
+                                    <input type="date" name="dispatch_date" class="form-control" required>
+                                </div>
+                      
+                                <!-- Delivery Method Selection -->
+                                <div class="mb-3">
+                                    <label>Delivery Method</label>
+                                    <select name="delivery_method" class="form-select" id="deliveryMethod{{ estimate.id }}" required>
+                                        <option value="">Select delivery method</option>
+                                        <option value="stores">Stores Personnel</option>
+                                        <option value="customer">Customer Pickup</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Stores Personnel Delivery (Hidden by default) -->
+                                <div class="mb-3 d-none" id="storesDelivery{{ estimate.id }}">
+                                    <label>Store Person to Deliver</label>
+                                    <select name="delivery_person" class="form-select">
+                                        <option value="">Select delivery person</option>
+                                        {% for emp in delivery_persons %}
+                                            <option value="{{ emp.id }}">{{ emp.first_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <!-- Customer Pickup (Hidden by default) -->
+                                <div class="mb-3 d-none" id="customerDelivery{{ estimate.id }}">
+                                    <label>Customer Name</label>
+                                    <input type="text" name="delivery_by_customer" class="form-control" placeholder="Enter customer name">
+                                </div>
+                      
+                                <div class="mb-3">
+                                    <label>Packaging Verified By</label>
+                                    <select name="packaging_verified_by" class="form-select" required>
+                                        {% for emp in packaging_verified_by %}
+                                            <option value="{{ emp.id }}">{{ emp.first_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                      
+                                <div class="mb-3">
+                                    <label>Authorized By</label>
+                                    <select name="dispatch_authorized_by" class="form-select" required>
+                                        {% for emp in delivery_authorization %}
+                                            <option value="{{ emp.id }}">{{ emp.first_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                      
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-success">Create Details</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-              </div>
+            </div>
+            
+            <!-- jQuery Script -->
+            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+            <script>
+            $(document).ready(function() {
+                $('[id^="deliveryMethod"]').change(function() {
+                    const estimateId = this.id.replace('deliveryMethod', '');
+                    const method = $(this).val();
+            
+                    const $stores = $('#storesDelivery' + estimateId);
+                    const $customer = $('#customerDelivery' + estimateId);
+            
+                    if (method === 'stores') {
+                        $stores.removeClass('d-none');
+                        $customer.addClass('d-none');
+                        $stores.find('select').prop('required', true);
+                        $customer.find('input').prop('required', false);
+                    } else if (method === 'customer') {
+                        $stores.addClass('d-none');
+                        $customer.removeClass('d-none');
+                        $stores.find('select').prop('required', false);
+                        $customer.find('input').prop('required', true);
+                    } else {
+                        $stores.addClass('d-none');
+                        $customer.addClass('d-none');
+                        $stores.find('select').prop('required', false);
+                        $customer.find('input').prop('required', false);
+                    }
+                });
+            });
+            </script>
+            
 
 
               <div class="modal fade" id="dispatchModal{{ estimate.id }}" tabindex="-1" aria-labelledby="dispatchLabel{{ estimate.id }}" aria-hidden="true">

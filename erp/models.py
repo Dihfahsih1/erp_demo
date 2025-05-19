@@ -484,6 +484,9 @@ class Delivery(models.Model):
         limit_choices_to={'department__name': 'Stores'},
         related_name='delivery_officer_estimates'
     )
+    
+    delivery_by_customer = models.CharField(max_length=100, null=True, blank=True)
+
     remarks = models.TextField(null=True, blank=True)
     
 

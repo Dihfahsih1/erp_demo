@@ -30,7 +30,11 @@
             <td>{{ note.delivery_note_number }}</td>
             <td>{{ note.estimate_number.invoice_number }}</td>
             <td>{{ note.estimate_number.customer_name }}</td>
-            <td>{{ note.delivery_person.first_name }}</td>
+            {% if note.delivery_by_customer %}
+                <td>{{ note.delivery_by_customer }} <i>-Customer</i></td>
+            {% else %}
+                <td>{{ note.delivery_person.first_name }} {{ note.delivery_person.last_name }} <i> -Stores</i></td>
+            {% endif %}
             <td>{{ note.receiver_name|default:"----" }}</td>
             <td>{{ note.date_of_receipt|date:"Y-m-d" }}</td>
             <td class="status-cell">

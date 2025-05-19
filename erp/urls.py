@@ -51,6 +51,9 @@ urlpatterns = [
      
      path('create-delivery-note/<int:pk>/', views.create_delivery_note, name='create_delivery_note'),
      path('create-dispatch/<int:pk>/', views.create_dispatch_details, name='create_dispatch_details'),
+     
+     path('estimate/<int:pk>/submit-hold-reason/', views.submit_hold_reason, name='submit-hold-reason'),
+
 
 
 

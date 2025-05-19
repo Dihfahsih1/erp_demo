@@ -464,6 +464,20 @@ def estimate_action(request, pk):
     estimate.save()
     return redirect(request.META.get("HTTP_REFERER", estimate.get_absolute_url()))
  
+ 
+ 
+def submit_hold_reason(request, pk):
+    if request.method == 'POST':
+        estimate = get_object_or_404(Estimate, pk=pk)
+        reason = request.POST.get('hold_reason')
+        if reason:
+            estimate.hold_reason = reason
+            estimate.save()
+            messages.success(request, "Hold reason submitted successfully.")
+        else:
+            messages.error(request, "Reason cannot be empty.")
+    return redirect(request.META.get('HTTP_REFERER', 'estimates-list')) 
+
 @login_required
 def download_estimate_template(request):
     # Create a sample DataFrame
@@ -533,21 +547,32 @@ def confirm_delivery(request, pk):
 
 sales_exec_role = UserRole.objects.filter(name='Sales Executive').first()
 @login_required
-def create_delivery_note(request,pk):
+def create_delivery_note(request, pk):
     estimate = get_object_or_404(Estimate, pk=pk)
-
+    
     if request.method == 'POST':
-        form=DeliveryForm(request.POST) 
+        form = DeliveryForm(request.POST)
         if form.is_valid():
             delivery_note = form.save(commit=False)
             delivery_note.estimate_number = estimate
-            delivery_note.save() 
+            
+            # Handle delivery method
+            delivery_method = request.POST.get('delivery_method')
+            if delivery_method == 'stores':
+                delivery_note.delivery_person_id = request.POST.get('delivery_person')
+                delivery_note.delivery_by_customer = None
+            elif delivery_method == 'customer':
+                delivery_note.delivery_by_customer = request.POST.get('delivery_by_customer')
+                delivery_note.delivery_person = None
+            
+            delivery_note.save()
             estimate.delivery_note = delivery_note
             estimate.status = 'dispatched'
             estimate.save()
+            
             messages.success(request, "Delivery note created successfully.")
             return redirect('delivery_note_list')
-           
+    
     messages.error(request, "Invalid request.")
     return redirect('delivery_estimates')
 

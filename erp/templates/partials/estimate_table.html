@@ -162,7 +162,26 @@
                             </button>
                         </form>
                     </div>
+
+
+                    <!-- Show reason if present, else show input form -->
+                    <div class="mt-2">
+                        {% if estimate.hold_reason %}
+                            <small class="text-danger"><strong>Reason:</strong> {{ estimate.hold_reason }}</small>
+                        {% else %}
+                            <!-- Reason submission form -->
+                            <form method="post" action="{% url 'submit-hold-reason' estimate.id %}">
+                                {% csrf_token %}
+                                <div class="input-group mt-1">
+                                    <input type="text" name="hold_reason" class="form-control form-control-sm" placeholder="Enter hold reason..." required>
+                                    <button type="submit" class="btn btn-sm btn-warning">Submit Reason</button>
+                                </div>
+                            </form>
+                        {% endif %}
+                    </div>
                     {% endif %}
+
+                    
 
             </td>
             

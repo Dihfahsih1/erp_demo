@@ -279,6 +279,8 @@ class Estimate(models.Model):
     
     stock_status = models.CharField(
         max_length=20,
+        null=True,   
+        blank=True,
         choices=StockStatus.choices,
         default=StockStatus.PENDING,
         verbose_name=_("Stock Status")
@@ -350,7 +352,7 @@ class Estimate(models.Model):
             'dispatchready': 'warning',# Yellow
             'in-transit': 'primary',   # Blue
         }
-        return colors.get(self.status, 'light')  # Default to 'light' if status not found
+        return colors.get(self.status, 'light')   
 
 class EstimateItem(models.Model):
     estimate = models.ForeignKey(

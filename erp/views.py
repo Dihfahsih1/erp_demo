@@ -257,6 +257,7 @@ def record_estimate(request):
     sales_persons = Employee.objects.filter(role__name='Sales Officer')
     if request.method == 'POST': 
         form = EstimateForm(request.POST)
+        print(form.errors)
         if form.is_valid():
             try:
                 estimate = form.save(commit=False)
@@ -279,6 +280,27 @@ def record_estimate(request):
         })
     
     return render(request, 'record_estimate.html', {'form': form,'sales_person': sales_persons})
+
+
+@login_required
+@require_POST
+def update_stock(request, pk): 
+    estimate = get_object_or_404(Estimate, pk=pk)
+    
+    if estimate.status != Estimate.Status.VERIFIED:
+        return JsonResponse({'error': 'Can only update stock for verified estimates'}, status=400)
+    
+    stock_status = request.POST.get('stock_status') 
+    if stock_status not in dict(Estimate.StockStatus.choices):
+        return JsonResponse({'error': 'Invalid stock status'}, status=400)
+    
+    estimate.stock_status = stock_status
+    estimate.save()
+    
+    return JsonResponse({
+        'success': True,
+        'display_status': estimate.get_stock_status_display()
+    })
 
 def autocomplete_customers(request):
     term = request.GET.get('term', '')

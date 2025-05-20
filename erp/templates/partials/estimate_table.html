@@ -195,6 +195,15 @@
         {% endfor %}
     </tbody>
 </table>
+<div id="successToast" class="toast position-fixed top-0 end-0 p-3" style="z-index: 11">
+    <div class="toast-header bg-success text-white">
+        <strong class="me-auto">Success</strong>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+    </div>
+    <div class="toast-body">
+        Status updated successfully!
+    </div>
+</div>
 
 
 <style>
@@ -437,12 +446,14 @@ document.querySelectorAll('.stock-btn').forEach(button => {
 
 <script>
     $(document).ready(function() {
+        // Initialize toast
+        const successToast = new bootstrap.Toast(document.getElementById('successToast'));
+        
         // Handle stock status updates
-        $('.stock-btn').click(function() {
+        $(document).on('click', '.stock-btn', function() {
             const estimateId = $(this).data('estimate-id');
             const stockStatus = $(this).data('stock-status');
-            console.log(`Estimate ID: ${estimateId}, Stock Status: ${stockStatus}`);
-            // Show confirmation dialog
+            
             if (confirm(`Change stock status to "${stockStatus.replace('_', ' ')}"?`)) {
                 updateStockStatus(estimateId, stockStatus);
             }
@@ -457,28 +468,75 @@ document.querySelectorAll('.stock-btn').forEach(button => {
                     csrfmiddlewaretoken: '{{ csrf_token }}'
                 },
                 success: function(response) {
-                    // Update the badge
-                    const badge = $(`#stock-badge-${estimateId}`);
-                    badge.text(response.display_status);
-                    
-                    // Update badge color
-                    badge.removeClass('bg-success bg-warning bg-danger bg-secondary');
-                    if (status === 'in_stock') {
-                        badge.addClass('bg-success');
-                    } else if (status === 'partial') {
-                        badge.addClass('bg-warning');
-                    } else if (status === 'out_of_stock') {
-                        badge.addClass('bg-danger');
-                    } else {
-                        badge.addClass('bg-secondary');
+                    if (response.success) {
+                        // Update the badge
+                        const badge = $(`#stock-badge-${estimateId}`);
+                        const actionsCell = badge.closest('td');
+                        
+                        badge.text(response.display_status);
+                        
+                        // Update badge color
+                        badge.removeClass('bg-success bg-warning bg-danger bg-secondary');
+                        if (status === 'in_stock') {
+                            badge.addClass('bg-success');
+                        } else if (status === 'partial') {
+                            badge.addClass('bg-warning');
+                        } else if (status === 'out_of_stock') {
+                            badge.addClass('bg-danger');
+                        } else {
+                            badge.addClass('bg-secondary');
+                        }
+                        
+                        // Update the UI based on new status
+                        if (status === 'in_stock') {
+                            // Hide stock buttons
+                            actionsCell.find('.stock-btn-group').remove();
+                            
+                            // Show billing button if it doesn't exist
+                            if (!actionsCell.find('.billing-btn').length) {
+                                const billingBtn = `
+                                    <button type="button" class="btn btn-primary btn-sm billing-btn"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#billingModal${estimateId}">
+                                        <i class="bi bi-receipt"></i> Record Billing
+                                    </button>`;
+                                actionsCell.append(billingBtn);
+                            }
+                        } else {
+                            // Show stock buttons if hidden
+                            if (!actionsCell.find('.stock-btn-group').length) {
+                                const stockBtnGroup = `
+                                    <div class="btn-group btn-group-sm mt-1 stock-btn-group">
+                                        <button class="btn btn-success stock-btn"
+                                                data-estimate-id="${estimateId}"
+                                                data-stock-status="in_stock">
+                                            <i class="fas fa-boxes"></i> In Stock
+                                        </button>
+                                        <button class="btn btn-warning stock-btn"
+                                                data-estimate-id="${estimateId}"
+                                                data-stock-status="partial">
+                                            <i class="fas fa-box-half"></i> Partial
+                                        </button>
+                                        <button class="btn btn-danger stock-btn"
+                                                data-estimate-id="${estimateId}"
+                                                data-stock-status="out_of_stock">
+                                            <i class="fas fa-box-open"></i> Out of Stock
+                                        </button>
+                                    </div>`;
+                                actionsCell.append(stockBtnGroup);
+                                
+                                // Remove billing button if exists
+                                actionsCell.find('.billing-btn').remove();
+                            }
+                        }
+                        
+                        // Show success toast
+                        $('#successToast .toast-body').text(`Stock status updated to: ${response.display_status}`);
+                        successToast.show();
                     }
-                    
-                    // Show success toast
-                    const toast = new bootstrap.Toast(document.getElementById('successToast'));
-                    toast.show();
                 },
                 error: function(xhr) {
-                    alert('Error updating status: ' + xhr.responseJSON.error);
+                    alert('Error updating status: ' + (xhr.responseJSON?.error || 'Server error'));
                 }
             });
         }

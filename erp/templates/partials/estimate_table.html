@@ -533,6 +533,7 @@ document.querySelectorAll('.stock-btn').forEach(button => {
                         // Show success toast
                         $('#successToast .toast-body').text(`Stock status updated to: ${response.display_status}`);
                         successToast.show();
+                        window.location.reload();
                     }
                 },
                 error: function(xhr) {
@@ -542,8 +543,6 @@ document.querySelectorAll('.stock-btn').forEach(button => {
         }
     });
 </script>
-
-
-
+ 
 
 

@@ -10,21 +10,61 @@
                     <h4 class="mb-0">Upload Signed Delivery Note</h4>
                 </div>
                 <div class="card-body">
-                    <form method="post" enctype="multipart/form-data" id="upload-form">
+                    <form method="post" enctype="multipart/form-data" id="upload-form" novalidate>
                         {% csrf_token %}
                         
                         <input type="hidden" name="delivery_status" value="{{ note.delivery_status }}">
                         <!-- Customer Information -->
                         <div class="row mb-3">
                             <div class="col-md-6">
+                                <label for="receiver_type" class="form-label">Who received?</label>
+                                <select class="form-select" id="receiver_type" name="receiver_type" onchange="toggleReceiverFields()">
+                                    <option value="">-- Select --</option>
+                                    <option value="customer">Customer</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- This will show only if 'customer' is selected -->
+                        <div class="row mb-3" id="customer_name_group" style="display: none;">
+                            <div class="col-md-12">
+                                <label for="customer_name" class="form-label">Customer Name </label>
+                                <input type="text" class="form-control" id="customer_name" name="received_by_customer" value="{{customer.owner_name}} - {{customer.owner_tel}}" readonly>
+                            </div>
+                        </div>
+                        
+                        <!-- This will show only if 'other' is selected -->
+                        <div class="row mb-3" id="other_receiver_group" style="display: none;">
+                            <div class="col-md-6">
                                 <label for="receiver_name" class="form-label">Receiver Name</label>
-                                <input type="text" class="form-control" id="receiver_name" name="receiver_name" required>
+                                <input type="text" class="form-control" id="receiver_name" name="receiver_name">
                             </div>
                             <div class="col-md-6">
                                 <label for="receiver_contact" class="form-label">Receiver Contact</label>
                                 <input type="text" class="form-control" id="receiver_contact" name="receiver_contact">
                             </div>
                         </div>
+                        
+                        <script>
+                            function toggleReceiverFields() {
+                                var type = document.getElementById('receiver_type').value;
+                                var customerGroup = document.getElementById('customer_name_group');
+                                var otherGroup = document.getElementById('other_receiver_group');
+                        
+                                if (type === 'customer') {
+                                    customerGroup.style.display = 'flex';
+                                    otherGroup.style.display = 'none';
+                                } else if (type === 'other') {
+                                    customerGroup.style.display = 'none';
+                                    otherGroup.style.display = 'flex';
+                                } else {
+                                    customerGroup.style.display = 'none';
+                                    otherGroup.style.display = 'none';
+                                }
+                            }
+                        </script>
+                        
 
                         <!-- Delivery Information -->
                         <div class="row mb-3">
@@ -69,7 +109,7 @@
 
                         <div class="d-grid gap-2 mt-4">
                             <button type="button" class="btn btn-primary btn-preview" onclick="showPreview()">
-                                <i class="fas fa-eye me-2"></i>Preview
+                                <i class="fas fa-eye me-2"></i>Preview Images
                             </button>
                             <button type="button" class="btn btn-success d-none" id="submit-btn" onclick="confirmSubmission()">
                                 <i class="fas fa-check me-2"></i>Confirm & Submit
@@ -87,11 +127,11 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="previewModalLabel">Delivery Note Preview</h5>
+                <h5 class="modal-title" id="previewModalLabel">Delivery Note Image Preview</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="row mb-4">
+                {% comment %} <div class="row mb-4">
                     <div class="col-md-6">
                         <h5>Customer Details</h5>
                         <p><strong>Name:</strong> <span id="preview-customer-name"></span></p>
@@ -102,7 +142,7 @@
                         <p><strong>Note Number:</strong> <span id="preview-estimate-number"></span></p>
                         <p><strong>Delivery Date:</strong> <span id="preview-delivery-date"></span></p>
                     </div>
-                </div>
+                </div> {% endcomment %}
                 
                 <div class="mb-4">
                     <h5 class="text-center mb-3">Uploaded Images</h5>
@@ -111,7 +151,7 @@
             </div>
             
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Edit Details</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Back</button>
                 <button type="button" class="btn btn-primary" onclick="confirmSubmission()">Confirm & Submit</button>
             </div>
         </div>
@@ -262,30 +302,9 @@
     // Show preview modal
     function showPreview() {
         console.log('showPreview function called');
-        
-        // Validate required fields
         const customerName = document.getElementById('receiver_name').value;
         const estimateNumber = document.getElementById('delivery_note_number').value;
         const deliveryDate = document.getElementById('date_of_receipt').value;
-        
-        console.log('Form values:', {
-            customerName,
-            estimateNumber,
-            deliveryDate,
-            files: uploadedFiles.length
-        });
-        
-        if (!customerName || !deliveryDate || !estimateNumber || uploadedFiles.length === 0) {
-            const missingFields = [];
-            if (!customerName) missingFields.push('Receiver Name');
-            if (!deliveryDate) missingFields.push('Delivery Date');
-            if (!estimateNumber) missingFields.push('Delivery Note Number');
-            if (uploadedFiles.length === 0) missingFields.push('Images');
-            
-            console.warn('Missing required fields:', missingFields);
-            alert('Please fill all required fields: ' + missingFields.join(', '));
-            return false;
-        }
     
         // Populate preview modal
         document.getElementById('preview-customer-name').textContent = customerName;
@@ -388,35 +407,8 @@
         }
     }
     
-    // Function to display form errors
-    function displayFormErrors(errors) {
-        // Clear previous errors
-        document.querySelectorAll('.is-invalid').forEach(el => {
-            el.classList.remove('is-invalid');
-        });
-        document.querySelectorAll('.invalid-feedback').forEach(el => {
-            el.remove();
-        });
-        
-        if (errors) {
-            for (const [field, error] of Object.entries(errors)) {
-                console.log(`Error for field ${field}:`, error);
-                const input = document.querySelector(`[name="${field}"]`) || 
-                            document.querySelector(`#id_${field}`) || 
-                            document.querySelector(`#${field}`);
-                
-                if (input) {
-                    input.classList.add('is-invalid');
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'invalid-feedback';
-                    errorDiv.textContent = Array.isArray(error) ? error.join(' ') : error;
-                    input.parentNode.appendChild(errorDiv);
-                } else {
-                    console.warn(`Could not find input element for field: ${field}`);
-                }
-            }
-        }
-    }
+    
+    
 </script>
 
 <style>

@@ -551,6 +551,7 @@ def create_delivery_note(request, pk):
         if form.is_valid():
             delivery_note = form.save(commit=False)
             delivery_note.estimate_number = estimate
+            delivery_note.sales_person = estimate.sales_person
             
             # Handle delivery method
             delivery_method = request.POST.get('delivery_method')
@@ -592,23 +593,35 @@ def create_dispatch_details(request, pk):
     return JsonResponse({'status': 'invalid method'}, status=405)
 
 
-
 @login_required
 def upload_signed_note(request, note_id):
     delivery = get_object_or_404(
         Delivery, 
         id=note_id,
-        estimate_number__sales_person=request.user  # Assuming user is linked to Employee
+        estimate_number__sales_person=request.user  #  user is linked to Employee
     )
+    
 
     if request.method == 'POST':
-        # Handle form submission (existing code)
+        receiver_type = request.POST.get('receiver_type')  # either 'customer' or 'other'
+
+        # Initialize form data dictionary
         form_data = {
-            'receiver_name': request.POST.get('receiver_name'),
-            'receiver_contact': request.POST.get('receiver_contact'),
+            'received_by': receiver_type, 
             'date_of_receipt': request.POST.get('date_of_receipt'),
-            'delivery_status': 'being_processed'
+            'delivery_status': 'being_processed',
+            'received_by_customer': None,
+            'receiver_name': None,
+            'receiver_contact': None
         }
+
+        # Handle based on selected type
+        if receiver_type == 'customer':
+            form_data['received_by_customer'] = request.POST.get('received_by_customer')
+        elif receiver_type == 'other':
+            form_data['receiver_name'] = request.POST.get('receiver_name') or None
+            form_data['receiver_contact'] = request.POST.get('receiver_contact') or None
+
         
         # Update delivery info
         for field, value in form_data.items():
@@ -653,7 +666,9 @@ def upload_signed_note(request, note_id):
     else:
         # GET request - render the form
         context = {
+            'customer': delivery.estimate_number.customer_name,
             'note': {
+                
                 'delivery_note_number': delivery.delivery_note_number,
                 'date_goods_received': delivery.date_goods_received.strftime('%Y-%m-%d') if delivery.date_goods_received else None,
                 'delivery_status': delivery.delivery_status,

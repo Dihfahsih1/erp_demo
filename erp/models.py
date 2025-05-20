@@ -446,6 +446,12 @@ class Dispatch(models.Model):
     def __str__(self):
         return f"Dispatch for {self.estimate_number.customer_name} - {self.estimate_number.invoice_number}"
 class Delivery(models.Model):
+    RECEIVER_CHOICES = [
+        ('customer', 'Customer'),
+        ('other', 'Other'),
+    ]
+    
+    received_by = models.CharField(max_length=10, choices=RECEIVER_CHOICES, null=True, blank=True) 
     class Status(models.TextChoices):
         PENDING = 'pending', _('Pending')
         BEING_PROCESSED = 'being_processed', _('Being Processed')
@@ -479,7 +485,7 @@ class Delivery(models.Model):
     
     delivery_note_number = models.CharField(max_length=100, null=True, blank=True)
     delivery_date = models.DateField(null=True, blank=True)
-    
+    received_by_customer = models.CharField(max_length=100, null=True, blank=True)
     receiver_name = models.CharField(max_length=100, null=True, blank=True)
     receiver_contact = models.CharField(max_length=20, null=True, blank=True)
     date_of_receipt = models.DateField(null=True, blank=True)

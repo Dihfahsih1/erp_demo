@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: May 17, 2025 at 12:04 PM
+-- Generation Time: May 20, 2025 at 01:57 PM
 -- Server version: 11.4.5-MariaDB-1
 -- PHP Version: 8.4.5
 
@@ -224,7 +224,12 @@ INSERT INTO `django_admin_log` (`id`, `action_time`, `object_id`, `object_repr`,
 (29, '2025-05-13 13:52:45.488075', '8', 'sales', 2, '[{\"changed\": {\"fields\": [\"First name\", \"Role\", \"Region of Operation\"]}}]', 1, 1),
 (30, '2025-05-13 14:12:41.430396', '1', 'Delivery DEL---19309093 - None', 2, '[{\"changed\": {\"fields\": [\"Estimate number\", \"Delivery note number\"]}}]', 3, 1),
 (31, '2025-05-14 09:12:33.297867', '8', 'davies', 2, '[{\"changed\": {\"fields\": [\"Username\"]}}]', 1, 1),
-(32, '2025-05-14 10:33:51.274535', '2', 'Delivery DEL-122 - None', 2, '[{\"changed\": {\"fields\": [\"Estimate number\"]}}]', 3, 1);
+(32, '2025-05-14 10:33:51.274535', '2', 'Delivery DEL-122 - None', 2, '[{\"changed\": {\"fields\": [\"Estimate number\"]}}]', 3, 1),
+(33, '2025-05-19 13:22:14.087386', '9', 'rhoda', 1, '[{\"added\": {}}]', 1, 1),
+(34, '2025-05-19 13:22:55.946899', '5', 'Central', 1, '[{\"added\": {}}]', 6, 1),
+(35, '2025-05-19 13:22:58.673116', '9', 'Rhoda N', 2, '[{\"changed\": {\"fields\": [\"First name\", \"Last name\", \"Role\", \"Region of Operation\"]}}]', 1, 1),
+(36, '2025-05-20 06:37:09.362397', '10', 'cathy', 1, '[{\"added\": {}}]', 1, 1),
+(37, '2025-05-20 06:37:33.297777', '10', 'Cathy L', 2, '[{\"changed\": {\"fields\": [\"First name\", \"Last name\", \"Role\", \"Region of Operation\"]}}]', 1, 1);
 
 -- --------------------------------------------------------
 
@@ -329,7 +334,13 @@ INSERT INTO `django_migrations` (`id`, `app`, `name`, `applied`) VALUES
 (44, 'erp', '0011_deliveryimage', '2025-05-16 11:47:57.973388'),
 (45, 'erp', '0012_rename_delivery_note_image_deliveryimage_delivery_image_and_more', '2025-05-16 12:01:18.938030'),
 (46, 'erp', '0013_estimate_hold_reason_alter_estimate_status', '2025-05-17 08:18:07.410977'),
-(47, 'erp', '0014_estimate_stock_status_alter_estimate_status', '2025-05-17 09:05:39.488951');
+(47, 'erp', '0014_estimate_stock_status_alter_estimate_status', '2025-05-17 09:05:39.488951'),
+(48, 'erp', '0015_alter_estimate_stock_status', '2025-05-19 07:42:18.624538'),
+(49, 'erp', '0016_delivery_delivery_by_customer', '2025-05-19 13:45:44.132587'),
+(50, 'erp', '0017_dispatch_packer_dispatch_picker', '2025-05-19 14:43:34.397199'),
+(51, 'erp', '0018_delivery_receiver_by_customer', '2025-05-20 12:56:38.210606'),
+(52, 'erp', '0019_rename_receiver_by_customer_delivery_received_by_customer', '2025-05-20 13:00:01.548969'),
+(53, 'erp', '0020_delivery_received_by', '2025-05-20 13:13:58.224959');
 
 -- --------------------------------------------------------
 
@@ -342,6 +353,14 @@ CREATE TABLE `django_session` (
   `session_data` longtext NOT NULL,
   `expire_date` datetime(6) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+--
+-- Dumping data for table `django_session`
+--
+
+INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES
+('cuivyscn8p54z893fapmyzire18rs95w', '.eJxVjMsOwiAQRf-FtSEMrTxcuu83kBkYpGogKe3K-O_apAvd3nPOfYmA21rC1nkJcxIX4cXpdyOMD647SHestyZjq-syk9wVedAup5b4eT3cv4OCvXxr1GBNUiMCJrSjj6RtJMcmayJwoBRG61ifwQ8DIzPkpMhnb41HbVG8P_WPOFs:1uHN2g:lCk0e4_OvYQvrBFOyso1daSOcDKBXwtXxIVDZH2PaJI', '2025-06-03 13:30:02.917602'),
+('ife2lz2tvxrfstbvgzd4radpqkwc79a3', '.eJxVjMsOwiAQRf-FtSEMrTxcuu83kBkYpGogKe3K-O_apAvd3nPOfYmA21rC1nkJcxIX4cXpdyOMD647SHestyZjq-syk9wVedAup5b4eT3cv4OCvXxr1GBNUiMCJrSjj6RtJMcmayJwoBRG61ifwQ8DIzPkpMhnb41HbVG8P_WPOFs:1uHLrS:yTBdZRuTyPAIWAhUxdNMhdKV88_GVUFjBIliR95si1o', '2025-06-03 12:14:22.210069');
 
 -- --------------------------------------------------------
 
@@ -407,19 +426,26 @@ CREATE TABLE `erp_delivery` (
   `packaging_verified_by_id` bigint(20) DEFAULT NULL,
   `dispatch_date` date DEFAULT NULL,
   `sales_person_id` bigint(20) DEFAULT NULL,
-  `date_of_receipt` date DEFAULT NULL
+  `date_of_receipt` date DEFAULT NULL,
+  `delivery_by_customer` varchar(100) DEFAULT NULL,
+  `received_by_customer` varchar(100) DEFAULT NULL,
+  `received_by` varchar(10) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 --
 -- Dumping data for table `erp_delivery`
 --
 
-INSERT INTO `erp_delivery` (`id`, `delivery_note_number`, `delivery_date`, `receiver_name`, `receiver_contact`, `date_goods_received`, `delivery_status`, `delivery_person_id`, `remarks`, `image`, `extracted_text`, `created_at`, `updated_at`, `estimate_number_id`, `dispatch_authorized_by_id`, `packaging_verified_by_id`, `dispatch_date`, `sales_person_id`, `date_of_receipt`) VALUES
-(1, 'DEL---19309093', NULL, 'Martin', '0785243728', NULL, 'pending', NULL, '', 'delivery_notes/IMG_5102_KtdmMm5_hdSThv9.jpg', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(2, 'DEL-122', NULL, 'urwi9ore', '7y8oy8re', NULL, 'received', NULL, '', 'delivery_notes/IMG_5102_KtdmMm5_ipVw0Dc.jpg', '', NULL, NULL, 3, NULL, NULL, '2025-05-13', 8, NULL),
-(3, 'DEL-123EF', NULL, 'Sachin', NULL, NULL, 'received', NULL, '', 'delivery_notes/IMG_5102_KtdmMm5_hdSThv9_JJ24o8q.jpg', '', NULL, NULL, 4, NULL, NULL, NULL, 8, '2025-05-15'),
-(4, 'TODAY-DEL-NOTE', NULL, 'Nakimuli', 'Lydia', NULL, 'received', NULL, '', 'delivery_notes/IMG_5102_KtdmMm5_hdSThv9_JJ24o8q_zQoNqte.jpg', '', NULL, NULL, 5, NULL, NULL, NULL, 8, '2025-05-16'),
-(5, 'DEL8739', NULL, 'Testing', '0098948', NULL, 'received', NULL, '', '', '', NULL, NULL, 2, NULL, NULL, NULL, 8, '2025-05-15');
+INSERT INTO `erp_delivery` (`id`, `delivery_note_number`, `delivery_date`, `receiver_name`, `receiver_contact`, `date_goods_received`, `delivery_status`, `delivery_person_id`, `remarks`, `image`, `extracted_text`, `created_at`, `updated_at`, `estimate_number_id`, `dispatch_authorized_by_id`, `packaging_verified_by_id`, `dispatch_date`, `sales_person_id`, `date_of_receipt`, `delivery_by_customer`, `received_by_customer`, `received_by`) VALUES
+(1, 'DEL---19309093', NULL, 'Martin', '0785243728', NULL, 'pending', NULL, '', 'delivery_notes/IMG_5102_KtdmMm5_hdSThv9.jpg', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(2, 'DEL-122', NULL, 'urwi9ore', '7y8oy8re', NULL, 'received', NULL, '', 'delivery_notes/IMG_5102_KtdmMm5_ipVw0Dc.jpg', '', NULL, NULL, 3, NULL, NULL, '2025-05-13', 8, NULL, NULL, NULL, NULL),
+(3, 'DEL-123EF', NULL, 'Sachin', NULL, NULL, 'received', NULL, '', 'delivery_notes/IMG_5102_KtdmMm5_hdSThv9_JJ24o8q.jpg', '', NULL, NULL, 4, NULL, NULL, NULL, 8, '2025-05-15', NULL, NULL, NULL),
+(4, 'TODAY-DEL-NOTE', NULL, 'Nakimuli', 'Lydia', NULL, 'received', NULL, '', 'delivery_notes/IMG_5102_KtdmMm5_hdSThv9_JJ24o8q_zQoNqte.jpg', '', NULL, NULL, 5, NULL, NULL, NULL, 8, '2025-05-16', NULL, NULL, NULL),
+(5, 'DEL8739', NULL, 'Testing', '0098948', NULL, 'received', NULL, '', '', '', NULL, NULL, 2, NULL, NULL, NULL, 8, '2025-05-15', NULL, NULL, NULL),
+(6, 'DEL-900858', NULL, 'Ntambi Moureen', '078947858', NULL, 'received', 5, '', '', '', NULL, NULL, 7, 6, 4, '2025-05-20', NULL, '2025-05-20', NULL, NULL, NULL),
+(7, 'DEL-66667', NULL, 'Faridah Nakato', '0784948484', NULL, 'received', NULL, '', '', '', NULL, NULL, 8, 4, 6, '2025-05-22', NULL, '2025-05-20', 'Marriam', NULL, NULL),
+(8, 'DEL-100-10', NULL, 'Great BI', '0485995', NULL, 'received', NULL, '', '', '', NULL, NULL, 9, 6, 5, '2025-05-21', NULL, '2025-05-07', 'Gabriel Farouk', NULL, NULL),
+(9, 'DEL-123', NULL, NULL, NULL, NULL, 'being_processed', 4, '', '', '', NULL, NULL, 10, 4, 5, '2025-05-19', NULL, '2025-05-07', NULL, 'Opiyo Nicholas - 084980058', 'customer');
 
 -- --------------------------------------------------------
 
@@ -444,7 +470,27 @@ INSERT INTO `erp_deliveryimage` (`id`, `delivery_image`, `uploaded_at`, `is_prim
 (1, 'delivery_notes/2025/05/16/youth.png', '2025-05-16 12:16:17.286099', 1, 5, 8),
 (2, 'delivery_notes/2025/05/16/AI-TD.png', '2025-05-16 12:16:17.289389', 0, 5, 8),
 (3, 'delivery_notes/2025/05/16/autozone.png', '2025-05-16 12:16:17.290787', 0, 5, 8),
-(4, 'delivery_notes/2025/05/16/youth_gvs5D8l.png', '2025-05-16 12:16:17.297155', 0, 5, 8);
+(4, 'delivery_notes/2025/05/16/youth_gvs5D8l.png', '2025-05-16 12:16:17.297155', 0, 5, 8),
+(5, 'delivery_notes/2025/05/19/IMG_5102_KtdmMm5_hdSThv9_JJ24o8q.jpg', '2025-05-19 12:00:24.591535', 1, 6, 8),
+(6, 'delivery_notes/2025/05/19/FBCE17C5-A571-4617-91B5-2AC13E211D1E.jpeg', '2025-05-19 12:00:24.593867', 0, 6, 8),
+(7, 'delivery_notes/2025/05/19/IMG_5102_KtdmMm5.jpg', '2025-05-19 12:00:24.596850', 0, 6, 8),
+(8, 'delivery_notes/2025/05/19/IMG_5102_KtdmMm5_hdSThv9_JJ24o8q_xCmKMi9.jpg', '2025-05-19 12:00:24.599424', 0, 6, 8),
+(9, 'delivery_notes/2025/05/19/IMG_5102_KtdmMm5_ipVw0Dc.jpg', '2025-05-19 12:00:24.602111', 0, 6, 8),
+(10, 'delivery_notes/2025/05/19/IMG_5102_KtdmMm5_hdSThv9_JJ24o8q_ZqWMAK8.jpg', '2025-05-19 12:00:24.604328', 0, 6, 8),
+(11, 'delivery_notes/2025/05/19/IMG_5102_HbFTWGZ.jpg', '2025-05-19 14:24:46.134589', 1, 7, 9),
+(12, 'delivery_notes/2025/05/19/IMG_5102_KtdmMm5_yRYsIRM_tjentxr.jpg', '2025-05-19 14:24:46.138085', 0, 7, 9),
+(13, 'delivery_notes/2025/05/19/IMG_5102_KtdmMm5_yRYsIRM.jpg', '2025-05-19 14:24:46.140397', 0, 7, 9),
+(14, 'delivery_notes/2025/05/19/IMG_5102_HbFTWGZ_5An4Ix1.jpg', '2025-05-19 14:24:46.142798', 0, 7, 9),
+(15, 'delivery_notes/2025/05/20/IMG_5102_KtdmMm5_hdSThv9.jpg', '2025-05-20 11:46:06.719001', 1, 8, 10),
+(16, 'delivery_notes/2025/05/20/IMG_5102_KtdmMm5_hdSThv9_JJ24o8q.jpg', '2025-05-20 11:46:06.721524', 0, 8, 10),
+(17, 'delivery_notes/2025/05/20/IMG_5102_KtdmMm5_hdSThv9_JJ24o8q_zQoNqte.jpg', '2025-05-20 11:46:06.723804', 0, 8, 10),
+(18, 'delivery_notes/2025/05/20/IMG_5102_KtdmMm5_ipVw0Dc.jpg', '2025-05-20 11:46:06.726283', 0, 8, 10),
+(19, 'delivery_notes/2025/05/20/IMG_5102_KtdmMm5_hdSThv9_QxUlss3.jpg', '2025-05-20 11:46:06.729961', 0, 8, 10),
+(20, 'delivery_notes/2025/05/20/IMG_5102_KtdmMm5_hdSThv9_JJ24o8q_EyJRnwj.jpg', '2025-05-20 11:46:06.732454', 0, 8, 10),
+(21, 'delivery_notes/2025/05/20/IMG_5102_KtdmMm5_hdSThv9_JJ24o8q_zQoNqte_o6mSvjL.jpg', '2025-05-20 11:46:06.735022', 0, 8, 10),
+(22, 'delivery_notes/2025/05/20/IMG_5102_KtdmMm5_ipVw0Dc_3OY35U0.jpg', '2025-05-20 11:46:06.737790', 0, 8, 10),
+(23, 'delivery_notes/2025/05/20/IMG_5102_KtdmMm5_yRYsIRM_tjentxr.jpg', '2025-05-20 13:50:08.643893', 1, 9, 9),
+(24, 'delivery_notes/2025/05/20/IMG_5102_KtdmMm5_yRYsIRM_tjentxr_jb7lUGW.jpg', '2025-05-20 13:50:08.647446', 0, 9, 9);
 
 -- --------------------------------------------------------
 
@@ -494,18 +540,24 @@ CREATE TABLE `erp_dispatch` (
   `store_gate_pass` varchar(100) DEFAULT NULL,
   `estimate_number_id` bigint(20) DEFAULT NULL,
   `dispatch_date` date DEFAULT NULL,
-  `camera_number` varchar(100) DEFAULT NULL
+  `camera_number` varchar(100) DEFAULT NULL,
+  `packer_id` bigint(20) DEFAULT NULL,
+  `picker_id` bigint(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 --
 -- Dumping data for table `erp_dispatch`
 --
 
-INSERT INTO `erp_dispatch` (`id`, `office_gate_pass`, `store_gate_pass`, `estimate_number_id`, `dispatch_date`, `camera_number`) VALUES
-(1, '5g54g', 'tgg4', 2, '2025-05-08', NULL),
-(2, '893988973ee', 'dey037839', 4, '2025-05-14', NULL),
-(3, 'TODAY-GATE-PASS-2', 'TODAY-GATE-PASS', 5, '2025-05-14', NULL),
-(4, '83ye893e8', '87499uru', 6, '2025-05-13', NULL);
+INSERT INTO `erp_dispatch` (`id`, `office_gate_pass`, `store_gate_pass`, `estimate_number_id`, `dispatch_date`, `camera_number`, `packer_id`, `picker_id`) VALUES
+(1, '5g54g', 'tgg4', 2, '2025-05-08', NULL, NULL, NULL),
+(2, '893988973ee', 'dey037839', 4, '2025-05-14', NULL, NULL, NULL),
+(3, 'TODAY-GATE-PASS-2', 'TODAY-GATE-PASS', 5, '2025-05-14', NULL, NULL, NULL),
+(4, '83ye893e8', '87499uru', 6, '2025-05-13', NULL, NULL, NULL),
+(5, 'INV_QUTY', 'INV-WERT - 57849', 7, '2025-05-20', NULL, NULL, NULL),
+(6, '368-78784', 'G-2873-WQ', 8, '2025-05-19', NULL, NULL, NULL),
+(7, 'SGP-123-QW', 'SGP-123-QW', 9, '2025-05-19', '2893', 4, 4),
+(8, 'GAT-1920', 'OFF-12253', 10, '2025-05-21', '2345', 5, 4);
 
 -- --------------------------------------------------------
 
@@ -537,14 +589,16 @@ CREATE TABLE `erp_employee` (
 --
 
 INSERT INTO `erp_employee` (`id`, `password`, `last_login`, `is_superuser`, `username`, `first_name`, `last_name`, `email`, `is_staff`, `is_active`, `date_joined`, `phone`, `is_verified`, `department_id`, `region_of_operation_id`, `role_id`) VALUES
-(1, 'pbkdf2_sha256$390000$Cy3u530hpkn7cnDAKdQDff$xETmmHAwZp4G5U1HKGBY41mvj275Sq09U+CdnMDqTgg=', '2025-05-14 10:21:24.445655', 1, 'admin', '', '', '', 1, 1, '2025-05-13 13:34:03.152720', '', 0, NULL, NULL, NULL),
-(2, 'pbkdf2_sha256$390000$vutHk9XebuTTuTnyrBxqJe$cde9HbGDxBd6/rhkKRRkj3Zd9axJMTH+tPPxZOnPuYQ=', '2025-05-16 07:04:18.458430', 0, 'estimates', 'Jolly', '', '', 0, 1, '2025-05-13 13:41:06.695663', '', 0, 1, 1, 1),
-(3, 'pbkdf2_sha256$390000$0ge24fRi4iectOn4wz83Yc$GV+RG7TwrSVNw0VIEnCiDQeaY4G1Q86Ekfh5RS7mzjc=', '2025-05-14 13:40:48.701283', 0, 'outstanding', 'Scovia', '', '', 0, 1, '2025-05-13 13:43:05.329088', '', 0, 3, 1, 4),
-(4, 'pbkdf2_sha256$390000$v5E1iv0FLz0yiL229jY5ks$RW3vlHOYiPGzCrc0EEOCrqtYiYmQJ6liF99JQssXhL0=', '2025-05-14 13:43:25.304681', 0, 'billing', 'Maria', '', '', 0, 1, '2025-05-13 13:45:09.586899', '', 0, 4, 1, 5),
-(5, 'pbkdf2_sha256$390000$XOJfhfYqNXomz3DhY52aGc$3YHAMJ3YidMG+3DnoPtpJRusRJVCly+xj7eXwa0BCkY=', '2025-05-16 13:39:27.724892', 0, 'delivery', 'Ali', '', '', 0, 1, '2025-05-13 13:46:21.040539', '', 0, 4, 1, 6),
-(6, 'pbkdf2_sha256$390000$NURtR93txiVLYJOe4ZEVAA$g4x4QSPRyLaIRV1sI+sErK9f0NEHge57xFzORzFrPxI=', '2025-05-14 13:44:31.138119', 0, 'dispatch', 'Yma', '', '', 0, 1, '2025-05-13 13:47:45.327171', '', 0, 4, 1, 7),
+(1, 'pbkdf2_sha256$390000$Cy3u530hpkn7cnDAKdQDff$xETmmHAwZp4G5U1HKGBY41mvj275Sq09U+CdnMDqTgg=', '2025-05-20 06:19:54.948462', 1, 'admin', '', '', '', 1, 1, '2025-05-13 13:34:03.152720', '', 0, NULL, NULL, NULL),
+(2, 'pbkdf2_sha256$390000$vutHk9XebuTTuTnyrBxqJe$cde9HbGDxBd6/rhkKRRkj3Zd9axJMTH+tPPxZOnPuYQ=', '2025-05-20 12:09:16.162515', 0, 'estimates', 'Jolly', '', '', 0, 1, '2025-05-13 13:41:06.695663', '', 0, 1, 1, 1),
+(3, 'pbkdf2_sha256$390000$0ge24fRi4iectOn4wz83Yc$GV+RG7TwrSVNw0VIEnCiDQeaY4G1Q86Ekfh5RS7mzjc=', '2025-05-20 12:10:04.278419', 0, 'outstanding', 'Scovia', '', '', 0, 1, '2025-05-13 13:43:05.329088', '', 0, 3, 1, 4),
+(4, 'pbkdf2_sha256$390000$v5E1iv0FLz0yiL229jY5ks$RW3vlHOYiPGzCrc0EEOCrqtYiYmQJ6liF99JQssXhL0=', '2025-05-20 12:10:25.649264', 0, 'billing', 'Maria', '', '', 0, 1, '2025-05-13 13:45:09.586899', '', 0, 4, 1, 5),
+(5, 'pbkdf2_sha256$390000$XOJfhfYqNXomz3DhY52aGc$3YHAMJ3YidMG+3DnoPtpJRusRJVCly+xj7eXwa0BCkY=', '2025-05-20 12:12:32.323870', 0, 'delivery', 'Ali', '', '', 0, 1, '2025-05-13 13:46:21.040539', '', 0, 4, 1, 6),
+(6, 'pbkdf2_sha256$390000$NURtR93txiVLYJOe4ZEVAA$g4x4QSPRyLaIRV1sI+sErK9f0NEHge57xFzORzFrPxI=', '2025-05-20 12:11:15.274243', 0, 'dispatch', 'Yma', '', '', 0, 1, '2025-05-13 13:47:45.327171', '', 0, 4, 1, 7),
 (7, 'pbkdf2_sha256$390000$T6dvNp8mWYTnnqKuRExibr$S1VKJPtrHuzgb28jfPd2rXHoRIJAxYJHz01iBH3yU5Q=', '2025-05-14 11:36:40.114920', 0, 'crm', 'Christine', '', '', 0, 1, '2025-05-13 13:50:36.576003', '', 0, 1, 1, 2),
-(8, 'pbkdf2_sha256$390000$ithvEVrgEfUeNSx7GZJvji$T42WN68swkSmMxELeOmNTivOfawcTCuGuq94t29vmKc=', '2025-05-16 13:28:35.369896', 0, 'davies', 'Davies', '', '', 0, 1, '2025-05-13 13:52:00.229119', '', 0, 2, 4, 3);
+(8, 'pbkdf2_sha256$390000$ithvEVrgEfUeNSx7GZJvji$T42WN68swkSmMxELeOmNTivOfawcTCuGuq94t29vmKc=', '2025-05-19 12:38:47.315608', 0, 'davies', 'Davies', '', '', 0, 1, '2025-05-13 13:52:00.229119', '', 0, 2, 4, 3),
+(9, 'pbkdf2_sha256$390000$39DYuuvVz7qzDY0ifTUVBc$j9G1PfUe6/rZpSuEl/8VXehtYD8KGVHVbuW6bk0bMnk=', '2025-05-20 13:30:02.913858', 0, 'rhoda', 'Rhoda', 'N', '', 0, 1, '2025-05-19 13:22:13.961188', '', 0, 2, 5, 3),
+(10, 'pbkdf2_sha256$390000$ZtKWquxNtXcG5tMZZYdAvH$gK/V4VWld8jJyxgrbxqc6okusksdWjnrDKUPpcCug3c=', '2025-05-20 12:01:00.118653', 0, 'cathy', 'Cathy', 'L', '', 0, 1, '2025-05-20 06:37:09.193297', '', 0, 2, 5, 3);
 
 -- --------------------------------------------------------
 
@@ -593,7 +647,7 @@ CREATE TABLE `erp_estimate` (
   `sales_person_id` bigint(20) DEFAULT NULL,
   `verified_by_id` bigint(20) DEFAULT NULL,
   `hold_reason` longtext DEFAULT NULL,
-  `stock_status` varchar(20) NOT NULL
+  `stock_status` varchar(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 --
@@ -606,7 +660,11 @@ INSERT INTO `erp_estimate` (`id`, `created_date`, `bk_estimate_id`, `amount`, `s
 (3, '2025-05-15', 'EST-2025-0003', 30000000.00, 'delivered', '2025-05-14 06:08:49.894930', '2025-05-14 06:22:16.388512', 'INVO-123', 2000000.00, '2025-05-14', '2025-05-14', 4, 1, 8, 3, NULL, 'pending'),
 (4, '2025-05-14', 'EST-2025-0004', 3000000.00, 'delivered', '2025-05-14 11:55:25.362106', '2025-05-14 13:58:05.879474', 'INV-1000', 2000000.00, '2025-05-14', '2025-05-14', 4, 2, 8, 3, NULL, 'pending'),
 (5, '2025-05-15', 'EST-2025-0005', 1000000.00, 'delivered', '2025-05-14 12:26:47.974709', '2025-05-15 13:45:27.611058', 'TODAY INV', 200000.00, '2025-05-14', '2025-05-14', 4, 2, 8, 3, NULL, 'pending'),
-(6, '2025-05-14', '5636287', 500000.00, 'dispatched', '2025-05-14 13:40:05.849331', '2025-05-14 13:52:57.072181', 'INV 038984', 400000.00, '2025-05-14', '2025-05-14', 4, 2, 8, 3, NULL, 'pending');
+(6, '2025-05-14', '5636287', 500000.00, 'dispatched', '2025-05-14 13:40:05.849331', '2025-05-14 13:52:57.072181', 'INV 038984', 400000.00, '2025-05-14', '2025-05-14', 4, 2, 8, 3, NULL, 'pending'),
+(7, '2025-05-20', 'EST-2025-0006', 20000000.00, 'delivered', '2025-05-19 07:42:27.502122', '2025-05-19 12:23:35.002938', 'IVN-10200', 20000000.00, '2025-05-19', '2025-05-19', 4, 1, 8, 3, '', 'in_stock'),
+(8, '2025-05-20', 'EST-2025-0007', 500000.00, 'delivered', '2025-05-19 13:23:56.649961', '2025-05-19 14:25:26.603823', 'INV-1250', 3000000.00, '2025-05-19', '2025-05-19', 4, 2, 9, 3, 'The customer has an outstanding balance', 'in_stock'),
+(9, '2025-05-21', 'EST-2025-0008', 300000.00, 'delivered', '2025-05-20 06:41:49.672212', '2025-05-20 11:47:03.102051', 'INV-1920093', 250000.00, '2025-05-20', '2025-05-20', 4, 2, 10, 3, 'checking the creadibility', 'pending'),
+(10, '2025-05-21', 'EST-2025-0009', 1000000.00, 'delivered', '2025-05-20 12:09:47.548206', '2025-05-20 13:50:08.649661', 'INV-200', 300000.00, '2025-05-20', '2025-05-20', 4, 1, 9, 3, '', 'in_stock');
 
 -- --------------------------------------------------------
 
@@ -657,7 +715,8 @@ INSERT INTO `erp_regionofoperation` (`id`, `name`, `description`) VALUES
 (1, 'Office', ''),
 (2, 'Eastern', ''),
 (3, 'Western', ''),
-(4, 'Northern', '');
+(4, 'Northern', ''),
+(5, 'Central', '');
 
 -- --------------------------------------------------------
 
@@ -837,7 +896,9 @@ ALTER TABLE `erp_department`
 --
 ALTER TABLE `erp_dispatch`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `erp_dispatch_estimate_number_id_f26cd7f1_fk_erp_estimate_id` (`estimate_number_id`);
+  ADD KEY `erp_dispatch_estimate_number_id_f26cd7f1_fk_erp_estimate_id` (`estimate_number_id`),
+  ADD KEY `erp_dispatch_packer_id_ad104927_fk_erp_employee_id` (`packer_id`),
+  ADD KEY `erp_dispatch_picker_id_843dc32f_fk_erp_employee_id` (`picker_id`);
 
 --
 -- Indexes for table `erp_employee`
@@ -961,7 +1022,7 @@ ALTER TABLE `auth_permission`
 -- AUTO_INCREMENT for table `django_admin_log`
 --
 ALTER TABLE `django_admin_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `django_content_type`
@@ -973,7 +1034,7 @@ ALTER TABLE `django_content_type`
 -- AUTO_INCREMENT for table `django_migrations`
 --
 ALTER TABLE `django_migrations`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
 
 --
 -- AUTO_INCREMENT for table `erp_customer`
@@ -985,13 +1046,13 @@ ALTER TABLE `erp_customer`
 -- AUTO_INCREMENT for table `erp_delivery`
 --
 ALTER TABLE `erp_delivery`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `erp_deliveryimage`
 --
 ALTER TABLE `erp_deliveryimage`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `erp_deliveryitem`
@@ -1009,13 +1070,13 @@ ALTER TABLE `erp_department`
 -- AUTO_INCREMENT for table `erp_dispatch`
 --
 ALTER TABLE `erp_dispatch`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `erp_employee`
 --
 ALTER TABLE `erp_employee`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `erp_employee_groups`
@@ -1033,7 +1094,7 @@ ALTER TABLE `erp_employee_user_permissions`
 -- AUTO_INCREMENT for table `erp_estimate`
 --
 ALTER TABLE `erp_estimate`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `erp_estimateitem`
@@ -1051,7 +1112,7 @@ ALTER TABLE `erp_notification`
 -- AUTO_INCREMENT for table `erp_regionofoperation`
 --
 ALTER TABLE `erp_regionofoperation`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `erp_sparepart`
@@ -1135,7 +1196,9 @@ ALTER TABLE `erp_deliveryitem`
 -- Constraints for table `erp_dispatch`
 --
 ALTER TABLE `erp_dispatch`
-  ADD CONSTRAINT `erp_dispatch_estimate_number_id_f26cd7f1_fk_erp_estimate_id` FOREIGN KEY (`estimate_number_id`) REFERENCES `erp_estimate` (`id`);
+  ADD CONSTRAINT `erp_dispatch_estimate_number_id_f26cd7f1_fk_erp_estimate_id` FOREIGN KEY (`estimate_number_id`) REFERENCES `erp_estimate` (`id`),
+  ADD CONSTRAINT `erp_dispatch_packer_id_ad104927_fk_erp_employee_id` FOREIGN KEY (`packer_id`) REFERENCES `erp_employee` (`id`),
+  ADD CONSTRAINT `erp_dispatch_picker_id_843dc32f_fk_erp_employee_id` FOREIGN KEY (`picker_id`) REFERENCES `erp_employee` (`id`);
 
 --
 -- Constraints for table `erp_employee`

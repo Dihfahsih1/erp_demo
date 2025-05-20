@@ -207,19 +207,23 @@
                           <input type="text" name="camera_number" class="form-control" required>
                         </div> 
 
-                        <select name="picker" class="form-select">
-                          <option value="">Select Picker</option>
-                          {% for emp in employees %}
-                              <option value="{{ emp.id }}">{{ emp.first_name }}</option>
-                          {% endfor %}
-                        </select>
-
-                        <select name="packer" class="form-select">
-                          <option value="">Select Packer</option>
-                          {% for emp in employees %}
-                              <option value="{{ emp.id }}">{{ emp.first_name }}</option>
-                          {% endfor %}
-                        </select>
+                        <div class="mb-3">
+                          <select name="picker" class="form-select">
+                            <option value="">Select The Picker</option>
+                            {% for emp in employees %}
+                                <option value="{{ emp.id }}">{{ emp.first_name }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                          <select name="packer" class="form-select">
+                            <option value="">Select The Packer</option>
+                            {% for emp in employees %}
+                                <option value="{{ emp.id }}">{{ emp.first_name }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
 
                         <div class="mb-3">
                           <label>Date of Dispatch</label>

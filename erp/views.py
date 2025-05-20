@@ -245,7 +245,7 @@ def all_billed_estimates(request):
   
     return render(request, 'billed_estimates_list.html', 
                   {'billed_estimates': billed_estimates,
-                   'delivery_authorization': employees
+                   'employees': employees
                   }) 
 
 @login_required

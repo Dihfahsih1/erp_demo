@@ -92,50 +92,7 @@
                                     <input type="date" name="dispatch_date" class="form-control" required>
                                 </div>
                       
-                                <!-- Delivery Method Selection -->
-                                <div class="mb-3">
-                                    <label>Delivery Method</label>
-                                    <select name="delivery_method" class="form-select" id="deliveryMethod{{ estimate.id }}" required>
-                                        <option value="">Select delivery method</option>
-                                        <option value="stores">Stores Personnel</option>
-                                        <option value="customer">Customer Pickup</option>
-                                    </select>
-                                </div>
                                 
-                                <!-- Stores Personnel Delivery (Hidden by default) -->
-                                <div class="mb-3 d-none" id="storesDelivery{{ estimate.id }}">
-                                    <label>Store Person to Deliver</label>
-                                    <select name="delivery_person" class="form-select">
-                                        <option value="">Select delivery person</option>
-                                        {% for emp in employees %}
-                                            <option value="{{ emp.id }}">{{ emp.first_name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                
-                                <!-- Customer Pickup (Hidden by default) -->
-                                <div class="mb-3 d-none" id="customerDelivery{{ estimate.id }}">
-                                    <label>Customer Name</label>
-                                    <input type="text" name="delivery_by_customer" class="form-control" placeholder="Enter customer name">
-                                </div>
-                      
-                                <div class="mb-3">
-                                    <label>Packaging Verified By</label>
-                                    <select name="packaging_verified_by" class="form-select" required>
-                                        {% for emp in employees %}
-                                            <option value="{{ emp.id }}">{{ emp.first_name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                      
-                                <div class="mb-3">
-                                    <label>Authorized By</label>
-                                    <select name="dispatch_authorized_by" class="form-select" required>
-                                        {% for emp in employees %}
-                                            <option value="{{ emp.id }}">{{ emp.first_name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
                             </div>
                       
                             <div class="modal-footer">
@@ -229,7 +186,55 @@
                           <label>Date of Dispatch</label>
                           <input type="date" name="dispatch_date" class="form-control" required>
                         </div>
+
+
+                        <!-- Delivery Method Selection -->
+                          <div class="mb-3">
+                              <label>Delivery Method</label>
+                              <select name="delivery_method" class="form-select" id="deliveryMethod{{ estimate.id }}" required>
+                                  <option value="">Select delivery method</option>
+                                  <option value="stores">Stores Personnel</option>
+                                  <option value="customer">Customer Pickup</option>
+                              </select>
+                          </div>
+                          
+                          <!-- Stores Personnel Delivery (Hidden by default) -->
+                          <div class="mb-3 d-none" id="storesDelivery{{ estimate.id }}">
+                              <label>Store Person to Deliver</label>
+                              <select name="delivery_person" class="form-select">
+                                  <option value="">Select delivery person</option>
+                                  {% for emp in employees %}
+                                      <option value="{{ emp.id }}">{{ emp.first_name }}</option>
+                                  {% endfor %}
+                              </select>
+                          </div>
+                          
+                          <!-- Customer Pickup (Hidden by default) -->
+                          <div class="mb-3 d-none" id="customerDelivery{{ estimate.id }}">
+                              <label>Customer Name</label>
+                              <input type="text" name="delivery_by_customer" class="form-control" placeholder="Enter customer name">
+                          </div>
+                
+                          <div class="mb-3">
+                              <label>Packaging Verified By</label>
+                              <select name="packaging_verified_by" class="form-select" required>
+                                  {% for emp in employees %}
+                                      <option value="{{ emp.id }}">{{ emp.first_name }}</option>
+                                  {% endfor %}
+                              </select>
+                          </div>
+                
+                          <div class="mb-3">
+                              <label>Authorized By</label>
+                              <select name="dispatch_authorized_by" class="form-select" required>
+                                  {% for emp in employees %}
+                                      <option value="{{ emp.id }}">{{ emp.first_name }}</option>
+                                  {% endfor %}
+                              </select>
+                          </div>
                       </div>
+
+
               
                       <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

@@ -449,9 +449,9 @@ def estimate_action(request, pk):
     elif action == "reject":
         estimate.status = Estimate.Status.REJECTED
         messages.error(request, "Estimate rejected.")
-    elif action == "cancel":
-        estimate.status = Estimate.Status.CANCELLED
-        messages.error(request, "Estimate cancelled.")
+    # elif action == "cancel":
+    #     estimate.status = Estimate.Status.CANCELLED
+    #     messages.error(request, "Estimate cancelled.")
     else:
         messages.error(request, "Invalid action.")
 

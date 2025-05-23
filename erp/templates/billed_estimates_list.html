@@ -159,10 +159,21 @@
                           <input type="text" name="office_gate_pass" class="form-control" required>
                         </div> 
 
-                        <div class="mb-3">
-                          <label>Camera Number</label>
-                          <input type="text" name="camera_number" class="form-control" required>
-                        </div> 
+                       <div class="mb-3">
+                        <label for="camera_number" class="form-label fw-bold">Select Camera</label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-primary text-white">
+                            <i class="fas fa-video"></i>
+                          </span>
+                          <select class="form-select" name="camera_number" id="camera_number" required>
+                            <option value="" disabled selected>Select a camera...</option>
+                            <option value="Camera 1">&#128247; Camera 1</option>
+                            <option value="Camera 2">&#128248; Camera 2</option>
+                            <option value="Camera 3">&#128249; Camera 3</option>
+                            <option value="Camera 4">&#128250; Camera 4</option>
+                          </select>
+                        </div>
+                       </div>
 
                         <div class="mb-3">
                           <select name="picker" class="form-select">

@@ -127,13 +127,13 @@
                             </button>
                         </form>
                         
-                        <form method="post" action="{% url 'estimate-action' estimate.pk %}" class="d-inline">
+                        {% comment %} <form method="post" action="{% url 'estimate-action' estimate.pk %}" class="d-inline">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="cancel">
                             <button type="submit" class="btn btn-action btn-cancel" onclick="return confirmAction('cancel')">
                                 <i class="fas fa-ban"></i> Cancel
                             </button>
-                        </form>
+                        </form> {% endcomment %}
                     </div>
 
                     {% elif request.user.role.name == "Credit Officer" and estimate.status == "on-hold" %}
@@ -171,14 +171,41 @@
                         {% else %}
                             <!-- Reason submission form -->
                             <form method="post" action="{% url 'submit-hold-reason' estimate.id %}">
-                                {% csrf_token %}
-                                <div class="input-group mt-1">
-                                    <input type="text" name="hold_reason" class="form-control form-control-sm" placeholder="Enter hold reason..." required>
-                                    <button type="submit" class="btn btn-sm btn-warning">Submit Reason</button>
-                                </div>
+                            {% csrf_token %}
+
+                            <label for="reason_select" class="form-label fw-semibold">Select Reason</label>
+                            <select class="form-select form-select-sm" name="reason_select" id="reason_select" onchange="toggleCustomReason(this.value)" required>
+                                <option value="" disabled selected>Choose a reason...</option>
+                                <option value="Insufficient data">Insufficient data</option>
+                                <option value="Awaiting approval">Awaiting approval</option>
+                                <option value="Client request">Client request</option>
+                                <option value="Technical issue">Technical issue</option>
+                                <option value="Scheduling conflict">Scheduling conflict</option>
+                                <option value="Other">Other (specify)</option>
+                            </select>
+
+                            <!-- Custom reason input (hidden by default) -->
+                            <div class="input-group mt-2" id="custom_reason_input" style="display: none;">
+                                <input type="text" name="hold_reason" class="form-control form-control-sm" placeholder="Enter custom reason...">
+                            </div>
+
+                            <button type="submit" class="btn btn-sm btn-warning mt-2">Submit Reason</button>
                             </form>
                         {% endif %}
-                    </div>
+                        </div>
+
+                        <script>
+                        function toggleCustomReason(value) {
+                            const customInput = document.getElementById('custom_reason_input');
+                            if (value === 'Other') {
+                            customInput.style.display = 'flex';
+                            customInput.querySelector('input').required = true;
+                            } else {
+                            customInput.style.display = 'none';
+                            customInput.querySelector('input').required = false;
+                            }
+                        }
+                        </script>
                     {% endif %}
 
                     

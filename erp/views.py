@@ -10,7 +10,9 @@ from django.core.paginator import Paginator
 from django.views.decorators.http import require_http_methods, require_POST
 from django.views .decorators.csrf import csrf_exempt
 from django.urls import reverse
+import requests
 from erp.forms import BillingForm, DispatchForm, DeliveryForm, EstimateForm, DeliveryUploadForm, DispatchVerificationForm, EstimateUploadForm, OfficerReviewForm, SalesAgentNoteForm, CustomerForm, EmployeeLoginForm, EmployeeRegistrationForm
+from erp_demo import settings
 from .models import Customer, Delivery, DeliveryImage, Dispatch, Employee, Estimate, UserRole
 import json
 import pandas as pd
@@ -24,6 +26,72 @@ from django.http import JsonResponse
 from django.db import transaction
 import pandas as pd
 from datetime import datetime
+
+import requests
+from django.conf import settings
+from django.contrib.auth import login, get_user_model
+from django.shortcuts import render, redirect
+from django.contrib import messages
+
+def erpnext_login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        # Step 1: Login to ERPNext
+        try:
+            session = requests.Session()
+            login_response = session.post(
+                f"{settings.ERP_NEXT_URL}/api/method/login",
+                data={'usr': username, 'pwd': password}
+            )
+
+            if login_response.status_code == 200:
+                # Step 2: Fetch user info
+                user_data = session.get(f"{settings.ERP_NEXT_URL}/api/resource/User/{username}")
+                if user_data.status_code == 200:
+                    user_info = user_data.json().get('data', {})
+                    first_name = user_info.get('first_name', '')
+                    last_name = user_info.get('last_name', '')
+                    email = user_info.get('email', username)
+
+                    # Step 3: Get or create local user
+                    User = get_user_model()
+                    user, created = User.objects.get_or_create(username=username, defaults={
+                        'first_name': first_name,
+                        'last_name': last_name,
+                        'email': email
+                    })
+
+                    # Step 4: Log in user
+                    user.backend = 'django.contrib.auth.backends.ModelBackend'
+                    login(request, user)
+
+                    # Step 5: Store ERPNext session cookie for API access
+                    request.session['erpnext_session'] = session.cookies.get('sid')
+
+                    return redirect('dashboard')
+                else:
+                    messages.error(request, 'Failed to fetch user info from ERPNext')
+            else:
+                messages.error(request, 'Invalid ERPNext credentials')
+        except Exception as e:
+            messages.error(request, f"Error connecting to ERPNext: {e}")
+
+    return render(request, 'accounts/login.html')
+
+
+def get_erpnext_session(username, password):
+    """Optional: Maintain ERPNext session for API calls"""
+    try:
+        response = requests.post(
+            f"{settings.ERP_NEXT_URL}/api/method/login",
+            data={"usr": username, "pwd": password}
+        )
+        if response.status_code == 200:
+            return response.cookies.get('sid')
+    except Exception:
+        return None
 
 
 

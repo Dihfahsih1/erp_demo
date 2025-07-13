@@ -10,15 +10,9 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Get credentials from .env
-ERP_URL = os.getenv("ERP_URL")
-API_KEY = os.getenv("ERP_API_KEY")
-API_SECRET = os.getenv("ERP_API_SECRET")
-
-
-ERP_NEXT_URL = os.getenv('ERP_NEXT_URL')  # "http://accounting.autozonepro.org:8080"
-ERP_API_KEY = os.getenv('ERP_API_KEY')    # System API user key
-ERP_API_SECRET = os.getenv('ERP_API_SECRET') 
+ERP_NEXT_URL = os.getenv("ERP_URL")
+ERP_API_KEY = os.getenv("ERP_API_KEY")
+ERP_API_SECRET = os.getenv("ERP_API_SECRET")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-7+ug312elp@(*oa#*x$0e+x-&9*13-2$*46@r6w)nh%*j&khtj'

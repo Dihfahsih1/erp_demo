@@ -1,3 +1,4 @@
+from collections import defaultdict
 from venv import logger
 from django.forms import ValidationError
 from django.shortcuts import render, get_object_or_404, redirect
@@ -25,7 +26,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.db import transaction
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import requests
 from django.conf import settings
@@ -37,25 +38,40 @@ def erpnext_login(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
+        print(f"[DEBUG] Attempting ERPNext login for user: {username}")
 
-        # Step 1: Login to ERPNext
         try:
             session = requests.Session()
+
+            # Debug ERPNext login attempt
+            login_url = f"{settings.ERP_NEXT_URL}/api/method/login"
+            print(f"[DEBUG] Posting to {login_url} with username={username}")
+
             login_response = session.post(
-                f"{settings.ERP_NEXT_URL}/api/method/login",
+                login_url,
                 data={'usr': username, 'pwd': password}
             )
 
+            print(f"[DEBUG] ERPNext login status code: {login_response.status_code}")
+            print(f"[DEBUG] ERPNext login response content: {login_response.text}")
+            print(f"[DEBUG] ERPNext session cookies: {session.cookies.get_dict()}")
+
             if login_response.status_code == 200:
-                # Step 2: Fetch user info
-                user_data = session.get(f"{settings.ERP_NEXT_URL}/api/resource/User/{username}")
+                # Try fetching user info
+                user_url = f"{settings.ERP_NEXT_URL}/api/resource/User/{username}"
+                print(f"[DEBUG] Fetching ERPNext user data from: {user_url}")
+                user_data = session.get(user_url)
+
+                print(f"[DEBUG] User data response code: {user_data.status_code}")
+                print(f"[DEBUG] User data content: {user_data.text}")
+
                 if user_data.status_code == 200:
                     user_info = user_data.json().get('data', {})
                     first_name = user_info.get('first_name', '')
                     last_name = user_info.get('last_name', '')
                     email = user_info.get('email', username)
 
-                    # Step 3: Get or create local user
+                    # Create or get local Django user
                     User = get_user_model()
                     user, created = User.objects.get_or_create(username=username, defaults={
                         'first_name': first_name,
@@ -63,37 +79,172 @@ def erpnext_login(request):
                         'email': email
                     })
 
-                    # Step 4: Log in user
+                    print(f"[DEBUG] Django user: {user}, created={created}")
+
+                    # Log in Django user
                     user.backend = 'django.contrib.auth.backends.ModelBackend'
                     login(request, user)
 
-                    # Step 5: Store ERPNext session cookie for API access
-                    request.session['erpnext_session'] = session.cookies.get('sid')
+                    # Save ERPNext session ID
+                    sid = session.cookies.get('sid')
+                    print(f"[DEBUG] ERPNext session ID stored in Django: {sid}")
+                    request.session['erpnext_session'] = sid
 
                     return redirect('dashboard')
                 else:
                     messages.error(request, 'Failed to fetch user info from ERPNext')
             else:
-                messages.error(request, 'Invalid ERPNext credentials')
+                # Show ERPNext error message (usually JSON)
+                try:
+                    error_info = login_response.json()
+                    frappe_msg = error_info.get('message', '')
+                    messages.error(request, f"ERPNext error: {frappe_msg}")
+                    print(f"[DEBUG] ERPNext error message: {frappe_msg}")
+                except Exception as e:
+                    messages.error(request, 'Invalid ERPNext credentials')
+                    print(f"[DEBUG] Could not parse ERPNext error response: {e}")
+
         except Exception as e:
             messages.error(request, f"Error connecting to ERPNext: {e}")
+            print(f"[DEBUG] Exception during ERPNext login: {e}")
 
     return render(request, 'accounts/login.html')
 
 
-def get_erpnext_session(username, password):
-    """Optional: Maintain ERPNext session for API calls"""
+HEADERS = {
+    "Authorization": f"token {settings.ERP_API_KEY}:{settings.ERP_API_SECRET}",
+    "Content-Type": "application/json"
+}
+
+def sales_manager_dashboard(request):
+    # Date ranges
+    today = datetime.now().date()
+    first_day_of_month = today.replace(day=1)
+    date_filter = f'[["posting_date", ">=", "{first_day_of_month}"], ["posting_date", "<=", "{today}"]]'
+    
     try:
-        response = requests.post(
-            f"{settings.ERP_NEXT_URL}/api/method/login",
-            data={"usr": username, "pwd": password}
-        )
-        if response.status_code == 200:
-            return response.cookies.get('sid')
-    except Exception:
-        return None
+        # Fetch all active sales persons
+        sales_persons = get_sales_persons()
+        
+        dashboard_data = []
+        
+        for sp in sales_persons:
+            sp_name = sp['name']
+            
+            # Get sales orders data
+            orders = get_sales_orders(sp_name, first_day_of_month, today)
+            orders_total = sum(float(order['grand_total']) for order in orders)
+            
+            # Get sales invoices data
+            invoices = get_sales_invoices(sp_name, first_day_of_month, today)
+            invoices_total = sum(float(inv['grand_total']) for inv in invoices)
+            
+            # Get outstanding amounts
+            outstanding = get_outstanding_amount(sp_name)
+            
+            # Compile dashboard data
+            dashboard_data.append({
+                'name': sp_name,
+                'employee_id': sp.get('employee', 'N/A'),
+                'employee_name': sp.get('employee_name', 'N/A'),
+                'parent_sales_person': sp.get('parent_sales_person', 'N/A'),
+                'sales_team': ', '.join(sp.get('sales_team', [])) or 'N/A',
+                'commission_rate': sp.get('commission_rate', 0),
+                'orders_total': orders_total,
+                'invoices_total': invoices_total,
+                'outstanding': outstanding,
+                'connection_rate': calculate_connection_rate(sp_name),
+                'last_order_date': max([o['transaction_date'] for o in orders]) if orders else 'N/A'
+            })
+        
+        # Sort by highest performing
+        dashboard_data.sort(key=lambda x: x['invoices_total'], reverse=True)
+        
+        context = {
+            'sales_data': dashboard_data,
+            'report_period': first_day_of_month.strftime("%B %Y"),
+            'last_updated': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        
+        return render(request, 'sales_person_dashboard.html', context)
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+def fetch_sales_orders():
+    url = f"{settings.ERP_NEXT_URL}/api/resource/Sales Order"
+    auth = (settings.ERP_API_KEY, settings.ERP_API_SECRET)
+    params = {"limit_page_length": 1000, "fields": '["name","items","outstanding_amount","sales_person"]'}
 
+    response = requests.get(url, auth=auth, params=params)
+    response.raise_for_status()
+    return response.json()["data"]
 
+def get_sales_persons():
+    sales_orders = fetch_sales_orders()
+    
+    summary = defaultdict(lambda: {"orders": 0, "quantity": 0, "outstanding": 0.0})
+
+    for order in sales_orders:
+        sales_person = order.get("sales_person", "Unassigned")
+
+    
+    return response.json().get('data', [])
+
+def get_sales_orders(sales_person, from_date, to_date):
+    filters = {
+        "sales_person": sales_person,
+        "transaction_date": ["between", [from_date.strftime("%Y-%m-%d"), to_date.strftime("%Y-%m-%d")]],
+        "docstatus": 1
+    }
+    response = requests.get(
+        f"{settings.ERP_NEXT_URL}/api/resource/Sales Order",
+        headers=HEADERS,
+        params={
+            "fields": json.dumps(["name", "grand_total", "transaction_date"]),
+            "filters": json.dumps(filters),
+            "limit_page_length": 0
+        }
+    )
+    return response.json().get('data', [])
+
+def get_sales_invoices(sales_person, from_date, to_date):
+    filters = {
+        "sales_person": sales_person,
+        "posting_date": ["between", [from_date.strftime("%Y-%m-%d"), to_date.strftime("%Y-%m-%d")]],
+        "docstatus": 1
+    }
+    response = requests.get(
+        f"{settings.ERP_NEXT_URL}/api/resource/Sales Invoice",
+        headers=HEADERS,
+        params={
+            "fields": json.dumps(["name", "grand_total", "posting_date"]),
+            "filters": json.dumps(filters),
+            "limit_page_length": 0
+        }
+    )
+    return response.json().get('data', [])
+
+def get_outstanding_amount(sales_person):
+    filters = {
+        "sales_person": sales_person,
+        "outstanding_amount": [">", 0],
+        "docstatus": 1
+    }
+    response = requests.get(
+        f"{settings.ERP_NEXT_URL}/api/resource/Sales Invoice",
+        headers=HEADERS,
+        params={
+            "fields": json.dumps(["outstanding_amount"]),
+            "filters": json.dumps(filters),
+            "limit_page_length": 0
+        }
+    )
+    invoices = response.json().get('data', [])
+    return sum(float(inv['outstanding_amount']) for inv in invoices)
+
+def calculate_connection_rate(sales_person):
+    # Implement your connection rate logic here
+    return 0  # Placeholder
 
 
 def register_employee(request):

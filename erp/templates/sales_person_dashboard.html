@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Sales Team Performance Dashboard</h1>
+        <span class="text-muted">Period: {{ report_period }} | Updated: {{ last_updated }}</span>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row">
+        {% for sp in sales_data %}
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                {{ sp.name }} ({{ sp.employee_id }})
+                            </div>
+                            <div class="h6 mb-0 font-weight-bold text-gray-800">
+                                {{ sp.employee_name }}
+                            </div>
+                            <div class="mt-2 text-xs text-muted">
+                                Team: {{ sp.sales_team }}<br>
+                                Reports to: {{ sp.parent_sales_person }}<br>
+                                Commission: {{ sp.commission_rate }}%
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-tie fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Sales Performance Metrics</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Sales Person</th>
+                                    <th>Orders Total</th>
+                                    <th>Invoices Total</th>
+                                    <th>Outstanding</th>
+                                    <th>Connection Rate</th>
+                                    <th>Last Activity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sp in sales_data %}
+                                <tr>
+                                    <td>{{ sp.name }}</td>
+                                    <td>${{ sp.orders_total|floatformat:2|intcomma }}</td>
+                                    <td>${{ sp.invoices_total|floatformat:2|intcomma }}</td>
+                                    <td class="{% if sp.outstanding > 0 %}text-danger{% endif %}">
+                                        ${{ sp.outstanding|floatformat:2|intcomma }}
+                                    </td>
+                                    <td>{{ sp.connection_rate }}%</td>
+                                    <td>{{ sp.last_order_date|slice:":10" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visualizations -->
+    <div class="row">
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Total Contribution (Orders vs Invoices)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar">
+                        <canvas id="contributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Outstanding Amounts</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="outstandingChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Contribution Chart
+var ctx = document.getElementById("contributionChart");
+var contributionChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: [{% for sp in sales_data %}"{{ sp.name }}",{% endfor %}],
+        datasets: [
+            {
+                label: "Orders",
+                backgroundColor: "#4e73df",
+                data: [{% for sp in sales_data %}{{ sp.orders_total }},{% endfor %}]
+            },
+            {
+                label: "Invoices",
+                backgroundColor: "#1cc88a",
+                data: [{% for sp in sales_data %}{{ sp.invoices_total }},{% endfor %}]
+            }
+        ]
+    },
+    options: {
+        scales: {
+            xAxes: [{
+                stacked: true,
+            }],
+            yAxes: [{
+                stacked: true,
+                ticks: {
+                    callback: function(value) {
+                        return '$' + value.toLocaleString();
+                    }
+                }
+            }]
+        },
+        tooltips: {
+            callbacks: {
+                label: function(tooltipItem) {
+                    return tooltipItem.dataset.label + ': $' + tooltipItem.yLabel.toLocaleString();
+                }
+            }
+        }
+    }
+});
+
+// Outstanding Chart
+var ctx2 = document.getElementById("outstandingChart");
+var outstandingChart = new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+        labels: [{% for sp in sales_data %}"{{ sp.name }}",{% endfor %}],
+        datasets: [{
+            data: [{% for sp in sales_data %}{{ sp.outstanding }},{% endfor %}],
+            backgroundColor: [
+                '#e74a3b', '#f6c23e', '#4e73df', '#1cc88a', '#36b9cc',
+                '#858796', '#5a5c69', '#3a3b45', '#2c3e50', '#1a1a1a'
+            ],
+        }]
+    },
+    options: {
+        tooltips: {
+            callbacks: {
+                label: function(tooltipItem, data) {
+                    var label = data.labels[tooltipItem.index] || '';
+                    var value = data.datasets[0].data[tooltipItem.index];
+                    return label + ': $' + value.toLocaleString();
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

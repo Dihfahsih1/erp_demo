@@ -5,7 +5,10 @@ from . import views
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
-     path('', views.sales_manager_dashboard, name='dashboard'),
+     path('', views.customer_sales_dashboard, name='dashboard'),
+     path('api/customer-fields/', views.get_customer_fields, name='customer_fields'),
+     path('api/sales-persons/', views.sales_persons, name='sales_persons'),
+     path("api/sales-performance/", views.sales_performance_dashboard, name='sales_performance'),
      path('dispatches/', views.dispatch_list_view, name='dispatch_list'),
      path('dispatch/mark-delivered/', views.dispatch_view, name='mark_dispatch_delivered'),
      path('dispatch/<int:dispatch_id>/mark-delivered/', views.mark_delivered, name='mark_delivered'), 
@@ -21,7 +24,6 @@ urlpatterns = [
      path('customers/<int:pk>/view/', views.customer_view, name='customer_view'),
      path('customers/<int:pk>/edit/', views.customer_edit, name='customer_edit'),
      path('customers/<int:pk>/delete/', views.customer_delete, name='customer_delete'),
-
 
      #Account registration and login
      path('accounts/RegisterEmployee/', views.register_employee, name='register'),
@@ -56,10 +58,5 @@ urlpatterns = [
      
      #Erpnext login
      path('erpnext/login/', views.erpnext_login, name='erpnext_login'),
-
-
-
-
-
     
 ]

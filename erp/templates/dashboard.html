@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Sales Team Performance</h2>
+    
+    <!-- Interactive Graph -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            {{ graph_html|safe }}
+        </div>
+    </div>
+    
+    <!-- Person Cards -->
+    <div class="row">
+        {% for person in performance_data %}
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    {{ person.name }}
+                </div>
+                <div class="card-body">
+                    <h5>${{ person.achieved|floatformat:2 }}</h5>
+                    <small class="text-muted">
+                        Commission: {{ person.commission }}%
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

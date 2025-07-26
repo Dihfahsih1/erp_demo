@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUTO PRO Master - Credit Control</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        .sidebar {
+            background-color: var(--secondary-color);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding-top: 20px;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 5px;
+            border-radius: 5px;
+            padding: 10px 15px;
+        }
+        
+        .sidebar .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .sidebar .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 10px;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .stat-card .value {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        
+        .stat-card .label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            border-color: var(--warning-color);
+        }
+        
+        .top-bar {
+            background-color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .search-bar {
+            width: 300px;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-profile img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .customer-table img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .badge-activity {
+            background-color: #f0f8ff;
+            color: var(--primary-color);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        
+        .progress-thin {
+            height: 5px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-new {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-old {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        
+        .status-problematic {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-approved {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-hold {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .outstanding-card {
+            padding: 15px;
+            border-left: 4px solid var(--primary-color);
+            margin-bottom: 15px;
+            background-color: white;
+            border-radius: 8px;
+        }
+        
+        .outstanding-card.problematic {
+            border-left-color: var(--danger-color);
+        }
+        
+        .outstanding-card h6 {
+            margin-bottom: 5px;
+        }
+        
+        .outstanding-card .meta {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .outstanding-card .actions {
+            margin-top: 10px;
+        }
+        
+        .ageing-bar {
+            height: 10px;
+            border-radius: 5px;
+            background-color: #e9ecef;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .ageing-bar .segment {
+            height: 100%;
+            display: inline-block;
+        }
+        
+        .segment-0-30 { background-color: #2ecc71; }
+        .segment-31-60 { background-color: #f39c12; }
+        .segment-61-90 { background-color: #e67e22; }
+        .segment-90-plus { background-color: #e74c3c; }
+        
+        .highlight-card {
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+        
+        .highlight-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .urgent {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar col-md-3 col-lg-2 d-md-block">
+        <div class="text-center mb-4">
+            <h4><i class="bi bi-bike"></i> AUTO PRO Master</h4>
+            <p class="text-muted small">Credit Control</p>
+        </div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="#">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-credit-card"></i> Pending Approvals
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-cash-stack"></i> Outstanding Invoices
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-calendar-range"></i> Ageing Analysis
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-people"></i> Customer Status
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-telephone-outbound"></i> Contact Log
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-file-earmark-bar-graph"></i> Weekly Reports
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-geo-alt"></i> Visit Planning
+                </a>
+            </li>
+            <li class="nav-item mt-3">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-gear"></i> Settings
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="search-bar">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search customers, orders...">
+                    <button class="btn btn-outline-secondary" type="button">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="user-profile">
+                <img src="placeholder.png" alt="User">
+                <div>
+                    <div class="fw-bold">Scovia</div>
+                    <div class="text-muted small">Credit Control</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <h4 class="mb-4">Credit Control Dashboard</h4>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Stats Cards -->
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value text-warning">24</div>
+                    <div class="label">Pending Approvals</div>
+                    <div class="mt-2">
+                        <span class="text-danger"><i class="bi bi-exclamation-triangle"></i> 8 urgent</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value text-danger">Sh 1,860,750</div>
+                    <div class="label">Total Outstanding</div>
+                    <div class="mt-2">
+                        <span class="text-danger"><i class="bi bi-arrow-up"></i> 12%</span> from last week
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value">42</div>
+                    <div class="label">Problematic Accounts</div>
+                    <div class="progress progress-thin mt-2">
+                        <div class="progress-bar bg-danger" role="progressbar" style="width: 28%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value">58</div>
+                    <div class="label">Overdue >90 Days</div>
+                    <div class="mt-2">
+                        <span class="text-danger"><i class="bi bi-arrow-up"></i> 6 new</span> this week
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <!-- Pending Approvals -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Pending Credit Approvals</span>
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary me-2">
+                                <i class="bi bi-filter"></i>
+                            </button>
+                            <button class="btn btn-sm btn-primary">
+                                <i class="bi bi-arrow-repeat"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="outstanding-card urgent">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6>ORD-2023-1092 • Boda Boda Paradise</h6>
+                                    <div class="meta">Amount: Shs. 1,200,850 • Sales: Catherine</div>
+                                    <div class="ageing-bar mt-2">
+                                        <div class="segment segment-0-30" style="width: 45%"></div>
+                                        <div class="segment segment-31-60" style="width: 30%"></div>
+                                        <div class="segment segment-61-90" style="width: 15%"></div>
+                                        <div class="segment segment-90-plus" style="width: 10%"></div>
+                                    </div>
+                                    <div class="mt-1 small text-muted">Current outstanding: Shs. 28,750</div>
+                                </div>
+                                <span class="status-badge status-problematic">Problematic</span>
+                            </div>
+                            <div class="actions mt-3">
+                                <button class="btn btn-sm btn-success me-2">Approve</button>
+                                <button class="btn btn-sm btn-danger me-2">Reject</button>
+                                <button class="btn btn-sm btn-warning me-2">Hold</button>
+                                <button class="btn btn-sm btn-outline-primary float-end">Contact</button>
+                            </div>
+                        </div>
+                        
+                        <div class="outstanding-card">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6>ORD-2023-1090 • Boda Boda Banja</h6>
+                                    <div class="meta">Amount: Shs. 800,420 • Sales: Rhoda</div>
+                                    <div class="ageing-bar mt-2">
+                                        <div class="segment segment-0-30" style="width: 80%"></div>
+                                        <div class="segment segment-31-60" style="width: 15%"></div>
+                                        <div class="segment segment-61-90" style="width: 5%"></div>
+                                    </div>
+                                    <div class="mt-1 small text-muted">Current outstanding: Shs. 200,300</div>
+                                </div>
+                                <span class="status-badge status-old">Old</span>
+                            </div>
+                            <div class="actions mt-3">
+                                <button class="btn btn-sm btn-success me-2">Approve</button>
+                                <button class="btn btn-sm btn-danger me-2">Reject</button>
+                                <button class="btn btn-sm btn-warning me-2">Hold</button>
+                                <button class="btn btn-sm btn-outline-primary float-end">Contact</button>
+                            </div>
+                        </div>
+                        
+                        <div class="outstanding-card">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6>ORD-2023-1088 • Cool Autos</h6>
+                                    <div class="meta">Amount: Shs. 5,200 • Sales: Saif</div>
+                                    <div class="ageing-bar mt-2">
+                                        <div class="segment segment-0-30" style="width: 95%"></div>
+                                        <div class="segment segment-31-60" style="width: 5%"></div>
+                                    </div>
+                                    <div class="mt-1 small text-muted">Current outstanding: Shs. 3,750</div>
+                                </div>
+                                <span class="status-badge status-new">New</span>
+                            </div>
+                            <div class="actions mt-3">
+                                <button class="btn btn-sm btn-success me-2">Approve</button>
+                                <button class="btn btn-sm btn-danger me-2">Reject</button>
+                                <button class="btn btn-sm btn-warning me-2">Hold</button>
+                                <button class="btn btn-sm btn-outline-primary float-end">Contact</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ageing Analysis & Quick Actions -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        Ageing Analysis Summary
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h6>Outstanding by Age (Days)</h6>
+                            <div class="d-flex mb-2 small">
+                                <div class="me-3 text-success">0-30: Shs. 86,420</div>
+                                <div class="me-3 text-warning">31-60: Shs. 42,150</div>
+                                <div class="me-3 text-orange">61-90: Shs. 28,300</div>
+                                <div class="text-danger">90+: Shs. 29,880</div>
+                            </div>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 46%">46%</div>
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: 23%">23%</div>
+                                <div class="progress-bar bg-orange" role="progressbar" style="width: 15%">15%</div>
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: 16%">16%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6>Top Problematic Accounts</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Customer</th>
+                                            <th>Outstanding</th>
+                                            <th>Oldest Invoice</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Boda Boda Banja</td>
+                                            <td>Shs. 24,850</td>
+                                            <td>132 days</td>
+                                            <td><span class="status-badge status-problematic">Legal</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Boda Boda Paradise</td>
+                                            <td>Shs. 18,750</td>
+                                            <td>98 days</td>
+                                            <td><span class="status-badge status-problematic">Payment Plan</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Smart Auto Garage</td>
+                                            <td>Shs. 15,200</td>
+                                            <td>87 days</td>
+                                            <td><span class="status-badge status-problematic">Follow-up</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="card highlight-card">
+                            <div class="card-body">
+                                <h6>Generate Weekly Report</h6>
+                                <p class="small text-muted">Create the weekly outstanding report with ageing analysis</p>
+                                <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#reportModal">
+                                    <i class="bi bi-file-earmark-text"></i> Generate Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <!-- Outstanding Invoices -->
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Outstanding Invoices</span>
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary me-2">
+                                <i class="bi bi-filter"></i> Filter
+                            </button>
+                            <button class="btn btn-sm btn-primary">
+                                <i class="bi bi-envelope"></i> Send Reminders
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Customer</th>
+                                        <th>Invoice #</th>
+                                        <th>Date</th>
+                                        <th>Amount</th>
+                                        <th>Age (Days)</th>
+                                        <th>Status</th>
+                                        <th>Last Contact</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                             
+                                            Boda Boda Paradise
+                                        </td>
+                                        <td>INV-2023-1052</td>
+                                        <td>Jun 12, 2023</td>
+                                        <td>Shs. 800,200</td>
+                                        <td>34</td>
+                                        <td><span class="status-badge status-old">Payment Due</span></td>
+                                        <td>Jul 10, 2023</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1" title="Contact">
+                                                <i class="bi bi-telephone"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-warning me-1" title="Visit">
+                                                <i class="bi bi-geo-alt"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" title="Details">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td> 
+                                            Bumpenge Auto Spares
+                                        </td>
+                                        <td>INV-2023-0985</td>
+                                        <td>May 28, 2023</td>
+                                        <td>Shs. 12,750</td>
+                                        <td>49</td>
+                                        <td><span class="status-badge status-problematic">Overdue</span></td>
+                                        <td>Jul 5, 2023</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1" title="Contact">
+                                                <i class="bi bi-telephone"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-warning me-1" title="Visit">
+                                                <i class="bi bi-geo-alt"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" title="Details">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td> 
+                                            Smart Auto Garage
+                                        </td>
+                                        <td>INV-2023-0872</td>
+                                        <td>Apr 15, 2023</td>
+                                        <td>Shs. 500,400</td>
+                                        <td>92</td>
+                                        <td><span class="status-badge status-problematic">Legal Action</span></td>
+                                        <td>Jun 22, 2023</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1" title="Contact">
+                                                <i class="bi bi-telephone"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-warning me-1" title="Visit">
+                                                <i class="bi bi-geo-alt"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" title="Details">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td> 
+                                            Monica Auto Spares
+                                        </td>
+                                        <td>INV-2023-1082</td>
+                                        <td>Jul 5, 2023</td>
+                                        <td>Shs. 700,300</td>
+                                        <td>11</td>
+                                        <td><span class="status-badge status-new">New</span></td>
+                                        <td>-</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1" title="Contact">
+                                                <i class="bi bi-telephone"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-warning me-1" title="Visit">
+                                                <i class="bi bi-geo-alt"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" title="Details">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Log Modal -->
+    <div class="modal fade" id="contactModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Log Customer Contact</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label class="form-label">Customer</label>
+                            <input type="text" class="form-control" value="Acme Corporation" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contact Type</label>
+                            <select class="form-select">
+                                <option>Phone Call</option>
+                                <option>Email</option>
+                                <option>SMS</option>
+                                <option>Visit</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contact Date</label>
+                            <input type="datetime-local" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Outcome</label>
+                            <select class="form-select">
+                                <option>Payment Promise</option>
+                                <option>Dispute</option>
+                                <option>Requested Documentation</option>
+                                <option>No Response</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Promise Date</label>
+                            <input type="date" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Amount Promised</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Shs. </span>
+                                <input type="number" class="form-control" placeholder="0.00">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" rows="3" placeholder="Enter contact details..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary">Log Contact</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Report Modal -->
+    <div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Weekly Outstanding Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Report Date</label>
+                            <input type="date" class="form-control" value="2023-07-14">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Report Type</label>
+                            <select class="form-select">
+                                <option>Detailed Ageing Report</option>
+                                <option>Summary Analysis</option>
+                                <option>Problem Accounts Only</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            Report Preview
+                        </div>
+                        <div class="card-body">
+                            <h6>Weekly Outstanding Report (Jul 8 - Jul 14, 2023)</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Customer</th>
+                                            <th>Total Outstanding</th>
+                                            <th>0-30 Days</th>
+                                            <th>31-60 Days</th>
+                                            <th>61-90 Days</th>
+                                            <th>90+ Days</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Bombo Spares</td>
+                                            <td>Shs. 28,750</td>
+                                            <td>Shs. 12,400</td>
+                                            <td>Shs. 8,200</td>
+                                            <td>Shs. 5,150</td>
+                                            <td>Shs. 3,000</td>
+                                            <td>Monitor</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Kilugi Spares</td>
+                                            <td>Shs. 42,150</td>
+                                            <td>Shs. 15,800</td>
+                                            <td>Shs. 12,750</td>
+                                            <td>Shs. 8,600</td>
+                                            <td>Shs. 5,000</td>
+                                            <td>Problematic</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Lira Motor Spares</td>
+                                            <td>Shs. 15,200</td>
+                                            <td>Shs. 5,400</td>
+                                            <td>Shs. 4,800</td>
+                                            <td>Shs. 3,200</td>
+                                            <td>Shs. 1,800</td>
+                                            <td>Legal Action</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Lubowa Martin</td>
+                                            <td>Shs. 7,300</td>
+                                            <td>Shs. 7,300</td>
+                                            <td>Shs. 0</td>
+                                            <td>Shs. 0</td>
+                                            <td>Shs. 0</td>
+                                            <td>New</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-3">
+                                <h6>Summary Statistics</h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="card stat-card">
+                                            <div class="value text-danger">Shs. 186,750</div>
+                                            <div class="label">Total Outstanding</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card stat-card">
+                                            <div class="value">42</div>
+                                            <div class="label">Problem Accounts</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card stat-card">
+                                            <div class="value">58</div>
+                                            <div class="label">Overdue >90 Days</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary mt-3">
+                                <i class="bi bi-file-earmark-excel"></i> Export to Excel
+                            </button>
+                            <button class="btn btn-success mt-3 ms-2">
+                                <i class="bi bi-printer"></i> Print Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Generate Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visit Planning Modal -->
+    <div class="modal fade" id="visitModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Plan Customer Visit</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label class="form-label">Customer</label>
+                            <select class="form-select">
+                                <option>Boda Boda Banja</option>
+                                <option>Bupenge Auto Spares.</option>
+                                <option>Smart Auto Garage</option>
+                                <option>Lubowa Martin</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Visit Date</label>
+                            <input type="datetime-local" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Purpose</label>
+                            <select class="form-select">
+                                <option>Outstanding Payment</option>
+                                <option>Credit Review</option>
+                                <option>Relationship Building</option>
+                                <option>Dispute Resolution</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Assigned To</label>
+                            <select class="form-select">
+                                <option>Robert   (Credit)</option>
+                                <option>Sarah   (Sales)</option>
+                                <option>Joint Visit</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Objectives</label>
+                            <textarea class="form-control" rows="3" placeholder="What do you hope to achieve?"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary">Schedule Visit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Example of initializing modals if needed
+        var contactModal = new bootstrap.Modal(document.getElementById('contactModal'));
+        var reportModal = new bootstrap.Modal(document.getElementById('reportModal'));
+        var visitModal = new bootstrap.Modal(document.getElementById('visitModal'));
+    </script>
+</body>
+</html>

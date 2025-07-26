@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Dashboard</title>
+    <style>
+        .alert { padding: 15px; margin-bottom: 20px; border: 1px solid transparent; border-radius: 4px; }
+        .alert-danger { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .alert-warning { background-color: #fff3cd; border-color: #ffeeba; color: #856404; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <div>
+        <h1>Test Dashboard - {{ report_period }}</h1>
+        <p>Last Updated: {{ last_updated }}</p>
+        {% if error_message %}
+            <div class="alert alert-danger">
+                Error: {{ error_message }}
+            </div>
+        {% endif %}
+        {% if sales_data %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sales Person</th>
+                        <th>Orders Total</th>
+                        <th>Last Order Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sp in sales_data %}
+                        <tr>
+                            <td>{{ sp.name }}</td>
+                            <td>${{ sp.orders_total|floatformat:2 }}</td>
+                            <td>{{ sp.last_order_date|slice:":10" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="alert alert-warning">
+                No sales data available.
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

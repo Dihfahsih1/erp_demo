@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUTO PRO Master - Sales Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --info-color: #17a2b8;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        .sidebar {
+            background-color: var(--secondary-color);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding-top: 20px;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 5px;
+            border-radius: 5px;
+            padding: 10px 15px;
+        }
+        
+        .sidebar .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .sidebar .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 10px;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .stat-card .value {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        
+        .stat-card .label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .btn-danger {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            border-color: var(--warning-color);
+        }
+        
+        .btn-info {
+            background-color: var(--info-color);
+            border-color: var(--info-color);
+        }
+        
+        .top-bar {
+            background-color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .search-bar {
+            width: 300px;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-profile img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .order-table img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .badge-activity {
+            background-color: #f0f8ff;
+            color: var(--primary-color);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        
+        .progress-thin {
+            height: 5px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-processing {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        
+        .status-completed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-returned {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-delivered {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .highlight-card {
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+        
+        .highlight-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .document-card {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background-color: white;
+            border-left: 4px solid var(--info-color);
+        }
+        
+        .document-card h6 {
+            margin-bottom: 5px;
+        }
+        
+        .document-card .meta {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .document-card .actions {
+            margin-top: 10px;
+        }
+        
+        .item-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            background-color: #e9ecef;
+            color: #495057;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .item-badge.completed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .item-badge.pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .item-badge.partial {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar col-md-3 col-lg-2 d-md-block">
+        <div class="text-center mb-4">
+            <h4><i class="bi bi-bike"></i> AUTO PRO Master</h4>
+            <p class="text-muted small">Sales Dashboard</p>
+        </div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="#">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-cart-plus"></i> Create Sales Order
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-list-check"></i> My Orders
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-truck"></i> Delivery Notes
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-people"></i> Customer Contacts
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-file-earmark-text"></i> Price List
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-graph-up"></i> Item Movement
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-clipboard-data"></i> Weekly Reports
+                </a>
+            </li>
+            <li class="nav-item mt-3">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-gear"></i> Settings
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="search-bar">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search orders, customers...">
+                    <button class="btn btn-outline-secondary" type="button">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="user-profile">
+                <img src="placeholder.png" alt="User">
+                <div>
+                    <div class="fw-bold">Catherine</div>
+                    <div class="text-muted small">Sales Person: Central</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <h4 class="mb-4">Sales Dashboard</h4>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Stats Cards -->
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value text-primary">Shs. 500,000</div>
+                    <div class="label">Monthly Target</div>
+                    <div class="progress progress-thin mt-2">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: 65%"></div>
+                    </div>
+                    <div class="mt-2">Shs. 325,000 achieved</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value text-info">Shs. 125,000</div>
+                    <div class="label">Total Customer Outstanding</div>
+                    <div class="mt-2">
+                        <span class="text-danger"><i class="bi bi-clock-history"></i> Call for follow-up</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value text-warning">12</div>
+                    <div class="label">Pending Delivery Notes</div>
+                    <div class="mt-2">
+                        <span class="text-danger"><i class="bi bi-exclamation-triangle"></i> 4 urgent</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value text-success">Shs. 245,000</div>
+                    <div class="label">Billed This Month</div>
+                    <div class="mt-2">
+                        <span class="text-success"><i class="bi bi-arrow-up"></i> 15%</span> from last month
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <!-- Quick Actions -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        Quick Actions
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary w-100 mb-3" data-bs-toggle="modal" data-bs-target="#salesOrderModal">
+                            <i class="bi bi-cart-plus"></i> Create Sales Order
+                        </button>
+                        <button class="btn btn-info w-100 mb-3" data-bs-toggle="modal" data-bs-target="#uploadDeliveryNoteModal">
+                            <i class="bi bi-upload"></i> Upload Delivery Note
+                        </button>
+                        <button class="btn btn-success w-100 mb-3">
+                            <i class="bi bi-file-earmark-text"></i> Generate Price List
+                        </button>
+                        <button class="btn btn-warning w-100 mb-3" data-bs-toggle="modal" data-bs-target="#weeklyReportModal">
+                            <i class="bi bi-clipboard-data"></i> Generate Weekly Report
+                        </button>
+                        <button class="btn btn-secondary w-100">
+                            <i class="bi bi-people"></i> View Customer Contacts
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Fast/Slow Moving Items -->
+                <div class="card mt-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Item Movement</span>
+                        <button class="btn btn-sm btn-outline-primary">View All</button>
+                    </div>
+                    <div class="card-body">
+                        <h6>Fast Moving Items</h6>
+                        <div class="document-card">
+                            <div class="meta">Bajaj=Bearing 6004=BM100KS • 150 units sold • Shs. 75,000</div>
+                        </div>
+                        <div class="document-card">
+                            <div class="meta">Bajaj=Axle Front=BM100KS • 120 units sold • Shs. 60,000</div>
+                        </div>
+                        <h6 class="mt-3">Slow Moving Items</h6>
+                        <div class="document-card">
+                            <div class="meta">Bajaj=Bearing 6003=BM100KS • 20 units sold • Shs. 10,000</div>
+                        </div>
+                        <div class="document-card">
+                            <div class="meta">Bajaj=Bearing 6201=BM100KS• 15 units sold • Shs. 7,500</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sales Orders -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>My Sales Orders</span>
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary me-2">
+                                <i class="bi bi-filter"></i> Filter
+                            </button>
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#salesOrderModal">
+                                <i class="bi bi-plus"></i> New Order
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Customer</th>
+                                        <th>Items</th>
+                                        <th>Ordered Amount</th>
+                                        <th>Billed Amount</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>SO-2025-1001</td>
+                                        <td>Masaka Auto  Garage Corporation</td>
+                                        <td>
+                                            <span class="item-badge">Bajaj=Bearing 6201=BM100KS (10)</span>
+                                            <span class="item-badge">Bajaj=Bearing 6201=BM100KS (5)</span>
+                                        </td>
+                                        <td>Shs. 50,000</td>
+                                        <td>Shs. 45,000</td>
+                                        <td><span class="status-badge status-pending">Pending</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1" title="Follow Up">
+                                                <i class="bi bi-telephone"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" title="Details">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>SO-2025-1002</td>
+                                        <td>Kato Auto  Garage.</td>
+                                        <td>
+                                            <span class="item-badge completed">Bajaj=Bearing 6201=BM100KS (8)</span>
+                                        </td>
+                                        <td>Shs. 40,000</td>
+                                        <td>Shs. 40,000</td>
+                                        <td><span class="status-badge status-completed">Fulfilled</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1" title="Follow Up">
+                                                <i class="bi bi-telephone"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" title="Details">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sales Performance Chart -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        Sales Performance Comparison
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="salesPerformanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Contacts -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Customer Contacts</span>
+                        <button class="btn btn-sm btn-outline-primary">View All</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="document-card">
+                            <h6>Boda Boda Banja</h6>
+                            <div class="meta">Contact: Jane  • Phone: 0 700 123 456 • Location: Katwe, CBD</div>
+                        </div>
+                        <div class="document-card">
+                            <h6>Smart Auto Garage.</h6>
+                            <div class="meta">Contact: Isma • Phone: 0 711 987 654 • Location: Kampala</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Delivery Notes -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Pending Delivery Notes</span>
+                        <button class="btn btn-sm btn-outline-primary">View All</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="document-card">
+                            <h6>DN-2025-1001 • Boda Boda Banja</h6>
+                            <div class="meta">Created: Today 10:30 AM • 2 items • Shs. 8,200</div>
+                            <div class="actions">
+                                <span class="status-badge status-pending">Pending Return</span>
+                                <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#uploadDeliveryNoteModal">Upload</button>
+                            </div>
+                        </div>
+                        <div class="document-card">
+                            <h6>DN-2025-1002 • Smart Auto Garage</h6>
+                            <div class="meta">Created: Yesterday 2:15 PM • 3 items • Shs. 5,750</div>
+                            <div class="actions">
+                                <span class="status-badge status-pending">Pending Return</span>
+                                <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#uploadDeliveryNoteModal">Upload</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Order Modal -->
+    <div class="modal fade" id="salesOrderModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Sales Order</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Customer</label>
+                            <select class="form-select">
+                                <option>Boda Boda Banja</option>
+                                <option>Smart Auto Garage</option>
+                                <option>Paradise Auto Spares</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Order Date</label>
+                            <input type="date" class="form-control" value="2025-07-16">
+                        </div>
+                    </div>
+                    
+                    <h6>Items</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Item Code</th>
+                                    <th>Description</th>
+                                    <th>Quantity</th>
+                                    <th>Unit Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>WID-1001</td>
+                                    <td>Bajaj=Bearing 6201=BM100KS</td>
+                                    <td><input type="number" class="form-control form-control-sm" value="10"></td>
+                                    <td>Shs. 500</td>
+                                    <td>Shs. 5,000</td>
+                                </tr>
+                                <tr>
+                                    <td>GAD-2005</td>
+                                    <td>Bajaj=Bearing 628 Clutch Bearing=BM100KS</td>
+                                    <td><input type="number" class="form-control form-control-sm" value="5"></td>
+                                    <td>Shs. 600</td>
+                                    <td>Shs. 3,000</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" rows="2" placeholder="Order notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary">Create Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Delivery Note Modal -->
+    <div class="modal fade" id="uploadDeliveryNoteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Upload Signed Delivery Note</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Delivery Note #</label>
+                        <input type="text" class="form-control" value="DN-2025-1001" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Customer</label>
+                        <input type="text" class="form-control" value="Masaka Auto  Garage Corporation" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Upload Signed Document</label>
+                        <input type="file" class="form-control" accept=".pdf,.jpg,.png">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary">Upload</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Report Modal -->
+    <div class="modal fade" id="weeklyReportModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Generate Weekly Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Week Ending</label>
+                            <input type="date" class="form-control" value="2025-07-20">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Report Type</label>
+                            <select class="form-select">
+                                <option>Sales Performance</option>
+                                <option>Customer Activity</option>
+                                <option>Order Fulfillment</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label class="form-label">Comments</label>
+                        <textarea class="form-control" rows="4" placeholder="Weekly performance comments..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary">Generate Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize modals
+        var salesOrderModal = new bootstrap.Modal(document.getElementById('salesOrderModal'));
+        var uploadDeliveryNoteModal = new bootstrap.Modal(document.getElementById('uploadDeliveryNoteModal'));
+        var weeklyReportModal = new bootstrap.Modal(document.getElementById('weeklyReportModal'));
+
+        // Sales Performance Chart
+        var ctx = document.getElementById('salesPerformanceChart').getContext('2d');
+        var salesPerformanceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                datasets: [
+                    {
+                        label: 'Your Sales',
+                        data: [50000, 60000, 75000, 70000, 80000, 85000, 90000],
+                        borderColor: 'rgb(52, 152, 219)',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Team Average',
+                        data: [45000, 55000, 60000, 65000, 70000, 75000, 80000],
+                        borderColor: 'rgb(231, 76, 60)',
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Sales Amount (Shs)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Month'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

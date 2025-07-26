@@ -3,6 +3,11 @@
 
 {% block content %}
 <div class="container-fluid">
+    {% if error_message %}
+        <div class="alert alert-danger" role="alert">
+            Error: {{ error_message }}
+        </div>
+    {% endif %}
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Sales Team Performance Dashboard</h1>
         <span class="text-muted">Period: {{ report_period }} | Updated: {{ last_updated }}</span>
@@ -35,6 +40,10 @@
                 </div>
             </div>
         </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-warning">No sales persons available.</div>
+            </div>
         {% endfor %}
     </div>
 
@@ -70,6 +79,10 @@
                                     <td>{{ sp.connection_rate }}%</td>
                                     <td>{{ sp.last_order_date|slice:":10" }}</td>
                                 </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="6">No data available</td>
+                                    </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
@@ -111,74 +124,72 @@
 
 {% block scripts %}
 <script>
-// Contribution Chart
-var ctx = document.getElementById("contributionChart");
-var contributionChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: [{% for sp in sales_data %}"{{ sp.name }}",{% endfor %}],
-        datasets: [
-            {
-                label: "Orders",
-                backgroundColor: "#4e73df",
-                data: [{% for sp in sales_data %}{{ sp.orders_total }},{% endfor %}]
+    // Contribution Chart
+    var ctx = document.getElementById("contributionChart");
+    var contributionChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [{% for sp in sales_data %}"{{ sp.name }}",{% endfor %}],
+            datasets: [
+                {
+                    label: "Orders",
+                    backgroundColor: "#4e73df",
+                    data: [{% for sp in sales_data %}{{ sp.orders_total }},{% endfor %}]
+                },
+                {
+                    label: "Invoices",
+                    backgroundColor: "#1cc88a",
+                    data: [{% for sp in sales_data %}{{ sp.invoices_total }},{% endfor %}]
+                }
+            ]
+        },
+        options: {
+            scales: {
+                xAxes: [{ stacked: true }],
+                yAxes: [{
+                    stacked: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }]
             },
-            {
-                label: "Invoices",
-                backgroundColor: "#1cc88a",
-                data: [{% for sp in sales_data %}{{ sp.invoices_total }},{% endfor %}]
-            }
-        ]
-    },
-    options: {
-        scales: {
-            xAxes: [{
-                stacked: true,
-            }],
-            yAxes: [{
-                stacked: true,
-                ticks: {
-                    callback: function(value) {
-                        return '$' + value.toLocaleString();
+            tooltips: {
+                callbacks: {
+                    label: function(tooltipItem) {
+                        return tooltipItem.dataset.label + ': $' + tooltipItem.yLabel.toLocaleString();
                     }
                 }
+            }
+        }
+    });
+
+    // Outstanding Chart
+    var ctx2 = document.getElementById("outstandingChart");
+    var outstandingChart = new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: [{% for sp in sales_data %}"{{ sp.name }}",{% endfor %}],
+            datasets: [{
+                data: [{% for sp in sales_data %}{{ sp.outstanding|default:0 }},{% endfor %}],
+                backgroundColor: [
+                    '#e74a3b', '#f6c23e', '#4e73df', '#1cc88a', '#36b9cc',
+                    '#858796', '#5a5c69', '#3a3b45', '#2c3e50', '#1a1a1a'
+                ],
             }]
         },
-        tooltips: {
-            callbacks: {
-                label: function(tooltipItem) {
-                    return tooltipItem.dataset.label + ': $' + tooltipItem.yLabel.toLocaleString();
+        options: {
+            tooltips: {
+                callbacks: {
+                    label: function(tooltipItem, data) {
+                        var label = data.labels[tooltipItem.index] || '';
+                        var value = data.datasets[0].data[tooltipItem.index];
+                        return label + ': $' + value.toLocaleString();
+                    }
                 }
             }
         }
-    }
-});
-
-// Outstanding Chart
-var ctx2 = document.getElementById("outstandingChart");
-var outstandingChart = new Chart(ctx2, {
-    type: 'doughnut',
-    data: {
-        labels: [{% for sp in sales_data %}"{{ sp.name }}",{% endfor %}],
-        datasets: [{
-            data: [{% for sp in sales_data %}{{ sp.outstanding }},{% endfor %}],
-            backgroundColor: [
-                '#e74a3b', '#f6c23e', '#4e73df', '#1cc88a', '#36b9cc',
-                '#858796', '#5a5c69', '#3a3b45', '#2c3e50', '#1a1a1a'
-            ],
-        }]
-    },
-    options: {
-        tooltips: {
-            callbacks: {
-                label: function(tooltipItem, data) {
-                    var label = data.labels[tooltipItem.index] || '';
-                    var value = data.datasets[0].data[tooltipItem.index];
-                    return label + ': $' + value.toLocaleString();
-                }
-            }
-        }
-    }
-});
+    });
 </script>
 {% endblock %}

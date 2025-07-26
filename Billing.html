@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUTO PRO Master - Billing Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --info-color: #17a2b8;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        .sidebar {
+            background-color: var(--secondary-color);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding-top: 20px;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 5px;
+            border-radius: 5px;
+            padding: 10px 15px;
+        }
+        
+        .sidebar .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .sidebar .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 10px;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .stat-card .value {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        
+        .stat-card .label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .btn-danger {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            border-color: var(--warning-color);
+        }
+        
+        .btn-info {
+            background-color: var(--info-color);
+            border-color: var(--info-color);
+        }
+        
+        .top-bar {
+            background-color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .search-bar {
+            width: 300px;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-profile img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .order-table img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .badge-activity {
+            background-color: #f0f8ff;
+            color: var(--primary-color);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        
+        .progress-thin {
+            height: 5px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-processing {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        
+        .status-completed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-returned {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-delivered {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .highlight-card {
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+        
+        .highlight-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .document-card {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background-color: white;
+            border-left: 4px solid var(--info-color);
+        }
+        
+        .document-card h6 {
+            margin-bottom: 5px;
+        }
+        
+        .document-card .meta {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .document-card .actions {
+            margin-top: 10px;
+        }
+        
+        .item-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            background-color: #e9ecef;
+            color: #495057;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .item-badge.completed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .item-badge.pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .item-badge.partial {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar col-md-3 col-lg-2 d-md-block">
+        <div class="text-center mb-4">
+            <h4><i class="bi bi-bike"></i> AUTO PRO Master</h4>
+            <p class="text-muted small">Billing Dashboard</p>
+        </div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="#">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-check-circle"></i> Approved Orders
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-card-checklist"></i> Pick Lists
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-truck"></i> Delivery Notes
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-receipt"></i> Invoices
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-clipboard-data"></i> Billing Reports
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-box-seam"></i> Item Tracking
+                </a>
+            </li>
+            <li class="nav-item mt-3">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-gear"></i> Settings
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="search-bar">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search orders, customers...">
+                    <button class="btn btn-outline-secondary" type="button">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="user-profile">
+                <img src="placeholder.png" alt="User">
+                <div>
+                    <div class="fw-bold">Maria</div>
+                    <div class="text-muted small">Billing in Charge</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <h4 class="mb-4">Billing Dashboard</h4>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Stats Cards -->
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value text-primary">42</div>
+                    <div class="label">Orders to Process</div>
+                    <div class="mt-2">
+                        <span class="text-success"><i class="bi bi-arrow-up"></i> 8 new</span> today
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value text-info">28</div>
+                    <div class="label">Pick Lists Today</div>
+                    <div class="progress progress-thin mt-2">
+                        <div class="progress-bar bg-info" role="progressbar" style="width: 65%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value text-success">Shs. 124,850</div>
+                    <div class="label">Today's Billing</div>
+                    <div class="mt-2">
+                        <span class="text-success"><i class="bi bi-arrow-up"></i> 12%</span> from yesterday
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value text-warning">7</div>
+                    <div class="label">Pending Deliveries</div>
+                    <div class="mt-2">
+                        <span class="text-danger"><i class="bi bi-clock-history"></i> 3 overdue</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <!-- Quick Actions -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        Quick Actions
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary w-100 mb-3">
+                            <i class="bi bi-card-checklist"></i> Generate Pick List
+                        </button>
+                        <button class="btn btn-info w-100 mb-3">
+                            <i class="bi bi-truck"></i> Create Delivery Note
+                        </button>
+                        <button class="btn btn-success w-100 mb-3">
+                            <i class="bi bi-receipt"></i> Generate Invoice
+                        </button>
+                        <button class="btn btn-warning w-100 mb-3">
+                            <i class="bi bi-clipboard-data"></i> Daily Billing Report
+                        </button>
+                        <button class="btn btn-secondary w-100">
+                            <i class="bi bi-box-seam"></i> Item Tracking
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Documents -->
+                <div class="card mt-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Recent Documents</span>
+                        <button class="btn btn-sm btn-outline-primary">View All</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="document-card">
+                            <h6>INV-2023-1085</h6>
+                            <div class="meta">Boda Boda Banja • Shs. 8,200 • Today 11:45 AM</div>
+                            <div class="actions">
+                                <span class="status-badge status-completed">Paid</span>
+                                <button class="btn btn-sm btn-outline-secondary float-end">View</button>
+                            </div>
+                        </div>
+                        <div class="document-card">
+                            <h6>DN-2023-1084</h6>
+                            <div class="meta">Auto Spares Katwe • 12 items • Today 10:30 AM</div>
+                            <div class="actions">
+                                <span class="status-badge status-delivered">Delivered</span>
+                                <button class="btn btn-sm btn-outline-secondary float-end">View</button>
+                            </div>
+                        </div>
+                        <div class="document-card">
+                            <h6>PL-2023-1083</h6>
+                            <div class="meta">Robert Spares • 8 items • Today 9:15 AM</div>
+                            <div class="actions">
+                                <span class="status-badge status-processing">Picking</span>
+                                <button class="btn btn-sm btn-outline-secondary float-end">View</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Approved Orders -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Approved Orders Ready for Processing</span>
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary me-2">
+                                <i class="bi bi-filter"></i> Filter
+                            </button>
+                            <button class="btn btn-sm btn-primary">
+                                <i class="bi bi-plus"></i> New Pick List
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Customer</th>
+                                        <th>Items</th>
+                                        <th>Amount</th>
+                                        <th>Approved</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>ORD-2023-1085</td>
+                                        <td> 
+                                            Acme Auto Spares
+                                        </td>
+                                        <td>
+                                            <span class="item-badge">ADNOC=4T-4 Stroke Engin Oil= 20W-50 SG (12)</span>
+                                            <span class="item-badge">Bajaj=Air Filter Foam/Cleaner=BM100KS(5)</span>
+                                        </td>
+                                        <td>Shs.908,200</td>
+                                        <td>Today 9:15 AM</td>
+                                        <td><span class="status-badge status-pending">Pending Pick</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1" title="Pick List">
+                                                <i class="bi bi-card-checklist"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" title="Details">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>ORD-2023-1084</td>
+                                        <td> 
+                                            Smart Auto Inc.
+                                        </td>
+                                        <td>
+                                            <span class="item-badge completed">Bajaj=Air Filter Foam/Cleaner=BM100KS(8)</span>
+                                            <span class="item-badge pending">Bajaj=Axle Front=BM100KS(4)</span>
+                                        </td>
+                                        <td>Shs.905,750</td>
+                                        <td>Today 8:45 AM</td>
+                                        <td><span class="status-badge status-processing">Partial Pick</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info me-1" title="Delivery Note">
+                                                <i class="bi bi-truck"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" title="Details">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>ORD-2023-1083</td>
+                                        <td>
+                                            Sempira Auto
+                                        </td>
+                                        <td>
+                                            <span class="item-badge completed">Bajaj=Bearing - Ball Clutch=BM150 (6)</span>
+                                            <span class="item-badge completed">Bajaj=Bearing 6004=BM100KS (2)</span>
+                                        </td>
+                                        <td>Shs.612,400</td>
+                                        <td>Yesterday 4:30 PM</td>
+                                        <td><span class="status-badge status-processing">Ready to Invoice</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-success me-1" title="Invoice">
+                                                <i class="bi bi-receipt"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" title="Details">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>ORD-2023-1081</td>
+                                        <td>
+                                            Auto Mobile
+                                        </td>
+                                        <td>
+                                            <span class="item-badge completed">Bajaj=Bearing 6004=BM100KS (10)</span>
+                                        </td>
+                                        <td>7,300</td>
+                                        <td>Yesterday 3:15 PM</td>
+                                        <td><span class="status-badge status-completed">Completed</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info me-1" title="Documents">
+                                                <i class="bi bi-folder"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" title="Details">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <!-- Pick List Details -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Recent Pick Lists</span>
+                        <button class="btn btn-sm btn-outline-primary">View All</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="document-card">
+                            <h6>PL-2023-1085 • Smart Auto Spares</h6>
+                            <div class="meta">Created: Today 11:00 AM • 2 items • Shs. 8,200</div>
+                            <div class="actions">
+                                <span class="status-badge status-completed">Picked</span>
+                                <button class="btn btn-sm btn-outline-primary me-1">Print</button>
+                                <button class="btn btn-sm btn-outline-secondary">Details</button>
+                            </div>
+                        </div>
+                        <div class="document-card">
+                            <h6>PL-2023-1084 • Cool Garage.</h6>
+                            <div class="meta">Created: Today 10:15 AM • 3 items • Shs. 5,750</div>
+                            <div class="actions">
+                                <span class="status-badge status-processing">In Progress</span>
+                                <button class="btn btn-sm btn-outline-primary me-1">Print</button>
+                                <button class="btn btn-sm btn-outline-secondary">Details</button>
+                            </div>
+                        </div>
+                        <div class="document-card">
+                            <h6>PL-2023-1083 • Masaka Auto  Garage</h6>
+                            <div class="meta">Created: Today 9:30 AM • 4 items • Shs. 12,400</div>
+                            <div class="actions">
+                                <span class="status-badge status-completed">Picked</span>
+                                <button class="btn btn-sm btn-outline-primary me-1">Print</button>
+                                <button class="btn btn-sm btn-outline-secondary">Details</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delivery Tracking -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Delivery Tracking</span>
+                        <button class="btn btn-sm btn-outline-primary">View All</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="document-card">
+                            <h6>DN-2023-1085 • Smart Auto Spares</h6>
+                            <div class="meta">Created: Today 11:30 AM • 2 items • Shs. 8,200</div>
+                            <div class="actions">
+                                <span class="status-badge status-delivered">Delivered</span>
+                                <button class="btn btn-sm btn-outline-success me-1">Confirm</button>
+                                <button class="btn btn-sm btn-outline-primary">Print</button>
+                            </div>
+                        </div>
+                        <div class="document-card">
+                            <h6>DN-2023-1084 • Cool Garage.</h6>
+                            <div class="meta">Created: Today 10:45 AM • 3 items • Shs. 5,750</div>
+                            <div class="actions">
+                                <span class="status-badge status-processing">In Transit</span>
+                                <button class="btn btn-sm btn-outline-success me-1">Confirm</button>
+                                <button class="btn btn-sm btn-outline-primary">Print</button>
+                            </div>
+                        </div>
+                        <div class="document-card">
+                            <h6>DN-2023-1083 • Masaka Auto  Garage</h6>
+                            <div class="meta">Created: Today 9:50 AM • 4 items • Shs. 12,400</div>
+                            <div class="actions">
+                                <span class="status-badge status-pending">Pending Dispatch</span>
+                                <button class="btn btn-sm btn-outline-success me-1">Confirm</button>
+                                <button class="btn btn-sm btn-outline-primary">Print</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pick List Modal -->
+    <div class="modal fade" id="pickListModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Pick List</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Order Number</label>
+                            <input type="text" class="form-control" value="ORD-2023-1085" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Customer</label>
+                            <input type="text" class="form-control" value="Smart Auto Spares" readonly>
+                        </div>
+                    </div>
+                    
+                    <h6>Items to Pick</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Item Code</th>
+                                    <th>Description</th>
+                                    <th>Ordered Qty</th>
+                                    <th>Available</th>
+                                    <th>Picked Qty</th>
+                                    <th>Location</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>WID-1001</td>
+                                    <td>Widget A</td>
+                                    <td>12</td>
+                                    <td>15</td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm" value="12">
+                                    </td>
+                                    <td>Aisle 3, Shelf B</td>
+                                </tr>
+                                <tr>
+                                    <td>GAD-2005</td>
+                                    <td>Gadget B</td>
+                                    <td>5</td>
+                                    <td>8</td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm" value="5">
+                                    </td>
+                                    <td>Aisle 1, Shelf D</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" rows="2" placeholder="Any special instructions for picking..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary">Generate Pick List</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delivery Note Modal -->
+    <div class="modal fade" id="deliveryNoteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Delivery Note</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Pick List #</label>
+                            <input type="text" class="form-control" value="PL-2023-1085" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Customer</label>
+                            <input type="text" class="form-control" value="Smart Auto Spares" readonly>
+                        </div>
+                    </div>
+                    
+                    <h6>Items to Deliver</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Item Code</th>
+                                    <th>Description</th>
+                                    <th>Picked Qty</th>
+                                    <th>To Deliver</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>WID-1001</td>
+                                    <td>Widget A</td>
+                                    <td>12</td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm" value="12">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>GAD-2005</td>
+                                    <td>Gadget B</td>
+                                    <td>5</td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm" value="5">
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Delivery Date</label>
+                            <input type="date" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Courier</label>
+                            <select class="form-select">
+                                <option>FastTrack Logistics</option>
+                                <option>QuickShip Express</option>
+                                <option>Metro Delivery</option>
+                                <option>Customer Pickup</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <label class="form-label">Delivery Instructions</label>
+                        <textarea class="form-control" rows="2" placeholder="Special delivery instructions..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary">Create Delivery Note</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Modal -->
+    <div class="modal fade" id="invoiceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Generate Invoice</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Delivery Note #</label>
+                            <input type="text" class="form-control" value="DN-2023-1085" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Customer</label>
+                            <input type="text" class="form-control" value="Smart Auto Spares" readonly>
+                        </div>
+                    </div>
+                    
+                    <h6>Items to Invoice</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Item Code</th>
+                                    <th>Description</th>
+                                    <th>Delivered Qty</th>
+                                    <th>Unit Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>WID-1001</td>
+                                    <td>Widget A</td>
+                                    <td>12</td>
+                                    <td>Shs. 450.00</td>
+                                    <td>Shs. 5,400.00</td>
+                                </tr>
+                                <tr>
+                                    <td>GAD-2005</td>
+                                    <td>Gadget B</td>
+                                    <td>5</td>
+                                    <td>Shs. 560.00</td>
+                                    <td>Shs. 2,800.00</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4" class="text-end">Subtotal</td>
+                                    <td>Shs. 8,200.00</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4" class="text-end">Tax (10%)</td>
+                                    <td>Shs. 820.00</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4" class="text-end fw-bold">Total</td>
+                                    <td class="fw-bold">Shs. 9,020.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Invoice Date</label>
+                            <input type="date" class="form-control" value="2023-07-14">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Due Date</label>
+                            <input type="date" class="form-control" value="2023-07-28">
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" rows="2" placeholder="Invoice notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary">Generate Invoice</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Example of initializing modals if needed
+        var pickListModal = new bootstrap.Modal(document.getElementById('pickListModal'));
+        var deliveryNoteModal = new bootstrap.Modal(document.getElementById('deliveryNoteModal'));
+        var invoiceModal = new bootstrap.Modal(document.getElementById('invoiceModal'));
+    </script>
+</body>
+</html>

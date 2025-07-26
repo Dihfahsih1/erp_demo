@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUTO PRO Master - Sales Order Monitoring</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        .sidebar {
+            background-color: var(--secondary-color);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding-top: 20px;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 5px;
+            border-radius: 5px;
+            padding: 10px 15px;
+        }
+        
+        .sidebar .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .sidebar .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 10px;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .stat-card .value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .stat-card .label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .btn-danger {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            border-color: var(--warning-color);
+        }
+        
+        .top-bar {
+            background-color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .search-bar {
+            width: 300px;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-profile img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .order-table img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .badge-activity {
+            background-color: #f0f8ff;
+            color: var(--primary-color);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        
+        .progress-thin {
+            height: 5px;
+        }
+        
+        .order-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-approved {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-processing {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        
+        .status-delivered {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status-overdue {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .order-card {
+            padding: 15px;
+            border-left: 4px solid var(--primary-color);
+            margin-bottom: 15px;
+            background-color: white;
+            border-radius: 8px;
+        }
+        
+        .order-card.overdue {
+            border-left-color: var(--accent-color);
+        }
+        
+        .order-card h6 {
+            margin-bottom: 5px;
+        }
+        
+        .order-card .meta {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .order-card .actions {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar col-md-3 col-lg-2 d-md-block">
+        <div class="text-center mb-4">
+            <h4><i class="bi bi-bike"></i> AUTO PRO Master</h4>
+            <p class="text-muted small">Order Monitoring</p>
+        </div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="#">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-cart-plus"></i> Create Order
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-cart-check"></i> Process Orders
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-credit-card"></i> Credit Approval
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-truck"></i> Courier Management
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-clipboard-data"></i> Sales Register
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-calendar-check"></i> Yesterday's Orders
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-exclamation-triangle"></i> Overdue Orders
+                </a>
+            </li>
+            <li class="nav-item mt-3">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-gear"></i> Settings
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="search-bar">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search orders, customers...">
+                    <button class="btn btn-outline-secondary" type="button">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="user-profile">
+                <img src="placeholder.png" alt="User">
+                <div>
+                    <div class="fw-bold">Jolly </div>
+                    <div class="text-muted small">Sales Order Office</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <h4 class="mb-4">Sales Order Monitoring</h4>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Stats Cards -->
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value">84</div>
+                    <div class="label">Orders Today</div>
+                    <div class="mt-2">
+                        <span class="text-success"><i class="bi bi-arrow-up"></i> 15%</span> from yesterday
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value">67</div>
+                    <div class="label">Held Orders</div>
+                    <div class="progress progress-thin mt-2">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 72%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value">18</div>
+                    <div class="label">Pending Approval</div>
+                    <div class="mt-2">
+                        <span class="text-danger"><i class="bi bi-exclamation-circle"></i> 5 urgent</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value">9</div>
+                    <div class="label">Overdue Orders</div>
+                    <div class="mt-2">
+                        <span class="text-danger"><i class="bi bi-arrow-up"></i> 2 new</span> today
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <!-- Quick Actions -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        Quick Actions
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary w-100 mb-3">
+                            <i class="bi bi-cart-plus"></i> Create New Order
+                        </button>
+                        <button class="btn btn-success w-100 mb-3">
+                            <i class="bi bi-cart-check"></i> Process Agent Orders
+                        </button>
+                        <button class="btn btn-warning w-100 mb-3">
+                            <i class="bi bi-credit-card"></i> Credit Approvals
+                        </button>
+                        <button class="btn btn-info w-100 mb-3">
+                            <i class="bi bi-truck"></i> Courier Reports
+                        </button>
+                        <button class="btn btn-secondary w-100">
+                            <i class="bi bi-clipboard-data"></i> Fulfillment Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Courier Assignments -->
+                <div class="card mt-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Recent Couriers</span>
+                        <button class="btn btn-sm btn-outline-primary">Add New</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex mb-3">
+                            <div class="flex-shrink-0">
+                                <i class="bi bi-truck fs-4 text-primary"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">FastTrack</h6>
+                                <p class="mb-1 small">Assigned to ORD-2023-1072</p>
+                                <span class="badge-activity">Today 10:45 AM</span>
+                            </div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <div class="flex-shrink-0">
+                                <i class="bi bi-truck fs-4 text-success"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">Mbale Express</h6>
+                                <p class="mb-1 small">Assigned to ORD-2023-1068</p>
+                                <span class="badge-activity">Today 9:30 AM</span>
+                            </div>
+                        </div>
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="bi bi-truck fs-4 text-warning"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">YY Coaches</h6>
+                                <p class="mb-1 small">Assigned to ORD-2023-1059</p>
+                                <span class="badge-activity">Yesterday 4:15 PM</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Approval Orders -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Pending Credit Approval</span>
+                        <button class="btn btn-sm btn-outline-primary">View All</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="order-card">
+                            <div class="d-flex justify-content-between">
+                                <h6>ORD-2023-1082</h6>
+                                <span class="order-status status-pending">Pending</span>
+                            </div>
+                            <div class="meta">Boda Boda Banja • Shs. 8,750 • Today 11:20 AM</div>
+                            <div class="actions">
+                                <!-- <button class="btn btn-sm btn-outline-success me-1">Approve</button>
+                                <button class="btn btn-sm btn-outline-danger">Reject</button> -->
+                                <button class="btn btn-sm btn-outline-secondary float-end">Details</button>
+                            </div>
+                        </div>
+                        <div class="order-card">
+                            <div class="d-flex justify-content-between">
+                                <h6>ORD-2023-1080</h6>
+                                <span class="order-status status-pending">Pending</span>
+                            </div>
+                            <div class="meta">Bumpenge Auto Spares • Shs. 12,420 • Today 10:45 AM</div>
+                            <div class="actions">
+                                <!-- <button class="btn btn-sm btn-outline-success me-1">Approve</button>
+                                <button class="btn btn-sm btn-outline-danger">Reject</button> -->
+                                <button class="btn btn-sm btn-outline-secondary float-end">Details</button>
+                            </div>
+                        </div>
+                        <div class="order-card">
+                            <div class="d-flex justify-content-between">
+                                <h6>ORD-2023-1078</h6>
+                                <span class="order-status status-pending">Urgent</span>
+                            </div>
+                            <div class="meta">Smart Auto Spares • Shs. 5,680 • Today 9:15 AM</div>
+                            <div class="actions">
+                                <!-- <button class="btn btn-sm btn-outline-success me-1">Approve</button>
+                                <button class="btn btn-sm btn-outline-danger">Reject</button> -->
+                                <button class="btn btn-sm btn-outline-secondary float-end">Details</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overdue Orders -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Overdue Orders</span>
+                        <button class="btn btn-sm btn-outline-primary">View All</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="order-card overdue">
+                            <div class="d-flex justify-content-between">
+                                <h6>ORD-2023-0952</h6>
+                                <span class="order-status status-overdue">5 Days Late</span>
+                            </div>
+                            <div class="meta">Sempira• Shs. 3,850 • Due Jul 10</div>
+                            <div class="actions">
+                                <button class="btn btn-sm btn-outline-primary me-1">Follow Up</button> 
+                                <button class="btn btn-sm btn-outline-secondary float-end">Details</button>
+                            </div>
+                        </div>
+                        <div class="order-card overdue">
+                            <div class="d-flex justify-content-between">
+                                <h6>ORD-2023-0978</h6>
+                                <span class="order-status status-overdue">3 Days Late</span>
+                            </div>
+                            <div class="meta">Boda Boda Paradise • Shs. 7,120 • Due Jul 12</div>
+                            <div class="actions">
+                                <button class="btn btn-sm btn-outline-primary me-1">Follow Up</button> 
+                                <button class="btn btn-sm btn-outline-secondary float-end">Details</button>
+                            </div>
+                        </div>
+                        <div class="order-card overdue">
+                            <div class="d-flex justify-content-between">
+                                <h6>ORD-2023-1012</h6>
+                                <span class="order-status status-overdue">1 Day Late</span>
+                            </div>
+                            <div class="meta">Auto Garage • Shs. 4,350 • Due Jul 14</div>
+                            <div class="actions">
+                                <button class="btn btn-sm btn-outline-primary me-1">Follow Up</button> 
+                                <button class="btn btn-sm btn-outline-secondary float-end">Details</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <!-- Recent Orders -->
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Recent Orders</span>
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary me-2">
+                                <i class="bi bi-filter"></i> Filter
+                            </button>
+                            <button class="btn btn-sm btn-primary">
+                                <i class="bi bi-plus"></i> Add New
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover order-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Customer</th>
+                                        <th>Sales Person</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Delivery Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>ORD-2023-1085</td>
+                                        <td>
+                                            <img src="placeholder.png" alt="Customer">
+                                            Auto Mobile World
+                                        </td>
+                                        <td>Sarah </td>
+                                        <td>Shs. 8,200</td>
+                                        <td><span class="order-status status-approved">Approved</span></td>
+                                        <td>Jul 18, 2023</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1" title="Track">
+                                                <i class="bi bi-geo-alt"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-success me-1" title="Confirm Delivery">
+                                                <i class="bi bi-check-circle"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" title="Details">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>ORD-2023-1084</td>
+                                        <td>
+                                            <img src="placeholder.png" alt="Customer">
+                                            Smart Auto Garage.
+                                        </td>
+                                        <td>Mark</td>
+                                        <td>Shs. 500,750</td>
+                                        <td><span class="order-status status-processing">Processing</span></td>
+                                        <td>Jul 17, 2023</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1" title="Track">
+                                                <i class="bi bi-geo-alt"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-success me-1" title="Confirm Delivery">
+                                                <i class="bi bi-check-circle"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" title="Details">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>ORD-2023-1083</td>
+                                        <td>
+                                            <img src="placeholder.png" alt="Customer">
+                                           Bupenge Auto Spares
+                                        </td>
+                                        <td>Musa</td>
+                                        <td>Shs. 1,200,400</td>
+                                        <td><span class="order-status status-delivered">Delivered</span></td>
+                                        <td>Jul 15, 2023</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info me-1" title="Feedback">
+                                                <i class="bi bi-chat-left-text"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" title="Details">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>ORD-2023-1081</td>
+                                        <td>
+                                            <img src="placeholder.png" alt="Customer">
+                                            Kawempe Auto Parts
+                                        </td>
+                                        <td>David</td>
+                                        <td>Shs. 700,300</td>
+                                        <td><span class="order-status status-pending">Pending Approval</span></td>
+                                        <td>Jul 19, 2023</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1" title="Approve">
+                                                <i class="bi bi-check-circle"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" title="Details">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delivery Confirmation Modal -->
+    <div class="modal fade" id="deliveryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delivery</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label class="form-label">Order Number</label>
+                            <input type="text" class="form-control" value="ORD-2023-1085" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Customer Name</label>
+                            <input type="text" class="form-control" value="Acme Corporation" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Delivery Date & Time</label>
+                            <input type="datetime-local" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Courier Details</label>
+                            <select class="form-select">
+                                <option>FastTrack Logistics</option>
+                                <option>QuickShip Express</option>
+                                <option>Metro Delivery</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Transport Cost</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Shs. </span>
+                                <input type="number" class="form-control" placeholder="0.00">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Customer Feedback</label>
+                            <textarea class="form-control" rows="3" placeholder="Enter customer comments..."></textarea>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="goodsReceived">
+                            <label class="form-check-label" for="goodsReceived">
+                                Customer confirmed receipt of goods
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary">Confirm Delivery</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fulfillment Report Modal -->
+    <div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Order Fulfillment Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Date Range</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control">
+                                <span class="input-group-text">to</span>
+                                <input type="date" class="form-control">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Report Type</label>
+                            <select class="form-select">
+                                <option>Daily Fulfillment</option>
+                                <option>Weekly Summary</option>
+                                <option>Monthly Overview</option>
+                                <option>Custom</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            Sample Report Preview
+                        </div>
+                        <div class="card-body">
+                            <h6>Order Fulfillment Summary (Jul 1 - Jul 15, 2023)</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Metric</th>
+                                            <th>Value</th>
+                                            <th>% of Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Total Orders</td>
+                                            <td>142</td>
+                                            <td>100%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Orders Fulfilled</td>
+                                            <td>128</td>
+                                            <td>90.1%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Orders Pending</td>
+                                            <td>14</td>
+                                            <td>9.9%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Total Order Value</td>
+                                            <td>Shs. 486,250</td>
+                                            <td>100%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Value Delivered</td>
+                                            <td>Shs. 452,800</td>
+                                            <td>93.1%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Transport Costs</td>
+                                            <td>Shs. 12,420</td>
+                                            <td>2.6% of delivered</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button class="btn btn-primary mt-3">
+                                <i class="bi bi-file-earmark-excel"></i> Export to Excel
+                            </button>
+                            <button class="btn btn-success mt-3 ms-2">
+                                <i class="bi bi-printer"></i> Print Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Generate Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Example of initializing modals if needed
+        var deliveryModal = new bootstrap.Modal(document.getElementById('deliveryModal'));
+        var reportModal = new bootstrap.Modal(document.getElementById('reportModal'));
+    </script>
+</body>
+</html>

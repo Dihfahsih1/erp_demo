@@ -39,13 +39,106 @@ import requests
 from django.http import JsonResponse
 from django.conf import settings
 
+# sales_app/views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from django.contrib import messages
+from django.conf import settings
+
+# sales_app/views.py
+from django.contrib.auth import logout
+
+def erpnext_logout(request):
+    if 'erpnext_session' in request.session:
+        del request.session['erpnext_session']
+    logout(request)
+    return redirect('login')
+
+def erpnext_login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('dashboard')
+        else:
+            try:
+                # Check ERPNext response for specific error
+                session = requests.Session()
+                login_url = f"{settings.ERP_NEXT_URL}/api/method/login"
+                login_response = session.post(login_url, data={'usr': username, 'pwd': password})
+                if login_response.status_code != 200:
+                    error_info = login_response.json()
+                    frappe_msg = error_info.get('message', 'Invalid ERPNext credentials')
+                    messages.error(request, f"ERPNext error: {frappe_msg}")
+                else:
+                    messages.error(request, 'Failed to fetch user info from ERPNext')
+            except Exception as e:
+                messages.error(request, f"Error connecting to ERPNext: {e}")
+
+    return render(request, 'accounts/login.html')
+
 HEADERS = {
     "Authorization": f"token {settings.ERP_API_KEY}:{settings.ERP_API_SECRET}",
     "Content-Type": "application/json",
     "Accept": "application/json",
-    "Expect": ""  # Explicitly handle the Expect header
+    "Expect": ""  
 }
 
+def erpnext_api_request(endpoint, method="GET", data=None, params=None):
+    """Generic function to interact with ERPNext API."""
+    url = f"{settings.ERP_NEXT_URL}/api/resource/{endpoint}"
+    try:
+        if method == "GET":
+            response = requests.get(url, headers=HEADERS, params=params)
+        elif method == "POST":
+            response = requests.post(url, headers=HEADERS, json=data)
+        elif method == "PUT":
+            response = requests.put(url, headers=HEADERS, json=data)
+        response.raise_for_status()
+        return response.json().get("data", [])
+    except requests.RequestException as e:
+        print(f"Error connecting to ERPNext: {str(e)}")
+        return None
+
+def sales_dashboard(request):
+    # Fetch latest 10 sales orders
+    sales_orders = []
+    customers = []
+    delivery_notes = []
+
+    try:
+        so_resp = requests.get(
+            f"{settings.ERP_NEXT_URL}/api/resource/Sales Order",
+            headers=HEADERS,
+            params={"limit_page_length": 10, "order_by": "creation desc"}
+        )
+        sales_orders = so_resp.json().get("data", [])
+
+        cust_resp = requests.get(
+            f"{settings.ERP_NEXT_URL}/api/resource/Customer",
+            headers=HEADERS,
+            params={"limit_page_length": 5}
+        )
+        customers = cust_resp.json().get("data", [])
+
+        dn_resp = requests.get(
+            f"{settings.ERP_NEXT_URL}/api/resource/Delivery Note",
+            headers=HEADERS,
+            params={"limit_page_length": 5}
+        )
+        delivery_notes = dn_resp.json().get("data", [])
+
+    except Exception as e:
+        print("Error connecting to ERP:", str(e))
+
+    return render(request, "sales_dashboard.html", {
+        "sales_orders": sales_orders,
+        "customers": customers,
+        "delivery_notes": delivery_notes
+    })
 
 def fetch_sales_person_performance():
     """Fetches sales data from ERPNext API"""
@@ -146,69 +239,7 @@ def sales_performance_dashboard(request):
 
 
         
-def erpnext_login(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password') 
-
-        try:
-            session = requests.Session()
-
-            # Debug ERPNext login attempt
-            login_url = f"{settings.ERP_NEXT_URL}/api/method/login" 
-
-            login_response = session.post(
-                login_url,
-                data={'usr': username, 'pwd': password}
-            )
-
-
-            if login_response.status_code == 200:
-                # Try fetching user info
-                user_url = f"{settings.ERP_NEXT_URL}/api/resource/User/{username}"
-                user_data = session.get(user_url)
-
-
-                if user_data.status_code == 200:
-                    user_info = user_data.json().get('data', {})
-                    first_name = user_info.get('first_name', '')
-                    last_name = user_info.get('last_name', '')
-                    email = user_info.get('email', username)
-
-                    # Create or get local Django user
-                    User = get_user_model()
-                    user, created = User.objects.get_or_create(username=username, defaults={
-                        'first_name': first_name,
-                        'last_name': last_name,
-                        'email': email
-                    })
-
-
-                    # Log in Django user
-                    user.backend = 'django.contrib.auth.backends.ModelBackend'
-                    login(request, user)
-
-                    # Save ERPNext session ID
-                    sid = session.cookies.get('sid')
-                    request.session['erpnext_session'] = sid
-
-                    return redirect('dashboard')
-                else:
-                    messages.error(request, 'Failed to fetch user info from ERPNext')
-            else:
-                # Show ERPNext error message (usually JSON)
-                try:
-                    error_info = login_response.json()
-                    frappe_msg = error_info.get('message', '')
-                    messages.error(request, f"ERPNext error: {frappe_msg}") 
-                except Exception as e:
-                    messages.error(request, 'Invalid ERPNext credentials')
-
-        except Exception as e:
-            messages.error(request, f"Error connecting to ERPNext: {e}") 
-
-    return render(request, 'accounts/login.html')
-
+ 
  
 
 

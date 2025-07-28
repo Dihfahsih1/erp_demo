@@ -40,6 +40,8 @@ INSTALLED_APPS = [
 ]
 
 AUTH_USER_MODEL = 'erp.Employee' 
+# ERPNEXT API LOGIN
+AUTHENTICATION_BACKENDS = ['sales_app.auth.ERPNextAuthBackend']
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
@@ -211,4 +213,8 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/' 
 MEDIA_ROOT = BASE_DIR / 'media'  
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGIN_URL = '/erpnext/login/'  # URL for your login view
+LOGIN_REDIRECT_URL = '/sales/dashboard/'  # Redirect after successful login
+LOGOUT_REDIRECT_URL = '/erpnext/login/'
  

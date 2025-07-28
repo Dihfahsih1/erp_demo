@@ -8,7 +8,6 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.conf import settings
 from django.templatetags.static import static
-from .utils.delivery_ocr import extract_delivery_data
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 

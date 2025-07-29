@@ -129,3 +129,43 @@ class OfficerReviewForm(forms.ModelForm):
     class Meta:
         model = Delivery
         fields = ['delivery_status', 'remarks']
+        
+        
+# sales_app/forms.py
+from django import forms
+import json
+
+class SalesOrderForm(forms.Form):
+    customer = forms.ChoiceField(choices=[])
+    order_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    notes = forms.CharField(widget=forms.Textarea, required=False)
+    items = forms.JSONField(widget=forms.HiddenInput)  # Stores item data as JSON
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Fetch customers assigned to the logged-in salesperson
+        from .utils import erpnext_api_request
+        customers = erpnext_api_request(
+            "Customer",
+            params={
+                "fields": json.dumps(["name", "customer_name"]),
+                "filters": json.dumps([["sales_team.sales_person", "=", kwargs.get('sales_person')]]),
+                "limit_page_length": 100
+            }
+        )
+        if customers:
+            self.fields['customer'].choices = [(c['name'], c['customer_name']) for c in customers]
+
+class DeliveryNoteUploadForm(forms.Form):
+    delivery_note_id = forms.CharField(max_length=50, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+    customer = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+    file = forms.FileField(allow_empty_file=False, widget=forms.FileInput(attrs={'accept': '.pdf,.jpg,.png'}))
+
+class WeeklyReportForm(forms.Form):
+    week_ending = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    report_type = forms.ChoiceField(choices=[
+        ('sales_performance', 'Sales Performance'),
+        ('customer_activity', 'Customer Activity'),
+        ('order_fulfillment', 'Order Fulfillment')
+    ])
+    comments = forms.CharField(widget=forms.Textarea, required=False)

@@ -134,7 +134,7 @@ class Employee(AbstractUser):
             return f"{self.first_name} {self.last_name}"
         return self.username  # fallback if names are not filled
 
-class Customer(models.Model):
+class Customer_details(models.Model):
     name_of_business = models.CharField(max_length=200, blank=True, null=True)
     district = models.CharField(max_length=100, blank=True, null=True)
     road_location = models.CharField(max_length=150, blank=True, null=True)
@@ -237,7 +237,7 @@ class Estimate(models.Model):
     )
      
     customer_name = models.ForeignKey(
-        Customer,
+        Customer_details,
         null=True,   
         blank=True,
         on_delete=models.PROTECT,
@@ -659,3 +659,107 @@ class Notification(models.Model):
         self.is_read = True
         self.save()
         return True
+    
+    
+    
+    
+#ERPNEXT  tables 
+
+ 
+
+class Customer(models.Model):
+    # Basic Info
+    naming_series = models.CharField(max_length=100, blank=True, null=True)
+    salutation = models.CharField(max_length=50, blank=True, null=True)
+    customer_name = models.CharField(max_length=255)
+    customer_type = models.CharField(max_length=50)
+    customer_group = models.CharField(max_length=100, blank=True, null=True)
+    territory = models.CharField(max_length=100, blank=True, null=True)
+    gender = models.CharField(max_length=50, blank=True, null=True)
+    lead_name = models.CharField(max_length=100, blank=True, null=True)
+    opportunity_name = models.CharField(max_length=100, blank=True, null=True)
+    prospect_name = models.CharField(max_length=100, blank=True, null=True)
+    account_manager = models.CharField(max_length=100, blank=True, null=True)
+    image = models.ImageField(upload_to='customer_images/', blank=True, null=True)
+
+    # Defaults
+    default_currency = models.CharField(max_length=50, blank=True, null=True)
+    default_bank_account = models.CharField(max_length=100, blank=True, null=True)
+    default_price_list = models.CharField(max_length=100, blank=True, null=True)
+
+    # Internal Customer
+    is_internal_customer = models.BooleanField(default=False)
+    represents_company = models.CharField(max_length=100, blank=True, null=True)
+
+    # More Info
+    market_segment = models.CharField(max_length=100, blank=True, null=True)
+    industry = models.CharField(max_length=100, blank=True, null=True)
+    customer_pos_id = models.CharField(max_length=100, blank=True, null=True)
+    website = models.URLField(blank=True, null=True)
+    language = models.CharField(max_length=50, blank=True, null=True)
+    customer_details = models.TextField(blank=True, null=True)
+
+    # Primary Address & Contact Info
+    customer_primary_address = models.CharField(max_length=100, blank=True, null=True)
+    primary_address = models.TextField(blank=True, null=True)
+    customer_primary_contact = models.CharField(max_length=100, blank=True, null=True)
+    mobile_no = models.CharField(max_length=50, blank=True, null=True)
+    whatsapp_number = models.CharField(max_length=50, blank=True, null=True)
+    location = models.CharField(max_length=100, blank=True, null=True)
+    route = models.CharField(max_length=100, blank=True, null=True)
+    district = models.CharField(max_length=100, blank=True, null=True)
+    region = models.CharField(max_length=100, blank=True, null=True)
+    email_id = models.EmailField(blank=True, null=True)
+
+    # Taxation
+    tax_id = models.CharField(max_length=100, blank=True, null=True)
+    tax_category = models.CharField(max_length=100, blank=True, null=True)
+    tax_withholding_category = models.CharField(max_length=100, blank=True, null=True)
+
+    # Accounting
+    payment_terms = models.CharField(max_length=100, blank=True, null=True)
+
+    # Loyalty
+    loyalty_program = models.CharField(max_length=100, blank=True, null=True)
+    loyalty_program_tier = models.CharField(max_length=100, blank=True, null=True)
+
+    # Sales Team
+    default_sales_partner = models.CharField(max_length=100, blank=True, null=True)
+    default_commission_rate = models.FloatField(blank=True, null=True)
+
+    # Settings
+    so_required = models.BooleanField(default=False)
+    dn_required = models.BooleanField(default=False)
+    is_frozen = models.BooleanField(default=False)
+    disabled = models.BooleanField(default=False)
+
+    # Custom Attachments
+    custom_national_id = models.FileField(upload_to='customer_docs/', blank=True, null=True)
+    custom_trading_license = models.FileField(upload_to='customer_docs/', blank=True, null=True)
+    custom_passport_photo = models.ImageField(upload_to='customer_docs/', blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.customer_name
+    
+    
+class SalesPerson(models.Model):
+    sales_person_name = models.CharField(max_length=255)
+    parent_sales_person = models.CharField(max_length=255, blank=True, null=True)  # Link to another SalesPerson
+    commission_rate = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    is_group = models.BooleanField(default=False)
+    enabled = models.BooleanField(default=True)
+    employee = models.CharField(max_length=100, blank=True, null=True)  # Link to Employee
+    department = models.CharField(max_length=100, blank=True, null=True)  # Link to Department
+
+    lft = models.IntegerField(blank=True, null=True)  # Nested Set model fields
+    rgt = models.IntegerField(blank=True, null=True)
+    old_parent = models.CharField(max_length=255, blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.sales_person_name

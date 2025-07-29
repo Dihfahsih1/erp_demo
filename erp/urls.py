@@ -6,7 +6,7 @@ from django.contrib.auth import views as auth_views
 
 urlpatterns = [
      path('', views.customer_sales_dashboard, name='dashboard'),
-     path('sales/dashboard/', views.sales_dashboard, name='sales_dashboard'),
+     path('api/sales/dashboard/', views.sales_dashboard, name='sales_dashboard'),
      path('api/customer-fields/', views.get_customer_fields, name='customer_fields'),
      path('api/sales-persons/', views.sales_persons, name='sales_persons'),
      path("api/sales-performance/", views.sales_performance_dashboard, name='sales_performance'),
@@ -60,5 +60,13 @@ urlpatterns = [
      #Erpnext login
      path('erpnext/login/', views.erpnext_login, name='erpnext_login'),
      path('logout/', views.erpnext_logout, name='logout'),
+     
+     path('search/', views.search, name='search'),
+     
+     path('sales-order/create/', views.create_sales_order, name='create_sales_order'),
+     path('delivery-note/upload/', views.upload_delivery_note, name='upload_delivery_note'),
+     path('weekly-report/generate/', views.generate_weekly_report, name='generate_weekly_report'),
+     path('price-list/generate/', views.generate_price_list, name='generate_price_list'),
+     path('customer-contacts/', views.view_customer_contacts, name='view_customer_contacts'),
     
 ]

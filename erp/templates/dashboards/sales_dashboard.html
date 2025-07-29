@@ -1,0 +1,557 @@
+{% extends "base.html" %}
+{% load static %}
+{% load math_filters %}
+{% block content %}
+<div class="main-content">
+    <!-- Display Error Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="top-bar">
+        <div class="search-bar">
+            <form action="{% url 'search' %}" method="get" class="input-group">
+                <input type="text" class="form-control" name="q" placeholder="Search orders, customers..." value="{{ query|default:'' }}">
+                <button class="btn btn-outline-secondary" type="submit">
+                    <i class="bi bi-search"></i>
+                </button>
+            </form>
+        </div>
+        <div class="user-profile">
+            <img src="{% static 'images/placeholder.png' %}" alt="User" onerror="this.src='https://via.placeholder.com/50';">
+            <div>
+                <div class="fw-bold">{{ sales_person_name|default:"Unknown" }}</div>
+                <div class="text-muted small">Sales Person: {{ sales_person_name|default:"Unknown" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <h4 class="mb-4">Sales Dashboard</h4>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Stats Cards -->
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="value text-primary">Shs. {{ monthly_target|default:0 }}</div>
+                <div class="label">Monthly Target</div>
+                {% comment %} <div class="progress progress-thin mt-2">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: {% if monthly_target > 0 %}{{ achieved|percentage:monthly_target|floatformat:2 }}%{% else %}0%{% endif %}"></div>
+                </div> {% endcomment %}
+                <div class="mt-2">Shs. {{ achieved|default:0 }} achieved</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="value text-info">Shs. {{ outstanding|default:0 }}</div>
+                <div class="label">Total Customer Outstanding</div>
+                <div class="mt-2">
+                    <span class="text-danger"><i class="bi bi-clock-history"></i> Call for follow-up</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="value text-warning">{{ pending_deliveries|default:0 }}</div>
+                <div class="label">Pending Delivery Notes</div>
+                <div class="mt-2">
+                    <span class="text-danger"><i class="bi bi-exclamation-triangle"></i> {{ urgent_deliveries|default:0 }} urgent</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="value text-success">Shs. {{ billed_month|default:0 }}</div>
+                <div class="label">Billed This Month</div>
+                <div class="mt-2">
+                    <span class="text-success"><i class="bi bi-arrow-up"></i> 15%</span> from last month
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-header">
+        <h2>{{ sales_person_name|default:"Unknown" }}'s Dashboard</h2>
+        <div class="stats">
+            <span class="stat-box">
+                <i class="bi bi-people"></i>
+                {{ customer_count|default:0 }} Customers
+            </span>
+            <span class="stat-box">
+                <i class="bi bi-receipt"></i>
+                {{ recent_orders_count|default:0 }} Recent Orders
+            </span>
+        </div>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Order #</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in sales_orders %}
+            <tr>
+                <td>{{ order.name|default:"N/A" }}</td>
+                <td>{{ order.customer_name|default:"N/A" }}</td>
+                <td>{{ order.transaction_date|default:"N/A" }}</td>
+                <td>Shs. {{ order.grand_total|default:0 }}</td>
+                <td class="status-{{ order.status|lower|default:'unknown' }}">{{ order.status|default:"Unknown" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">No recent orders found. {% if messages %}Check for API errors above.{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    Quick Actions
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-primary w-100 mb-3" data-bs-toggle="modal" data-bs-target="#salesOrderModal">
+                        <i class="bi bi-cart-plus"></i> Create Sales Order
+                    </button>
+                    <button class="btn btn-info w-100 mb-3" data-bs-toggle="modal" data-bs-target="#uploadDeliveryNoteModal">
+                        <i class="bi bi-upload"></i> Upload Delivery Note
+                    </button>
+                    <a href="{% url 'generate_price_list' %}" class="btn btn-success w-100 mb-3">
+                        <i class="bi bi-file-earmark-text"></i> Generate Price List
+                    </a>
+                    <button class="btn btn-warning w-100 mb-3" data-bs-toggle="modal" data-bs-target="#weeklyReportModal">
+                        <i class="bi bi-clipboard-data"></i> Generate Weekly Report
+                    </button>
+                    <a href="{% url 'view_customer_contacts' %}" class="btn btn-secondary w-100">
+                        <i class="bi bi-people"></i> View Customer Contacts
+                    </a>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Item Movement</span>
+                    <button class="btn btn-sm btn-outline-primary">View All</button>
+                </div>
+                <div class="card-body">
+                    <h6>Fast Moving Items</h6>
+                    {% for item in fast_moving_items %}
+                    <div class="document-card">
+                        <div class="meta">{{ item.item_code|default:"N/A" }} • {{ item.qty|default:0 }} units sold • Shs. {{ item.amount|default:item.qty|mul:500 }}</div>
+                    </div>
+                    {% empty %}
+                    <div>No fast-moving items found.</div>
+                    {% endfor %}
+                    <h6 class="mt-3">Slow Moving Items</h6>
+                    {% for item in slow_moving_items %}
+                    <div class="document-card">
+                        <div class="meta">{{ item.item_code|default:"N/A" }} • {{ item.qty|default:0 }} units sold • Shs. {{ item.amount|default:item.qty|mul:500 }}</div>
+                    </div>
+                    {% empty %}
+                    <div>No slow-moving items found.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>My Sales Orders</span>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary me-2">
+                            <i class="bi bi-filter"></i> Filter
+                        </button>
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#salesOrderModal">
+                            <i class="bi bi-plus"></i> New Order
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Customer</th>
+                                    <th>Items</th>
+                                    <th>Ordered Amount</th>
+                                    <th>Billed Amount</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in sales_orders %}
+                                <tr>
+                                    <td>{{ order.name|default:"N/A" }}</td>
+                                    <td>{{ order.customer_name|default:"N/A" }}</td>
+                                    <td>
+                                        {% for item in order.items %}
+                                        <span class="item-badge {{ order.status|lower|default:'unknown' }}">{{ item.item_code|default:"N/A" }} ({{ item.qty|default:0 }})</span>
+                                        {% empty %}
+                                        <span>No items</span>
+                                        {% endfor %}
+                                    </td>
+                                    <td>Shs. {{ order.grand_total|default:0 }}</td>
+                                    <td>Shs. {{ order.billed_amount|default:order.grand_total|default:0 }}</td>
+                                    <td><span class="status-badge status-{{ order.status|lower|default:'unknown' }}">{{ order.status|default:"Unknown" }}</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary me-1" title="Follow Up">
+                                            <i class="bi bi-telephone"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" title="Details">
+                                            <i class="bi bi-three-dots"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="7">No sales orders found. {% if messages %}Check for API errors above.{% endif %}</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    Sales Performance Comparison
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="salesPerformanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Customer Contacts</span>
+                    <a href="{% url 'view_customer_contacts' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% for customer in customers %}
+                    <div class="document-card">
+                        <h6>{{ customer.customer_name|default:"N/A" }}</h6>
+                        <div class="meta">Location: {{ customer.territory|default:"N/A" }}</div>
+                    </div>
+                    {% empty %}
+                    <div>No customer contacts found.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Pending Delivery Notes</span>
+                    <button class="btn btn-sm btn-outline-primary">View All</button>
+                </div>
+                <div class="card-body">
+                    {% for dn in delivery_notes %}
+                    <div class="document-card">
+                        <h6>{{ dn.name|default:"N/A" }} • {{ dn.customer_name|default:"N/A" }}</h6>
+                        <div class="meta">Created: {{ dn.posting_date|default:"N/A" }} • {{ dn.total_qty|default:0 }} items • Shs. {{ dn.grand_total|default:0 }}</div>
+                        <div class="actions">
+                            <span class="status-badge status-{{ dn.status|lower|default:'pending' }}">{{ dn.status|default:"Pending" }}</span>
+                            <a href="{% url 'upload_delivery_note' %}?dn={{ dn.name|urlencode }}" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#uploadDeliveryNoteModal">Upload</a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div>No delivery notes found.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Order Modal -->
+    <div class="modal fade" id="salesOrderModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form method="post" action="{% url 'create_sales_order' %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title">Create Sales Order</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {{ sales_order_form.non_field_errors }}
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Customer</label>
+                                {{ sales_order_form.customer }}
+                                {% if sales_order_form.customer.errors %}
+                                    <div class="text-danger">{{ sales_order_form.customer.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Order Date</label>
+                                {{ sales_order_form.order_date }}
+                                {% if sales_order_form.order_date.errors %}
+                                    <div class="text-danger">{{ sales_order_form.order_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <h6>Items</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm" id="items-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item Code</th>
+                                        <th>Description</th>
+                                        <th>Quantity</th>
+                                        <th>Unit Price</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Populated by JavaScript -->
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addItemRow()">Add Item</button>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label">Notes</label>
+                            {{ sales_order_form.notes }}
+                            {% if sales_order_form.notes.errors %}
+                                <div class="text-danger">{{ sales_order_form.notes.errors }}</div>
+                            {% endif %}
+                        </div>
+                        {{ sales_order_form.items }}
+                        {% if sales_order_form.items.errors %}
+                            <div class="text-danger">{{ sales_order_form.items.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Order</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delivery Note Upload Modal -->
+    <div class="modal fade" id="uploadDeliveryNoteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" action="{% url 'upload_delivery_note' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title">Upload Signed Delivery Note</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {{ delivery_note_form.non_field_errors }}
+                        <div class="mb-3">
+                            <label class="form-label">Delivery Note #</label>
+                            {{ delivery_note_form.delivery_note_id }}
+                            {% if delivery_note_form.delivery_note_id.errors %}
+                                <div class="text-danger">{{ delivery_note_form.delivery_note_id.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Customer</label>
+                            {{ delivery_note_form.customer }}
+                            {% if delivery_note_form.customer.errors %}
+                                <div class="text-danger">{{ delivery_note_form.customer.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Upload Signed Document</label>
+                            {{ delivery_note_form.file }}
+                            {% if delivery_note_form.file.errors %}
+                                <div class="text-danger">{{ delivery_note_form.file.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Report Modal -->
+    <div class="modal fade" id="weeklyReportModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form method="post" action="{% url 'generate_weekly_report' %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title">Generate Weekly Report</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {{ weekly_report_form.non_field_errors }}
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Week Ending</label>
+                                {{ weekly_report_form.week_ending }}
+                                {% if weekly_report_form.week_ending.errors %}
+                                    <div class="text-danger">{{ weekly_report_form.week_ending.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Report Type</label>
+                                {{ weekly_report_form.report_type }}
+                                {% if weekly_report_form.report_type.errors %}
+                                    <div class="text-danger">{{ weekly_report_form.report_type.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label">Comments</label>
+                            {{ weekly_report_form.comments }}
+                            {% if weekly_report_form.comments.errors %}
+                                <div class="text-danger">{{ weekly_report_form.comments.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Generate Report</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Initialize modals
+        var salesOrderModal = new bootstrap.Modal(document.getElementById('salesOrderModal'));
+        var uploadDeliveryNoteModal = new bootstrap.Modal(document.getElementById('uploadDeliveryNoteModal'));
+        var weeklyReportModal = new bootstrap.Modal(document.getElementById('weeklyReportModal'));
+
+        // Sales Performance Chart
+        var ctx = document.getElementById('salesPerformanceChart').getContext('2d');
+        var salesPerformanceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ chart_labels|safe }},
+                datasets: [
+                    {
+                        label: 'Your Sales',
+                        data: {{ chart_your_sales|safe }},
+                        borderColor: '#007bff', // Blue for light/dark themes
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        tension: 0.1,
+                        fill: true
+                    },
+                    {
+                        label: 'Team Average',
+                        data: {{ chart_team_avg|safe }},
+                        borderColor: '#dc3545', // Red for light/dark themes
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        tension: 0.1,
+                        fill: true,
+                        borderDash: [5, 5]
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Sales Amount (Shs)'
+                        },
+                        ticks: {
+                            color: '#495057' // Neutral color for readability
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Month'
+                        },
+                        ticks: {
+                            color: '#495057'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#495057'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Dynamic item rows for Sales Order Modal
+        function addItemRow() {
+            const tbody = document.getElementById('items-table').querySelector('tbody');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><input type="text" class="form-control form-control-sm" name="item_code" required></td>
+                <td><input type="text" class="form-control form-control-sm" name="description"></td>
+                <td><input type="number" class="form-control form-control-sm" name="qty" value="1" min="1" oninput="updateTotal(this)" required></td>
+                <td><input type="number" class="form-control form-control-sm" name="rate" value="0" min="0" step="0.01" oninput="updateTotal(this)" required></td>
+                <td class="total">0.00</td>
+                <td><button type="button" class="btn btn-sm btn-danger" onclick="this.parentElement.parentElement.remove(); updateItemsField();">Remove</button></td>
+            `;
+            tbody.appendChild(row);
+            updateItemsField();
+        }
+
+        function updateTotal(input) {
+            const row = input.closest('tr');
+            const qty = parseFloat(row.querySelector('input[name="qty"]').value) || 0;
+            const rate = parseFloat(row.querySelector('input[name="rate"]').value) || 0;
+            row.querySelector('.total').textContent = (qty * rate).toFixed(2);
+            updateItemsField();
+        }
+
+        function updateItemsField() {
+            const items = [];
+            document.querySelectorAll('#items-table tr').forEach(row => {
+                const item = {
+                    item_code: row.querySelector('input[name="item_code"]')?.value || '',
+                    description: row.querySelector('input[name="description"]')?.value || '',
+                    qty: parseInt(row.querySelector('input[name="qty"]')?.value) || 0,
+                    rate: parseFloat(row.querySelector('input[name="rate"]')?.value) || 0
+                };
+                if (item.item_code && item.qty > 0 && item.rate >= 0) {
+                    items.push(item);
+                }
+            });
+            document.querySelector('input[name="items"]').value = JSON.stringify(items);
+        }
+
+        // Initialize one item row
+        addItemRow();
+    </script>
+</div>
+{% endblock %}

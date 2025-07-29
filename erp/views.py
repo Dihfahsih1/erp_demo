@@ -62,7 +62,7 @@ def erpnext_login(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('dashboard')
+            return redirect('sales_dashboard')
         else:
             try:
                 # Check ERPNext response for specific error
@@ -103,42 +103,7 @@ def erpnext_api_request(endpoint, method="GET", data=None, params=None):
         print(f"Error connecting to ERPNext: {str(e)}")
         return None
 
-def sales_dashboard(request):
-    # Fetch latest 10 sales orders
-    sales_orders = []
-    customers = []
-    delivery_notes = []
 
-    try:
-        so_resp = requests.get(
-            f"{settings.ERP_NEXT_URL}/api/resource/Sales Order",
-            headers=HEADERS,
-            params={"limit_page_length": 10, "order_by": "creation desc"}
-        )
-        sales_orders = so_resp.json().get("data", [])
-
-        cust_resp = requests.get(
-            f"{settings.ERP_NEXT_URL}/api/resource/Customer",
-            headers=HEADERS,
-            params={"limit_page_length": 5}
-        )
-        customers = cust_resp.json().get("data", [])
-
-        dn_resp = requests.get(
-            f"{settings.ERP_NEXT_URL}/api/resource/Delivery Note",
-            headers=HEADERS,
-            params={"limit_page_length": 5}
-        )
-        delivery_notes = dn_resp.json().get("data", [])
-
-    except Exception as e:
-        print("Error connecting to ERP:", str(e))
-
-    return render(request, "sales_dashboard.html", {
-        "sales_orders": sales_orders,
-        "customers": customers,
-        "delivery_notes": delivery_notes
-    })
 
 def fetch_sales_person_performance():
     """Fetches sales data from ERPNext API"""
@@ -424,6 +389,8 @@ def customer_sales_dashboard(request):
             'error_message': f"Failed to load data: {str(e)}",
             'title': 'Data Loading Error'
         })
+        
+        
 def get_sales_persons():
     """Fetch all active sales persons"""
     url = f"{settings.ERP_NEXT_URL}/api/resource/Sales Person"
@@ -1197,3 +1164,353 @@ def update_note_status(request):
 
 
 
+# sales_app/views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.core.paginator import Paginator
+from django.http import HttpResponse
+from .utils import erpnext_api_request
+from .forms import SalesOrderForm, DeliveryNoteUploadForm, WeeklyReportForm
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
+import json
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+import io
+
+@login_required
+def sales_dashboard(request):
+    user = request.user
+    # Fetch Employee record to get branch
+    employee = erpnext_api_request(
+        f"Employee",
+        params={
+            "fields": json.dumps(["name", "employee_name", "branch"]),
+            "filters": json.dumps([["user_id", "=", user.username]])
+        },
+        request=request
+    )
+    if not employee or not isinstance(employee, list) or len(employee) == 0:
+        messages.error(request, "Employee record not found for this user. Contact administrator.")
+        branch = user.username  # Fallback to username
+        sales_person_name = user.username
+    else:
+        employee = employee[0]
+        branch = employee.get("branch", user.username)
+        sales_person_name = employee.get("employee_name", user.username)
+
+    # Fetch Sales Person record using branch as name
+    sales_person = erpnext_api_request(
+        f"Sales Person/{branch}",
+        params={"fields": json.dumps(["name", "sales_person_name"])},
+        request=request
+    )
+    if not sales_person:
+        messages.warning(request, f"Sales Person record for branch '{branch}' not found. Using branch name as fallback.")
+        sales_person_name = branch
+    else:
+        sales_person_name = sales_person.get("sales_person_name", branch)
+        
+    customers = erpnext_api_request(
+    "Customer",
+    params={
+        "fields": json.dumps(["name", "customer_name"]),
+        "filters": json.dumps([
+            ["Customer", "sales_team.sales_person", "=", sales_person_name]
+        ]),
+        "limit_page_length": 20
+    },
+    request=request
+    ) or []
+    print(f"Fetched {len(customers)} customers for sales person '{sales_person_name}'")
+    context = {"sales_person_name": sales_person_name, "customers": customers}
+    return render(request, "dashboards/sales_dashboard.html", context)
+
+    # # Fetch customers assigned to this salesperson (branch)
+    # customers = erpnext_api_request(
+    #     "Customer",
+    #     params={
+    #         "fields": json.dumps(["name", "customer_name", "territory"]),  # Removed 'phone'
+    #         "filters": json.dumps([["sales_team.sales_person", "=", branch], ["sales_team.allocated_percentage", "=", 100]]),
+    #         "limit_page_length": 100
+    #     },
+    #     request=request
+    # ) or []
+    # customer_count = len(customers)
+    # customer_ids = [c['name'] for c in customers]
+
+    # # Fetch recent sales orders for this salesperson's customers
+    # sales_orders = []
+    # recent_orders_count = 0
+    # if customer_ids:
+    #     sales_orders = erpnext_api_request(
+    #         "Sales Order",
+    #         params={
+    #             "fields": json.dumps(["name", "customer_name", "transaction_date", "grand_total", "status", "items.item_code", "items.qty", "billed_amount"]),
+    #             "filters": json.dumps([["customer", "in", customer_ids], ["transaction_date", ">=", (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")]]),
+    #             "order_by": "creation desc",
+    #             "limit_page_length": 10
+    #         },
+    #         request=request
+    #     ) or []
+    #     recent_orders_count = len(sales_orders)
+
+    # # Stats Cards Calculations
+    # monthly_target = 500000  # Configurable via ERPNext or settings
+    # achieved = sum(float(order.get("grand_total", 0)) for order in sales_orders)
+    # outstanding = 0
+    # if customer_ids:
+    #     outstanding_data = erpnext_api_request(
+    #         "Customer",
+    #         params={
+    #             "fields": json.dumps(["sum(outstanding_amount) as outstanding"]),
+    #             "filters": json.dumps([["name", "in", customer_ids]])
+    #         },
+    #         request=request
+    #     )
+    #     outstanding = outstanding_data[0].get("outstanding", 0) if outstanding_data and isinstance(outstanding_data, list) and outstanding_data else 0
+
+    # pending_delivery_notes = []
+    # pending_deliveries = 0
+    # urgent_deliveries = 0
+    # if customer_ids:
+    #     pending_delivery_notes = erpnext_api_request(
+    #         "Delivery Note",
+    #         params={
+    #             "fields": json.dumps(["name", "posting_date"]),
+    #             "filters": json.dumps([["customer", "in", customer_ids], ["status", "=", "To Bill"]]),
+    #             "limit_page_length": 0
+    #         },
+    #         request=request
+    #     ) or []
+    #     pending_deliveries = len(pending_delivery_notes)
+    #     urgent_deliveries = len([dn for dn in pending_delivery_notes if (datetime.now() - datetime.strptime(dn.get("posting_date", "2025-01-01"), "%Y-%m-%d")).days > 7])
+
+    # billed_month = achieved
+
+    # # Item Movement Analysis
+    # stock_data = erpnext_api_request(
+    #     "Stock Ledger Entry",
+    #     params={
+    #         "fields": json.dumps(["item_code", "sum(actual_qty) as qty"]),
+    #         "filters": json.dumps([["posting_date", ">=", (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")]]),
+    #         "group_by": "item_code",
+    #         "order_by": "qty desc",
+    #         "limit_page_length": 10
+    #     },
+    #     request=request
+    # ) or []
+    # fast_moving = stock_data[:2] if stock_data else []
+    # slow_moving = stock_data[-2:] if len(stock_data) >= 2 else []
+
+    # # Delivery Notes
+    # delivery_notes = []
+    # if customer_ids:
+    #     delivery_notes = erpnext_api_request(
+    #         "Delivery Note",
+    #         params={
+    #             "fields": json.dumps(["name", "customer_name", "posting_date", "total_qty", "grand_total", "status"]),
+    #             "filters": json.dumps([["customer", "in", customer_ids], ["status", "=", "To Bill"]]),
+    #             "limit_page_length": 5
+    #         },
+    #         request=request
+    #     ) or []
+
+    # # Sales Performance Chart
+    # end_date = datetime.now()
+    # start_date = end_date - relativedelta(months=6)
+    # sales_data = []
+    # if customer_ids:
+    #     sales_data = erpnext_api_request(
+    #         "Sales Order",
+    #         params={
+    #             "fields": json.dumps(["transaction_date", "grand_total"]),
+    #             "filters": json.dumps([["customer", "in", customer_ids], ["transaction_date", ">=", start_date.strftime("%Y-%m-%d")]]),
+    #             "limit_page_length": 100
+    #         },
+    #         request=request
+    #     ) or []
+    # months = [(start_date + relativedelta(months=i)).strftime("%b") for i in range(7)]
+    # your_sales = [0] * 7
+    # for order in sales_data:
+    #     order_date = datetime.strptime(order["transaction_date"], "%Y-%m-%d")
+    #     month_idx = (order_date.year - start_date.year) * 12 + order_date.month - start_date.month
+    #     if 0 <= month_idx < 7:
+    #         your_sales[month_idx] += float(order["grand_total"])
+    # team_avg = [sum(your_sales) / len(your_sales)] * 7 if your_sales and sum(your_sales) > 0 else [0] * 7
+
+    # context = {
+    #     "sales_person_name": sales_person_name,
+    #     "customer_count": customer_count,
+    #     "recent_orders_count": recent_orders_count,
+    #     "sales_orders": sales_orders,
+    #     "monthly_target": monthly_target,
+    #     "achieved": achieved,
+    #     "outstanding": outstanding,
+    #     "pending_deliveries": pending_deliveries,
+    #     "urgent_deliveries": urgent_deliveries,
+    #     "billed_month": billed_month,
+    #     "customers": customers[:2],
+    #     "delivery_notes": delivery_notes,
+    #     "fast_moving_items": fast_moving,
+    #     "slow_moving_items": slow_moving,
+    #     "chart_labels": json.dumps(months),
+    #     "chart_your_sales": your_sales,
+    #     "chart_team_avg": team_avg,
+    # }
+      # Updated template path
+
+@login_required
+def create_sales_order(request):
+    if request.method == "POST":
+        form = SalesOrderForm(request.POST, sales_person=request.user.username)
+        if form.is_valid():
+            items = json.loads(form.cleaned_data['items'])
+            data = {
+                "doctype": "Sales Order",
+                "customer": form.cleaned_data["customer"],
+                "transaction_date": form.cleaned_data["order_date"].isoformat(),
+                "order_type": "Sales",
+                "items": [{"item_code": item['item_code'], "qty": item['qty'], "rate": item['rate']} for item in items],
+                "notes": form.cleaned_data["notes"],
+                "sales_team": [{"sales_person": request.user.username, "allocated_percentage": 100}]
+            }
+            response = erpnext_api_request("Sales Order", method="POST", data=data, request=request)
+            if response:
+                messages.success(request, "Sales order created successfully.")
+                return redirect("dashboard")
+            else:
+                messages.error(request, "Failed to create sales order in ERPNext.")
+    else:
+        form = SalesOrderForm(sales_person=request.user.username)
+    return render(request, 'sales_dashboard.html', {'sales_order_form': form})
+
+@login_required
+def upload_delivery_note(request):
+    if request.method == "POST":
+        form = DeliveryNoteUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            delivery_note_id = form.cleaned_data["delivery_note_id"]
+            file = request.FILES["file"]
+            # Upload file to ERPNext
+            files = {'file': (file.name, file, file.content_type)}
+            upload_response = erpnext_api_request(
+                "File",
+                method="POST",
+                data={"file_name": file.name, "attached_to_doctype": "Delivery Note", "attached_to_name": delivery_note_id},
+                files=files,
+                request=request
+            )
+            if upload_response:
+                messages.success(request, "Delivery note uploaded successfully.")
+                return redirect("dashboard")
+            else:
+                messages.error(request, "Failed to upload delivery note.")
+    else:
+        delivery_note_id = request.GET.get("dn")
+        initial = {}
+        if delivery_note_id:
+            dn = erpnext_api_request(
+                f"Delivery Note/{delivery_note_id}",
+                params={"fields": json.dumps(["name", "customer_name"])},
+                request=request
+            )
+            if dn:
+                initial = {"delivery_note_id": dn.get("name"), "customer": dn.get("customer_name")}
+        form = DeliveryNoteUploadForm(initial=initial)
+    return render(request, 'sales_dashboard.html', {'delivery_note_form': form})
+
+@login_required
+def generate_weekly_report(request):
+    if request.method == "POST":
+        form = WeeklyReportForm(request.POST)
+        if form.is_valid():
+            week_ending = form.cleaned_data["week_ending"]
+            report_type = form.cleaned_data["report_type"]
+            comments = form.cleaned_data["comments"]
+
+            # Generate PDF report
+            buffer = io.BytesIO()
+            p = canvas.Canvas(buffer, pagesize=letter)
+            p.drawString(100, 750, f"Weekly Report: {report_type.replace('_', ' ').title()}")
+            p.drawString(100, 730, f"Week Ending: {week_ending}")
+            p.drawString(100, 710, "Prepared by: " + request.user.username)
+            p.drawString(100, 690, "Comments:")
+            p.drawString(100, 670, comments[:200] if comments else "No comments provided.")
+            # Add more report content based on report_type
+            p.showPage()
+            p.save()
+            buffer.seek(0)
+            response = HttpResponse(content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="weekly_report_{week_ending}.pdf"'
+            response.write(buffer.getvalue())
+            buffer.close()
+            return response
+    else:
+        form = WeeklyReportForm(initial={'week_ending': datetime.now().date()})
+    return render(request, 'sales_dashboard.html', {'weekly_report_form': form})
+
+@login_required
+def generate_price_list(request):
+    # Fetch items for price list
+    items = erpnext_api_request(
+        "Item",
+        params={
+            "fields": json.dumps(["item_code", "item_name", "standard_rate"]),
+            "limit_page_length": 100
+        },
+        request=request
+    ) or []
+    
+    # Generate PDF price list
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    p.drawString(100, 750, "AUTO PRO Master Price List")
+    y = 730
+    for item in items:
+        p.drawString(100, y, f"{item['item_code']}: {item['item_name']} - Shs. {item['standard_rate']}")
+        y -= 20
+        if y < 50:
+            p.showPage()
+            y = 750
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="price_list.pdf"'
+    response.write(buffer.getvalue())
+    buffer.close()
+    return response
+
+@login_required
+def view_customer_contacts(request):
+    customers = erpnext_api_request(
+        "Customer",
+        params={
+            "fields": json.dumps(["name", "customer_name", "phone", "territory"]),
+            "filters": json.dumps([["sales_team.sales_person", "=", request.user.username], ["sales_team.allocated_percentage", "=", 100]]),
+            "limit_page_length": 50
+        },
+        request=request
+    ) or []
+    paginator = Paginator(customers, 10)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'customer_contacts.html', {'page_obj': page_obj})
+
+@login_required
+def search(request):
+    query = request.GET.get('q', '')
+    if query:
+        sales_orders = erpnext_api_request(
+            "Sales Order",
+            params={
+                "fields": json.dumps(["name", "customer_name", "transaction_date", "grand_total", "status"]),
+                "filters": json.dumps([["customer_name", "like", f"%{query}%"]]),
+                "limit_page_length": 10
+            },
+            request=request
+        ) or []
+        return render(request, 'sales_dashboard.html', {'sales_orders': sales_orders, 'query': query})
+    return redirect('dashboard')

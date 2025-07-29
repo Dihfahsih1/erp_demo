@@ -41,7 +41,7 @@ INSTALLED_APPS = [
 
 AUTH_USER_MODEL = 'erp.Employee' 
 # ERPNEXT API LOGIN
-AUTHENTICATION_BACKENDS = ['sales_app.auth.ERPNextAuthBackend']
+AUTHENTICATION_BACKENDS = ['erp.auth.ERPNextAuthBackend']
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 

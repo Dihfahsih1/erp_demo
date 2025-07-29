@@ -10,7 +10,7 @@
         alt="AutoZone Logo"
         class="brand-image opacity-75 shadow"
       /> 
-      <span class="brand-text fw-light">APL Estimate Automation</span>
+      <span class="brand-text fw-light">Auto Pro Master</span>
        
     </a> 
   </div>  
@@ -46,7 +46,7 @@
         role="menu"
         data-accordion="false"
       >
-        <li class="nav-item menu-open">
+        {% comment %} <li class="nav-item menu-open">
           <a href="{% url 'dashboard' %}" class="nav-link active">
             <i class="nav-icon bi bi-speedometer"></i>
             <p>
@@ -55,7 +55,56 @@
             </p>
           </a>
           
-        </li>
+        </li> {% endcomment %}
+        {% if request.user.username == 'Administrator' %}
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="#">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-cart-plus"></i> Create Sales Order
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-list-check"></i> My Orders
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-truck"></i> Delivery Notes
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-people"></i> Customer Contacts
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-file-earmark-text"></i> Price List
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-graph-up"></i> Item Movement
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-clipboard-data"></i> Weekly Reports
+                </a>
+            </li>
+            <li class="nav-item mt-3">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-gear"></i> Settings
+                </a>
+            </li>
+        </ul>
+        {% endif %}
 
         {% if request.user.role and request.user.role.name == 'CRM Officer' or request.user.role.name == 'Estimates Officer' or request.user.role.name == 'Credit Officer' %}
         <li class="nav-header">CUSTOMERS</li>

@@ -1,7 +1,7 @@
 import json
 from django import forms
 from django.contrib import admin
-from .models import Department, Employee, Customer, RegionOfOperation, SparePart, Estimate, EstimateItem, Verification, Dispatch, Delivery, StoresReconciliation, UserRole
+from .models import Customer_details, Department, Employee, Customer, RegionOfOperation, SparePart, Estimate, EstimateItem, Verification, Dispatch, Delivery, StoresReconciliation, UserRole
 
 from django.utils.html import format_html
 from django.contrib import admin
@@ -52,7 +52,7 @@ class EmployeeAdmin(UserAdmin):
             obj.set_password(obj.password)  # Hash the password
         super().save_model(request, obj, form, change)
 
-@admin.register(Customer)
+@admin.register(Customer_details)
 class CustomerAdmin(admin.ModelAdmin):
     list_display = ('owner_name','district')
     search_fields = ('owner_name','district')

@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salesperson Dashboard - Visualizations</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+
+        .sidebar {
+            background-color: var(--secondary-color);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding-top: 20px;
+            width: 250px;
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 5px;
+            border-radius: 5px;
+            padding: 10px 15px;
+        }
+
+        .sidebar .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .sidebar .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 10px;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+            border-radius: 10px 10px 0 0 !important;
+        }
+
+        .top-bar {
+            background-color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-bar {
+            width: 300px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-profile img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .filter-group {
+            margin-bottom: 20px;
+        }
+
+        .filter-group select {
+            margin-right: 10px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+    </style>
+</head>
+<body>
+     <div class="sidebar col-md-3 col-lg-2 d-md-block">
+        <div class="text-center mb-4">
+            <h4><i class="bi bi-speedometer2"></i> Salesperson Dashboard</h4>
+            <p class="text-muted small">Document Search</p>
+        </div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="sales_person_performance.html">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="sales_person_customers.html">
+                    <i class="bi bi-person-lines-fill"></i> Customers
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="sales_person_ageing.html">
+                    <i class="bi bi-file-earmark-text"></i> Ageing Report
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="sales_person_document.html">
+                    <i class="bi bi-search"></i> Document Search
+                </a>
+            </li>
+            <li class="nav-item mt-3">
+                <a class="nav-link" href="sales_person_customer_ledger.html">
+                    <i class="bi bi-gear"></i> Customer Ledger
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="search-bar">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search customers, documents...">
+                    <button class="btn btn-outline-secondary" type="button">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="user-profile">
+                <img src="placeholder.png" alt="User">
+                <div>
+                    <div class="fw-bold">John Doe</div>
+                    <div class="text-muted small">Salesperson - Central Region</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <h4 class="mb-4">Sales Performance Visualizations</h4>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <label class="form-label me-2">Filters:</label>
+            <select class="form-select d-inline-block w-auto">
+                <option>All Brands</option>
+                <option>Brand A</option>
+                <option>Brand B</option>
+                <option>Brand C</option>
+            </select>
+            <select class="form-select d-inline-block w-auto">
+                <option>All Districts/Routes</option>
+                <option>District 1</option>
+                <option>Route A</option>
+                <option>Route B</option>
+            </select>
+            <select class="form-select d-inline-block w-auto">
+                <option>All Billing Frequencies</option>
+                <option>Weekly</option>
+                <option>Monthly</option>
+                <option>Quarterly</option>
+                <option>Yearly</option>
+            </select>
+            <input type="number" class="form-control d-inline-block w-auto" placeholder="Min Amount (e.g., 500,000)">
+        </div>
+
+        <div class="row">
+            <!-- Business Volume Visualization -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        Business Volume (Monthly, Quarterly, Yearly)
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="businessVolumeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Qualitative Performance Visualization -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        Qualitative Performance
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="qualitativePerformanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <!-- District/Route Performance Visualization -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        District/Route Performance
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="districtRouteChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Metrics Visualization -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        Customer Metrics
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="customerMetricsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Business Volume Chart (Bar Chart)
+        const businessVolumeChart = new Chart(document.getElementById('businessVolumeChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Monthly', 'Quarterly', 'Yearly'],
+                datasets: [
+                    {
+                        label: 'Target (M)',
+                        data: [5, 15, 60],
+                        backgroundColor: 'rgba(52, 152, 219, 0.5)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Achievement',
+                        data: [4.2, 13.5, 55],
+                        backgroundColor: 'rgba(46, 204, 113, 0.5)',
+                        borderColor: 'rgba(46, 204, 113, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Last Year Achievement',
+                        data: [3.8, 12, 50],
+                        backgroundColor: 'rgba(231, 76, 60, 0.5)',
+                        borderColor: 'rgba(231, 76, 60, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Amount (Millions)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Business Volume: Target vs Achievement'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.parsed.y + 'M';
+                                if (context.dataset.label === 'Achievement') {
+                                    const target = context.chart.data.datasets[0].data[context.dataIndex];
+                                    const percentage = ((context.parsed.y / target) * 100).toFixed(1);
+                                    label += ` (${percentage}% of Target)`;
+                                }
+                                if (context.dataset.label === 'Last Year Achievement') {
+                                    const current = context.chart.data.datasets[1].data[context.dataIndex];
+                                    const growth = (((current - context.parsed.y) / context.parsed.y) * 100).toFixed(1);
+                                    label += ` (Growth: ${growth}%)`;
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Qualitative Performance Chart (Stacked Bar Chart)
+        const qualitativePerformanceChart = new Chart(document.getElementById('qualitativePerformanceChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Monthly', 'Quarterly', 'Yearly'],
+                datasets: [
+                    {
+                        label: 'Billed Amount (M)',
+                        data: [3.5, 10, 40],
+                        backgroundColor: 'rgba(52, 152, 219, 0.5)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Last Year Billed (M)',
+                        data: [3, 9, 35],
+                        backgroundColor: 'rgba(231, 76, 60, 0.5)',
+                        borderColor: 'rgba(231, 76, 60, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Customers Billed',
+                        data: [50, 120, 400],
+                        backgroundColor: 'rgba(46, 204, 113, 0.5)',
+                        borderColor: 'rgba(46, 204, 113, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Value'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Qualitative Performance: Billed Amount & Customers'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.dataset.label.includes('Billed (M)')) {
+                                    label += context.parsed.y + 'M';
+                                } else {
+                                    label += context.parsed.y;
+                                }
+                                if (context.dataset.label === 'Billed Amount (M)') {
+                                    const lastYear = context.chart.data.datasets[1].data[context.dataIndex];
+                                    const growth = (((context.parsed.y - lastYear) / lastYear) * 100).toFixed(1);
+                                    label += ` (Growth: ${growth}%)`;
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // District/Route Performance Chart (Heatmap simulation with Bar Chart)
+        const districtRouteChart = new Chart(document.getElementById('districtRouteChart'), {
+            type: 'bar',
+            data: {
+                labels: ['District 1', 'District 2', 'Route A', 'Route B'],
+                datasets: [
+                    {
+                        label: 'Achievement (M)',
+                        data: [2.5, 3.0, 1.8, 2.2],
+                        backgroundColor: 'rgba(52, 152, 219, 0.5)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Target (M)',
+                        data: [3.0, 3.5, 2.0, 2.5],
+                        backgroundColor: 'rgba(46, 204, 113, 0.5)',
+                        borderColor: 'rgba(46, 204, 113, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Amount (Millions)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    title: {
+                        display: true,
+                        text: 'District/Route Performance'
+                    }
+                }
+            }
+        });
+
+        // Customer Metrics Chart (Pie Chart)
+        const customerMetricsChart = new Chart(document.getElementById('customerMetricsChart'), {
+            type: 'pie',
+            data: {
+                labels: ['New Customers', 'Existing Customers'],
+                datasets: [{
+                    label: 'Customer Distribution',
+                    data: [25, 75],
+                    backgroundColor: [
+                        'rgba(52, 152, 219, 0.5)',
+                        'rgba(46, 204, 113, 0.5)'
+                    ],
+                    borderColor: [
+                        'rgba(52, 152, 219, 1)',
+                        'rgba(46, 204, 113, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Customer Metrics: New vs Existing (Last 6 Months)'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.parsed + '%';
+                                if (context.label === 'New Customers') {
+                                    label += ' (Purchases: 2.5M)';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

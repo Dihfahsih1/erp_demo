@@ -134,7 +134,7 @@ class Employee(AbstractUser):
             return f"{self.first_name} {self.last_name}"
         return self.username  # fallback if names are not filled
 
-class Customer_details(models.Model):
+class Customer(models.Model):
     name_of_business = models.CharField(max_length=200, blank=True, null=True)
     district = models.CharField(max_length=100, blank=True, null=True)
     road_location = models.CharField(max_length=150, blank=True, null=True)
@@ -237,7 +237,7 @@ class Estimate(models.Model):
     )
      
     customer_name = models.ForeignKey(
-        Customer_details,
+        Customer,
         null=True,   
         blank=True,
         on_delete=models.PROTECT,
@@ -664,10 +664,7 @@ class Notification(models.Model):
     
     
 #ERPNEXT  tables 
-
- 
-
-class Customer(models.Model):
+class CustomerDetails(models.Model):
     # Basic Info
     naming_series = models.CharField(max_length=100, blank=True, null=True)
     salutation = models.CharField(max_length=50, blank=True, null=True)

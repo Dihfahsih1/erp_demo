@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salesperson Dashboard - Document Search</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+
+        .sidebar {
+            background-color: var(--secondary-color);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding-top: 20px;
+            width: 250px;
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 5px;
+            border-radius: 5px;
+            padding: 10px 15px;
+        }
+
+        .sidebar .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .sidebar .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 10px;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+            border-radius: 10px 10px 0 0 !important;
+        }
+
+        .top-bar {
+            background-color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-bar {
+            width: 300px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-profile img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .filter-group {
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .filter-group select, .filter-group input {
+            margin-right: 10px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .slider-container {
+            width: 200px;
+            display: inline-block;
+        }
+
+        .table-responsive {
+            margin-top: 20px;
+        }
+
+        .table th, .table td {
+            vertical-align: middle;
+        }
+
+        .clickable-row {
+            cursor: pointer;
+        }
+
+        .clickable-row:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar col-md-3 col-lg-2 d-md-block">
+        <div class="text-center mb-4">
+            <h4><i class="bi bi-speedometer2"></i> Salesperson Dashboard</h4>
+            <p class="text-muted small">Document Search</p>
+        </div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="sales_person_performance.html">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="sales_person_customers.html">
+                    <i class="bi bi-person-lines-fill"></i> Customers
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="sales_person_ageing.html">
+                    <i class="bi bi-file-earmark-text"></i> Ageing Report
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="sales_person_document.html">
+                    <i class="bi bi-search"></i> Document Search
+                </a>
+            </li>
+            <li class="nav-item mt-3">
+                <a class="nav-link" href="sales_person_customer_ledger.html">
+                    <i class="bi bi-gear"></i> Customer Ledger
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="search-bar">
+                <div class="input-group">
+                    <input type="text" id="keywordSearch" class="form-control" placeholder="Search documents...">
+                    <button class="btn btn-outline-secondary" type="button">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="user-profile">
+                <img src="placeholder.png" alt="User">
+                <div>
+                    <div class="fw-bold">Office Sales</div>
+                    <div class="text-muted small">Salesperson - Central Region</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <h4 class="mb-4">Document Search</h4>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <label class="form-label me-2">Filters:</label>
+            <select id="docTypeFilter" class="form-select d-inline-block w-auto">
+                <option value="all">All Document Types</option>
+                <option value="Sales Return">Sales Return</option>
+                <option value="Purchase Return">Purchase Return</option>
+                <option value="Delivery Notes">Delivery Notes</option>
+                <option value="Payments">Payments</option>
+                <option value="Invoices">Invoices</option>
+            </select>
+            <select id="brandFilter" class="form-select d-inline-block w-auto">
+                <option value="all">All Brands</option>
+                <option value="brandA">Brand A</option>
+                <option value="brandB">Brand B</option>
+                <option value="brandC">Brand C</option>
+            </select>
+            <select id="regionFilter" class="form-select d-inline-block w-auto">
+                <option value="all">All Districts/Routes</option>
+                <option value="district1">District 1</option>
+                <option value="district2">District 2</option>
+                <option value="routeA">Route A</option>
+                <option value="routeB">Route B</option>
+            </select>
+            <select id="billingFilter" class="form-select d-inline-block w-auto">
+                <option value="all">All Billing Frequencies</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="quarterly">Quarterly</option>
+                <option value="yearly">Yearly</option>
+            </select>
+            <div class="input-group w-auto">
+                <span class="input-group-text">From</span>
+                <input type="date" id="startDate" class="form-control">
+                <span class="input-group-text">To</span>
+                <input type="date" id="endDate" class="form-control">
+            </div>
+            <div class="slider-container">
+                <label for="amountSlider" class="form-label">Min Amount (K)</label>
+                <input type="range" id="amountSlider" class="form-range" min="0" max="1000" value="0">
+                <span id="sliderValue">0K</span>
+            </div>
+            <button id="applyFilters" class="btn btn-primary">Apply Filters</button>
+        </div>
+
+        <div class="row">
+            <!-- Document Amount Distribution Bar Chart -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        Document Amount Distribution by Type
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="docAmountChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Document Search Table -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        Document Search Results
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="docTable" class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Document Name</th>
+                                        <th>Date</th>
+                                        <th>Amount (K)</th>
+                                        <th>Balance (K)</th>
+                                        <th>Days</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="clickable-row" data-doc-id="1">
+                                        <td>INV-001</td>
+                                        <td>2025-06-01</td>
+                                        <td>500</td>
+                                        <td>250</td>
+                                        <td>30</td>
+                                        <td>Invoice for Acme Corporation</td>
+                                    </tr>
+                                    <tr class="clickable-row" data-doc-id="2">
+                                        <td>SR-001</td>
+                                        <td>2025-06-05</td>
+                                        <td>200</td>
+                                        <td>0</td>
+                                        <td>25</td>
+                                        <td>Sales Return for Beta Enterprises</td>
+                                    </tr>
+                                    <tr class="clickable-row" data-doc-id="3">
+                                        <td>DN-001</td>
+                                        <td>2025-06-10</td>
+                                        <td>300</td>
+                                        <td>0</td>
+                                        <td>20</td>
+                                        <td>Delivery Note for Gamma Retail</td>
+                                    </tr>
+                                    <tr class="clickable-row" data-doc-id="4">
+                                        <td>PY-001</td>
+                                        <td>2025-06-15</td>
+                                        <td>400</td>
+                                        <td>0</td>
+                                        <td>15</td>
+                                        <td>Payment from Delta Traders</td>
+                                    </tr>
+                                    <tr class="clickable-row" data-doc-id="5">
+                                        <td>INV-002</td>
+                                        <td>2025-06-20</td>
+                                        <td>600</td>
+                                        <td>300</td>
+                                        <td>10</td>
+                                        <td>Invoice for Acme Corporation</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Details Modal -->
+        <div class="modal fade" id="docModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="docModalTitle">Document Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>Document Name:</strong> <span id="docName"></span></p>
+                        <p><strong>Date:</strong> <span id="docDate"></span></p>
+                        <p><strong>Amount (K):</strong> <span id="docAmount"></span></p>
+                        <p><strong>Balance (K):</strong> <span id="docBalance"></span></p>
+                        <p><strong>Days:</strong> <span id="docDays"></span></p>
+                        <p><strong>Remarks:</strong> <span id="docRemarks"></span></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Dummy data for chart and table (updated by filters)
+        let docData = [
+            { id: 1, name: 'INV-001', type: 'Invoices', date: '2025-06-01', amount: 500, balance: 250, days: 30, remarks: 'Invoice for Acme Corporation', brand: 'brandA', region: 'district1', billing: 'monthly' },
+            { id: 2, name: 'SR-001', type: 'Sales Return', date: '2025-06-05', amount: 200, balance: 0, days: 25, remarks: 'Sales Return for Beta Enterprises', brand: 'brandB', region: 'district2', billing: 'quarterly' },
+            { id: 3, name: 'DN-001', type: 'Delivery Notes', date: '2025-06-10', amount: 300, balance: 0, days: 20, remarks: 'Delivery Note for Gamma Retail', brand: 'brandA', region: 'routeA', billing: 'monthly' },
+            { id: 4, name: 'PY-001', type: 'Payments', date: '2025-06-15', amount: 400, balance: 0, days: 15, remarks: 'Payment from Delta Traders', brand: 'brandC', region: 'routeB', billing: 'weekly' },
+            { id: 5, name: 'INV-002', type: 'Invoices', date: '2025-06-20', amount: 600, balance: 300, days: 10, remarks: 'Invoice for Acme Corporation', brand: 'brandA', region: 'district1', billing: 'monthly' }
+        ];
+
+        let docAmountData = {
+            'all': {
+                'Invoices': 1100,
+                'Sales Return': 200,
+                'Delivery Notes': 300,
+                'Payments': 400,
+                'Purchase Return': 0
+            },
+            'brandA': {
+                'Invoices': 1100,
+                'Sales Return': 0,
+                'Delivery Notes': 300,
+                'Payments': 0,
+                'Purchase Return': 0
+            },
+            'brandB': {
+                'Invoices': 0,
+                'Sales Return': 200,
+                'Delivery Notes': 0,
+                'Payments': 0,
+                'Purchase Return': 0
+            },
+            'brandC': {
+                'Invoices': 0,
+                'Sales Return': 0,
+                'Delivery Notes': 0,
+                'Payments': 400,
+                'Purchase Return': 0
+            }
+        };
+
+        // Document Amount Distribution Bar Chart
+        const docAmountChart = new Chart(document.getElementById('docAmountChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Invoices', 'Sales Return', 'Delivery Notes', 'Payments', 'Purchase Return'],
+                datasets: [{
+                    label: 'Document Amount (K)',
+                    data: Object.values(docAmountData['all']),
+                    backgroundColor: 'rgba(52, 152, 219, 0.5)',
+                    borderColor: 'rgba(52, 152, 219, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Amount (K)' }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'top' },
+                    title: { display: true, text: 'Document Amount by Type' }
+                }
+            }
+        });
+
+        // Document Search Table
+        $(document).ready(function() {
+            const table = $('#docTable').DataTable({
+                paging: true,
+                searching: true,
+                ordering: true,
+                info: false,
+                pageLength: 5,
+                lengthChange: false,
+                order: [[2, 'desc']] // Default sort by Amount
+            });
+
+            // Clickable rows for document details modal
+            $('#docTable').on('click', '.clickable-row', function() {
+                const docId = $(this).data('doc-id');
+                const doc = docData.find(d => d.id === docId);
+                $('#docModalTitle').text(`Document: ${doc.name}`);
+                $('#docName').text(doc.name);
+                $('#docDate').text(doc.date);
+                $('#docAmount').text(doc.amount);
+                $('#docBalance').text(doc.balance);
+                $('#docDays').text(doc.days);
+                $('#docRemarks').text(doc.remarks);
+                const docModal = new bootstrap.Modal(document.getElementById('docModal'));
+                docModal.show();
+            });
+
+            // Update slider value display
+            $('#amountSlider').on('input', function() {
+                $('#sliderValue').text($(this).val() + 'K');
+            });
+
+            // Apply filters and update visualizations
+            $('#applyFilters').on('click', function() {
+                const docType = $('#docTypeFilter').val();
+                const brand = $('#brandFilter').val();
+                const region = $('#regionFilter').val();
+                const billing = $('#billingFilter').val();
+                const startDate = $('#startDate').val();
+                const endDate = $('#endDate').val();
+                const minAmount = parseInt($('#amountSlider').val());
+                const keyword = $('#keywordSearch').val().toLowerCase();
+
+                // Filter document data
+                let filteredData = docData.filter(doc => {
+                    return (docType === 'all' || doc.type === docType) &&
+                           (brand === 'all' || doc.brand === brand) &&
+                           (region === 'all' || doc.region === region) &&
+                           (billing === 'all' || doc.billing === billing) &&
+                           doc.amount >= minAmount &&
+                           (keyword === '' || 
+                            doc.name.toLowerCase().includes(keyword) || 
+                            doc.remarks.toLowerCase().includes(keyword)) &&
+                           (!startDate || doc.date >= startDate) &&
+                           (!endDate || doc.date <= endDate);
+                });
+
+                // Update document amount chart
+                docAmountChart.data.datasets[0].data = Object.values(docAmountData[brand] || docAmountData['all']);
+                docAmountChart.update();
+
+                // Update document table
+                table.clear().rows.add(filteredData.map(doc => [
+                    doc.name, doc.date, doc.amount, doc.balance, doc.days, doc.remarks
+                ])).draw();
+            });
+
+            // Trigger filter on keyword search enter
+            $('#keywordSearch').on('keypress', function(e) {
+                if (e.which === 13) {
+                    $('#applyFilters').click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

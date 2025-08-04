@@ -668,6 +668,7 @@ class CustomerDetails(models.Model):
     # Basic Info
     naming_series = models.CharField(max_length=100, blank=True, null=True)
     salutation = models.CharField(max_length=50, blank=True, null=True)
+    customer_id = models.CharField(max_length=10000, blank=True, null=True)
     customer_name = models.CharField(max_length=255)
     customer_type = models.CharField(max_length=50)
     customer_group = models.CharField(max_length=100, blank=True, null=True)
@@ -760,3 +761,327 @@ class SalesPerson(models.Model):
 
     def __str__(self):
         return self.sales_person_name
+
+class CustomerAddress(models.Model):
+    customer = models.ForeignKey(CustomerDetails, on_delete=models.CASCADE)
+    address_type = models.CharField(max_length=50)
+    address_line1 = models.CharField(max_length=255)
+    address_line2 = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    state = models.CharField(max_length=100, blank=True, null=True)
+    country = models.CharField(max_length=100, blank=True, null=True)
+    pincode = models.CharField(max_length=20, blank=True, null=True)
+    
+class CustomerSalesTeam(models.Model):
+    customer = models.ForeignKey(CustomerDetails, on_delete=models.CASCADE)
+    sales_person = models.ForeignKey(SalesPerson, on_delete=models.SET_NULL, null=True)
+    allocated_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    
+    
+class SalesOrder(models.Model):
+    title = models.CharField(max_length=255, blank=True, null=True)
+    naming_series = models.CharField(max_length=140)
+    customer = models.CharField(max_length=255)
+    customer_name = models.CharField(max_length=255, blank=True, null=True)
+    tax_id = models.CharField(max_length=140, blank=True, null=True)
+    order_type = models.CharField(max_length=140, blank=True, null=True)
+    transaction_date = models.DateField()
+    delivery_date = models.DateField(blank=True, null=True)
+    po_no = models.CharField(max_length=140, blank=True, null=True)
+    po_date = models.DateField(blank=True, null=True)
+    company = models.CharField(max_length=255)
+    
+    skip_delivery_note = models.BooleanField(default=False)
+    has_unit_price_items = models.BooleanField(default=False)
+    amended_from = models.CharField(max_length=140, blank=True, null=True)
+    cost_center = models.CharField(max_length=140, blank=True, null=True)
+    project = models.CharField(max_length=140, blank=True, null=True)
+    currency = models.CharField(max_length=20)
+    conversion_rate = models.FloatField(default=1.0)
+    selling_price_list = models.CharField(max_length=140, blank=True, null=True)
+    price_list_currency = models.CharField(max_length=20, blank=True, null=True)
+    plc_conversion_rate = models.FloatField(default=1.0)
+    ignore_pricing_rule = models.BooleanField(default=False)
+    set_warehouse = models.CharField(max_length=140, blank=True, null=True)
+    reserve_stock = models.BooleanField(default=False)
+
+    total_qty = models.FloatField(default=0.0)
+    total_net_weight = models.FloatField(default=0.0)
+    base_total = models.DecimalField(max_digits=12, decimal_places=2)
+    base_net_total = models.DecimalField(max_digits=12, decimal_places=2)
+    total = models.DecimalField(max_digits=12, decimal_places=2)
+    net_total = models.DecimalField(max_digits=12, decimal_places=2)
+
+    tax_category = models.CharField(max_length=140, blank=True, null=True)
+    taxes_and_charges = models.CharField(max_length=255, blank=True, null=True)
+    shipping_rule = models.CharField(max_length=140, blank=True, null=True)
+    incoterm = models.CharField(max_length=140, blank=True, null=True)
+    named_place = models.CharField(max_length=140, blank=True, null=True)
+
+    base_grand_total = models.DecimalField(max_digits=12, decimal_places=2)
+    base_rounding_adjustment = models.DecimalField(max_digits=12, decimal_places=2, default=0.0)
+    base_rounded_total = models.DecimalField(max_digits=12, decimal_places=2)
+    base_in_words = models.TextField(blank=True, null=True)
+
+    grand_total = models.DecimalField(max_digits=12, decimal_places=2)
+    rounding_adjustment = models.DecimalField(max_digits=12, decimal_places=2, default=0.0)
+    rounded_total = models.DecimalField(max_digits=12, decimal_places=2)
+    in_words = models.TextField(blank=True, null=True)
+
+    advance_paid = models.DecimalField(max_digits=12, decimal_places=2, default=0.0)
+    disable_rounded_total = models.BooleanField(default=False)
+
+    status = models.CharField(max_length=140, blank=True, null=True)
+    delivery_status = models.CharField(max_length=140, blank=True, null=True)
+    per_delivered = models.FloatField(default=0.0)
+    per_billed = models.FloatField(default=0.0)
+    per_picked = models.FloatField(default=0.0)
+    billing_status = models.CharField(max_length=140, blank=True, null=True)
+
+    sales_partner = models.CharField(max_length=140, blank=True, null=True)
+    amount_eligible_for_commission = models.DecimalField(max_digits=12, decimal_places=2, default=0.0)
+    commission_rate = models.FloatField(default=0.0)
+    total_commission = models.DecimalField(max_digits=12, decimal_places=2, default=0.0)
+
+    loyalty_points = models.IntegerField(default=0)
+    loyalty_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.0)
+
+    from_date = models.DateField(blank=True, null=True)
+    to_date = models.DateField(blank=True, null=True)
+    language = models.CharField(max_length=50, blank=True, null=True)
+    is_internal_customer = models.BooleanField(default=False, null=True, blank=True)
+    source = models.CharField(max_length=140, blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.customer} - {self.transaction_date}"
+
+
+class SalesOrderItem(models.Model):
+    sales_order = models.ForeignKey(SalesOrder, on_delete=models.CASCADE, related_name='items')
+    item_code = models.CharField(max_length=100)
+    item_name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    qty = models.FloatField()
+    rate = models.DecimalField(max_digits=18, decimal_places=2)
+    amount = models.DecimalField(max_digits=18, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.item_code} - {self.qty}"
+
+
+
+from django.db import models
+
+class Item(models.Model):
+    # Basic Information
+    naming_series = models.CharField(max_length=255, blank=True, null=True)
+    item_code = models.CharField(max_length=255, unique=True)
+    item_name = models.CharField(max_length=255, blank=True, null=True)
+    item_group = models.CharField(max_length=255, blank=True, null=True)
+    stock_uom = models.CharField(max_length=255, blank=True, null=True)
+
+    # Status
+    disabled = models.BooleanField(default=False)
+    allow_alternative_item = models.BooleanField(default=False)
+    is_stock_item = models.BooleanField(default=False)
+    has_variants = models.BooleanField(default=False)
+    is_fixed_asset = models.BooleanField(default=False)
+    auto_create_assets = models.BooleanField(default=False)
+    is_grouped_asset = models.BooleanField(default=False)
+
+    # Asset
+    asset_category = models.CharField(max_length=255, blank=True, null=True)
+    asset_naming_series = models.CharField(max_length=255, blank=True, null=True)
+
+    # Stock
+    opening_stock = models.FloatField(blank=True, null=True)
+    valuation_rate = models.FloatField(blank=True, null=True)
+    standard_rate = models.FloatField(blank=True, null=True)
+    over_delivery_receipt_allowance = models.FloatField(blank=True, null=True)
+    over_billing_allowance = models.FloatField(blank=True, null=True)
+
+    # Image and Description
+    image = models.URLField(blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+
+    # Brand
+    brand = models.CharField(max_length=255, blank=True, null=True)
+    custom_model = models.CharField(max_length=255, blank=True, null=True)
+
+    # Inventory Settings
+    shelf_life_in_days = models.IntegerField(blank=True, null=True)
+    end_of_life = models.DateField(blank=True, null=True)
+    default_material_request_type = models.CharField(max_length=255, blank=True, null=True)
+    valuation_method = models.CharField(max_length=255, blank=True, null=True)
+    warranty_period = models.CharField(max_length=255, blank=True, null=True)
+    weight_per_unit = models.FloatField(blank=True, null=True)
+    weight_uom = models.CharField(max_length=255, blank=True, null=True)
+    allow_negative_stock = models.BooleanField(default=False)
+
+    # Serial and Batch
+    has_batch_no = models.BooleanField(default=False)
+    create_new_batch = models.BooleanField(default=False)
+    batch_number_series = models.CharField(max_length=255, blank=True, null=True)
+    has_expiry_date = models.BooleanField(default=False)
+    retain_sample = models.BooleanField(default=False)
+    sample_quantity = models.IntegerField(blank=True, null=True)
+    has_serial_no = models.BooleanField(default=False)
+    serial_no_series = models.CharField(max_length=255, blank=True, null=True)
+
+    # Variants
+    variant_of = models.CharField(max_length=255, blank=True, null=True)
+    variant_based_on = models.CharField(max_length=255, blank=True, null=True)
+
+    # Deferred Accounting
+    enable_deferred_expense = models.BooleanField(default=False)
+    no_of_months_exp = models.IntegerField(blank=True, null=True)
+    enable_deferred_revenue = models.BooleanField(default=False)
+    no_of_months = models.IntegerField(blank=True, null=True)
+
+    # Purchasing
+    purchase_uom = models.CharField(max_length=255, blank=True, null=True)
+    min_order_qty = models.FloatField(blank=True, null=True)
+    safety_stock = models.FloatField(blank=True, null=True)
+    is_purchase_item = models.BooleanField(default=False)
+    lead_time_days = models.IntegerField(blank=True, null=True)
+    last_purchase_rate = models.FloatField(blank=True, null=True)
+    is_customer_provided_item = models.BooleanField(default=False)
+    customer = models.CharField(max_length=255, blank=True, null=True)
+    delivered_by_supplier = models.BooleanField(default=False)
+
+    # Foreign Trade
+    country_of_origin = models.CharField(max_length=255, blank=True, null=True)
+    customs_tariff_number = models.CharField(max_length=255, blank=True, null=True)
+
+    # Sales
+    sales_uom = models.CharField(max_length=255, blank=True, null=True)
+    grant_commission = models.BooleanField(default=False)
+    is_sales_item = models.BooleanField(default=False)
+    max_discount = models.FloatField(blank=True, null=True)
+
+    # Taxes and Quality
+    inspection_required_before_purchase = models.BooleanField(default=False)
+    quality_inspection_template = models.CharField(max_length=255, blank=True, null=True)
+    inspection_required_before_delivery = models.BooleanField(default=False)
+
+    # Manufacturing
+    include_item_in_manufacturing = models.BooleanField(default=False)
+    is_sub_contracted_item = models.BooleanField(default=False)
+    default_bom = models.CharField(max_length=255, blank=True, null=True)
+    customer_code = models.TextField(blank=True, null=True)
+    default_item_manufacturer = models.CharField(max_length=255, blank=True, null=True)
+    default_manufacturer_part_no = models.CharField(max_length=255, blank=True, null=True)
+    total_projected_qty = models.FloatField(blank=True, null=True)
+    
+    
+        # 🔧 Add these missing fields below
+    default_supplier = models.CharField(max_length=255, null=True, blank=True)
+    default_warehouse = models.CharField(max_length=255, null=True, blank=True)
+    barcode = models.CharField(max_length=255, null=True, blank=True)
+    reorder_level = models.FloatField(null=True, blank=True)
+    reorder_qty = models.FloatField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.item_code
+
+
+
+from django.db import models
+from django.contrib.auth.hashers import make_password, check_password
+
+class ERPUser(models.Model):
+    # Basic Identity
+    enabled = models.BooleanField(default=True)
+    email = models.EmailField(unique=True)
+    first_name = models.CharField(max_length=100, blank=True)
+    middle_name = models.CharField(max_length=100, blank=True)
+    last_name = models.CharField(max_length=100, blank=True)
+    full_name = models.CharField(max_length=200, blank=True)
+    username = models.CharField(max_length=100, unique=True)
+    
+    # Password for login (Django-compatible)
+    password = models.CharField(max_length=128, blank=True)
+
+    # Profile Image
+    user_image = models.ImageField(upload_to='user_images/', blank=True, null=True)
+    
+    # Locale
+    language = models.CharField(max_length=50, blank=True)
+    time_zone = models.CharField(max_length=100, blank=True)
+    
+    # Account Settings
+    send_welcome_email = models.BooleanField(default=False)
+    unsubscribed = models.BooleanField(default=False)
+    mute_sounds = models.BooleanField(default=False)
+    desk_theme = models.CharField(max_length=50, blank=True)
+    banner_image = models.ImageField(upload_to='banner_images/', blank=True, null=True)
+
+    # Password Reset & Security
+    new_password = models.CharField(max_length=128, blank=True)
+    logout_all_sessions = models.BooleanField(default=False)
+    reset_password_key = models.CharField(max_length=128, blank=True)
+    last_reset_password_key_generated_on = models.DateTimeField(null=True, blank=True)
+    last_password_reset_date = models.DateField(null=True, blank=True)
+
+    # Bio
+    gender = models.CharField(max_length=20, blank=True)
+    birth_date = models.DateField(null=True, blank=True)
+    interest = models.TextField(blank=True)
+    phone = models.CharField(max_length=50, blank=True)
+    mobile_no = models.CharField(max_length=50, blank=True)
+    location = models.CharField(max_length=200, blank=True)
+    bio = models.TextField(blank=True)
+
+    # Notifications & Follow Settings
+    document_follow_notify = models.BooleanField(default=True)
+    document_follow_frequency = models.CharField(max_length=50, blank=True)
+    follow_created_documents = models.BooleanField(default=True)
+    follow_commented_documents = models.BooleanField(default=True)
+    follow_liked_documents = models.BooleanField(default=True)
+    follow_assigned_documents = models.BooleanField(default=True)
+    follow_shared_documents = models.BooleanField(default=True)
+
+    # Email Preferences
+    email_signature = models.TextField(blank=True)
+    thread_notify = models.BooleanField(default=True)
+    send_me_a_copy = models.BooleanField(default=True)
+    allowed_in_mentions = models.BooleanField(default=True)
+
+    # Workspace
+    default_workspace = models.CharField(max_length=100, blank=True)
+    default_app = models.CharField(max_length=100, blank=True)
+
+    # Security / Access Control
+    simultaneous_sessions = models.PositiveIntegerField(default=1)
+    restrict_ip = models.TextField(blank=True)
+    last_ip = models.GenericIPAddressField(null=True, blank=True)
+    login_after = models.PositiveIntegerField(null=True, blank=True)
+    login_before = models.PositiveIntegerField(null=True, blank=True)
+    user_type = models.CharField(max_length=50, blank=True)
+    last_active = models.DateTimeField(null=True, blank=True)
+    bypass_restrict_ip_check_if_2fa_enabled = models.BooleanField(default=False)
+    last_login = models.DateTimeField(null=True, blank=True)
+
+    # API Access
+    api_key = models.CharField(max_length=128, blank=True)
+    api_secret = models.CharField(max_length=128, blank=True)
+    
+    # System fields
+    onboarding_status = models.CharField(max_length=50, blank=True)
+
+    def __str__(self):
+        return self.full_name or f"{self.first_name} {self.last_name}".strip() or self.username or self.email
+
+    def set_password(self, raw_password):
+        self.password = make_password(raw_password)
+
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.password)
+
+    class Meta:
+        ordering = ['username']
+

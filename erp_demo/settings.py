@@ -217,4 +217,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/erpnext/login/'  # URL for your login view
 LOGIN_REDIRECT_URL = '/sales/dashboard/'  # Redirect after successful login
 LOGOUT_REDIRECT_URL = '/erpnext/login/'
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
  

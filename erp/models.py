@@ -10,6 +10,9 @@ from django.core.validators import FileExtensionValidator
 from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from datetime import date
+
+from django.db import models
+from django.contrib.auth.hashers import make_password, check_password
 # ----------------------------
 # 1. Core Entities
 # ----------------------------
@@ -774,7 +777,7 @@ class CustomerAddress(models.Model):
     
 class CustomerSalesTeam(models.Model):
     customer = models.ForeignKey(CustomerDetails, on_delete=models.CASCADE)
-    sales_person = models.ForeignKey(SalesPerson, on_delete=models.SET_NULL, null=True)
+    sales_person = models.CharField(max_length=255, blank=True, null=True)
     allocated_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     
     
@@ -990,8 +993,6 @@ class Item(models.Model):
 
 
 
-from django.db import models
-from django.contrib.auth.hashers import make_password, check_password
 
 class ERPUser(models.Model):
     # Basic Identity
@@ -1084,4 +1085,28 @@ class ERPUser(models.Model):
 
     class Meta:
         ordering = ['username']
+
+class SalesPerson(models.Model):
+    sales_person_name = models.CharField(max_length=255)
+    parent_sales_person = models.CharField(max_length=255, null=True, blank=True)
+    commission_rate = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    is_group = models.BooleanField(default=False)
+    enabled = models.BooleanField(default=True)
+    employee = models.CharField(max_length=255, null=True, blank=True)
+    department = models.CharField(max_length=255, null=True, blank=True)
+    lft = models.IntegerField(null=True, blank=True)
+    rgt = models.IntegerField(null=True, blank=True)
+    old_parent = models.CharField(max_length=255, null=True, blank=True)
+
+    def __str__(self):
+        return self.sales_person_name
+    
+class SalesPersonTarget(models.Model):
+    sales_person = models.CharField(max_length=255, null=True, blank=True)
+    target_period = models.CharField(max_length=100)  # e.g. "Monthly", "Quarterly", etc.
+    target_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    distribution_id = models.CharField(max_length=100, null=True, blank=True)  # Optional custom field
+
+    def __str__(self):
+        return f"{self.sales_person} - {self.target_period}: {self.target_amount}"
 

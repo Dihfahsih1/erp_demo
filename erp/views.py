@@ -1,4 +1,8 @@
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
+import logging
+import os
+from urllib.parse import quote, unquote
 from venv import logger
 from django.forms import ValidationError
 from django.shortcuts import render, get_object_or_404, redirect
@@ -14,11 +18,11 @@ from django.urls import reverse
 import requests
 from erp.forms import BillingForm, DispatchForm, DeliveryForm, EstimateForm, DeliveryUploadForm, DispatchVerificationForm, EstimateUploadForm, OfficerReviewForm, SalesAgentNoteForm, CustomerForm, EmployeeLoginForm, EmployeeRegistrationForm
 from erp_demo import settings
-from .models import Customer, Delivery, DeliveryImage, Dispatch, Employee, Estimate, UserRole
+from .models import Customer, Delivery, DeliveryImage, Dispatch, Employee, Estimate, Item, SalesOrder, SalesOrderItem, UserRole
 import json
 import pandas as pd
 from io import BytesIO
-from datetime import datetime
+from datetime import date, datetime
 from django.utils.timezone import now
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -88,6 +92,7 @@ HEADERS = {
 }
 
 def erpnext_api_request(endpoint, method="GET", data=None, params=None):
+    print(f"Making {method} request to {endpoint} with data: {data} and params: {params}")  # Debugging line
     """Generic function to interact with ERPNext API."""
     url = f"{settings.ERP_NEXT_URL}/api/resource/{endpoint}"
     try:
@@ -199,14 +204,6 @@ def sales_performance_dashboard(request):
     graph_html = fig.to_html(full_html=False)
     
     return render(request, "dashboard.html", {"graph_html": graph_html})
-
- 
-
-
-        
- 
- 
-
 
 
 import json
@@ -1179,213 +1176,192 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import io
 
+from django.views.decorators.csrf import csrf_exempt 
+
+logger = logging.getLogger(__name__)
+
+
 @login_required
-def sales_dashboard(request):
-    user = request.user
-    # Fetch Employee record to get branch
-    employee = erpnext_api_request(
-        f"Employee",
-        params={
-            "fields": json.dumps(["name", "employee_name", "branch"]),
-            "filters": json.dumps([["user_id", "=", user.username]])
-        },
-        request=request
-    )
-    if not employee or not isinstance(employee, list) or len(employee) == 0:
-        messages.error(request, "Employee record not found for this user. Contact administrator.")
-        branch = user.username  # Fallback to username
-        sales_person_name = user.username
-    else:
-        employee = employee[0]
-        branch = employee.get("branch", user.username)
-        sales_person_name = employee.get("employee_name", user.username)
-
-    # Fetch Sales Person record using branch as name
-    sales_person = erpnext_api_request(
-        f"Sales Person/{branch}",
-        params={"fields": json.dumps(["name", "sales_person_name"])},
-        request=request
-    )
-    if not sales_person:
-        messages.warning(request, f"Sales Person record for branch '{branch}' not found. Using branch name as fallback.")
-        sales_person_name = branch
-    else:
-        sales_person_name = sales_person.get("sales_person_name", branch)
-        
-    customers = erpnext_api_request(
-    "Customer",
-    params={
-        "fields": json.dumps(["name", "customer_name"]),
-        "filters": json.dumps([
-            ["Customer", "sales_team.sales_person", "=", sales_person_name]
-        ]),
-        "limit_page_length": 20
-    },
-    request=request
-    ) or []
-    print(f"Fetched {len(customers)} customers for sales person '{sales_person_name}'")
-    context = {"sales_person_name": sales_person_name, "customers": customers}
-    return render(request, "dashboards/sales_dashboard.html", context)
-
-    # # Fetch customers assigned to this salesperson (branch)
-    # customers = erpnext_api_request(
-    #     "Customer",
-    #     params={
-    #         "fields": json.dumps(["name", "customer_name", "territory"]),  # Removed 'phone'
-    #         "filters": json.dumps([["sales_team.sales_person", "=", branch], ["sales_team.allocated_percentage", "=", 100]]),
-    #         "limit_page_length": 100
-    #     },
-    #     request=request
-    # ) or []
-    # customer_count = len(customers)
-    # customer_ids = [c['name'] for c in customers]
-
-    # # Fetch recent sales orders for this salesperson's customers
-    # sales_orders = []
-    # recent_orders_count = 0
-    # if customer_ids:
-    #     sales_orders = erpnext_api_request(
-    #         "Sales Order",
-    #         params={
-    #             "fields": json.dumps(["name", "customer_name", "transaction_date", "grand_total", "status", "items.item_code", "items.qty", "billed_amount"]),
-    #             "filters": json.dumps([["customer", "in", customer_ids], ["transaction_date", ">=", (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")]]),
-    #             "order_by": "creation desc",
-    #             "limit_page_length": 10
-    #         },
-    #         request=request
-    #     ) or []
-    #     recent_orders_count = len(sales_orders)
-
-    # # Stats Cards Calculations
-    # monthly_target = 500000  # Configurable via ERPNext or settings
-    # achieved = sum(float(order.get("grand_total", 0)) for order in sales_orders)
-    # outstanding = 0
-    # if customer_ids:
-    #     outstanding_data = erpnext_api_request(
-    #         "Customer",
-    #         params={
-    #             "fields": json.dumps(["sum(outstanding_amount) as outstanding"]),
-    #             "filters": json.dumps([["name", "in", customer_ids]])
-    #         },
-    #         request=request
-    #     )
-    #     outstanding = outstanding_data[0].get("outstanding", 0) if outstanding_data and isinstance(outstanding_data, list) and outstanding_data else 0
-
-    # pending_delivery_notes = []
-    # pending_deliveries = 0
-    # urgent_deliveries = 0
-    # if customer_ids:
-    #     pending_delivery_notes = erpnext_api_request(
-    #         "Delivery Note",
-    #         params={
-    #             "fields": json.dumps(["name", "posting_date"]),
-    #             "filters": json.dumps([["customer", "in", customer_ids], ["status", "=", "To Bill"]]),
-    #             "limit_page_length": 0
-    #         },
-    #         request=request
-    #     ) or []
-    #     pending_deliveries = len(pending_delivery_notes)
-    #     urgent_deliveries = len([dn for dn in pending_delivery_notes if (datetime.now() - datetime.strptime(dn.get("posting_date", "2025-01-01"), "%Y-%m-%d")).days > 7])
-
-    # billed_month = achieved
-
-    # # Item Movement Analysis
-    # stock_data = erpnext_api_request(
-    #     "Stock Ledger Entry",
-    #     params={
-    #         "fields": json.dumps(["item_code", "sum(actual_qty) as qty"]),
-    #         "filters": json.dumps([["posting_date", ">=", (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")]]),
-    #         "group_by": "item_code",
-    #         "order_by": "qty desc",
-    #         "limit_page_length": 10
-    #     },
-    #     request=request
-    # ) or []
-    # fast_moving = stock_data[:2] if stock_data else []
-    # slow_moving = stock_data[-2:] if len(stock_data) >= 2 else []
-
-    # # Delivery Notes
-    # delivery_notes = []
-    # if customer_ids:
-    #     delivery_notes = erpnext_api_request(
-    #         "Delivery Note",
-    #         params={
-    #             "fields": json.dumps(["name", "customer_name", "posting_date", "total_qty", "grand_total", "status"]),
-    #             "filters": json.dumps([["customer", "in", customer_ids], ["status", "=", "To Bill"]]),
-    #             "limit_page_length": 5
-    #         },
-    #         request=request
-    #     ) or []
-
-    # # Sales Performance Chart
-    # end_date = datetime.now()
-    # start_date = end_date - relativedelta(months=6)
-    # sales_data = []
-    # if customer_ids:
-    #     sales_data = erpnext_api_request(
-    #         "Sales Order",
-    #         params={
-    #             "fields": json.dumps(["transaction_date", "grand_total"]),
-    #             "filters": json.dumps([["customer", "in", customer_ids], ["transaction_date", ">=", start_date.strftime("%Y-%m-%d")]]),
-    #             "limit_page_length": 100
-    #         },
-    #         request=request
-    #     ) or []
-    # months = [(start_date + relativedelta(months=i)).strftime("%b") for i in range(7)]
-    # your_sales = [0] * 7
-    # for order in sales_data:
-    #     order_date = datetime.strptime(order["transaction_date"], "%Y-%m-%d")
-    #     month_idx = (order_date.year - start_date.year) * 12 + order_date.month - start_date.month
-    #     if 0 <= month_idx < 7:
-    #         your_sales[month_idx] += float(order["grand_total"])
-    # team_avg = [sum(your_sales) / len(your_sales)] * 7 if your_sales and sum(your_sales) > 0 else [0] * 7
-
-    # context = {
-    #     "sales_person_name": sales_person_name,
-    #     "customer_count": customer_count,
-    #     "recent_orders_count": recent_orders_count,
-    #     "sales_orders": sales_orders,
-    #     "monthly_target": monthly_target,
-    #     "achieved": achieved,
-    #     "outstanding": outstanding,
-    #     "pending_deliveries": pending_deliveries,
-    #     "urgent_deliveries": urgent_deliveries,
-    #     "billed_month": billed_month,
-    #     "customers": customers[:2],
-    #     "delivery_notes": delivery_notes,
-    #     "fast_moving_items": fast_moving,
-    #     "slow_moving_items": slow_moving,
-    #     "chart_labels": json.dumps(months),
-    #     "chart_your_sales": your_sales,
-    #     "chart_team_avg": team_avg,
-    # }
-      # Updated template path
-
 @login_required
 def create_sales_order(request):
-    if request.method == "POST":
-        form = SalesOrderForm(request.POST, sales_person=request.user.username)
-        if form.is_valid():
-            items = json.loads(form.cleaned_data['items'])
-            data = {
-                "doctype": "Sales Order",
-                "customer": form.cleaned_data["customer"],
-                "transaction_date": form.cleaned_data["order_date"].isoformat(),
-                "order_type": "Sales",
-                "items": [{"item_code": item['item_code'], "qty": item['qty'], "rate": item['rate']} for item in items],
-                "notes": form.cleaned_data["notes"],
-                "sales_team": [{"sales_person": request.user.username, "allocated_percentage": 100}]
-            }
-            response = erpnext_api_request("Sales Order", method="POST", data=data, request=request)
-            if response:
-                messages.success(request, "Sales order created successfully.")
-                return redirect("dashboard")
-            else:
-                messages.error(request, "Failed to create sales order in ERPNext.")
-    else:
-        form = SalesOrderForm(sales_person=request.user.username)
-    return render(request, 'sales_dashboard.html', {'sales_order_form': form})
+    if request.method != "POST":
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
 
+    try:
+        # Validate required fields
+        required_fields = ['customer', 'transaction_date', 'delivery_date']
+        missing_fields = [field for field in required_fields if not request.POST.get(field)]
+        if missing_fields:
+            return JsonResponse({
+                'error': f'Missing required fields: {", ".join(missing_fields)}'
+            }, status=400)
+        
+        # Fetch customer details from ERPNext to get sales team
+        customer = request.POST.get("customer")
+        cust_response = requests.get(
+            f"{ERP_URL}/api/resource/Customer/{customer}",
+            headers={
+                "Authorization": f"token {ERP_API_KEY}:{ERP_API_SECRET}"
+            }
+        )
+        cust_response.raise_for_status()
+        cust_data = cust_response.json()['data']
+        cust_sales_team = cust_data.get('sales_team', [])
+        
+        if not cust_sales_team:
+            return JsonResponse({'error': 'No sales team defined for this customer'}, status=400)
+        
+        # Assume only one sales person; take the first one
+        sales_person = cust_sales_team[0]['sales_person']
+        
+        # Build sales_team as a list (required by ERPNext API)
+        sales_team = [{
+            "sales_person": sales_person,
+            "allocated_percentage": 100,
+            "commission_rate": 100,
+            "allocated_amount": 0  # Will be updated after calculating net total
+        }]
+        
+        # Process items
+        item_codes = request.POST.getlist("item_code[]")
+        qtys = request.POST.getlist("qty[]")
+        rates = request.POST.getlist("rate[]")
+        descriptions = request.POST.getlist("description[]")
+        warehouses = request.POST.getlist("warehouse[]")
+        uoms = request.POST.getlist("uom[]")
+        discount_percents = request.POST.getlist("discount_percent[]")
+
+        items = []
+        net_total = 0
+        for i in range(len(item_codes)):
+            try:
+                qty = float(qtys[i])
+                if qty <= 0:
+                    continue
+                
+                rate = float(rates[i]) if i < len(rates) else 0
+                item_total = qty * rate
+                net_total += item_total
+                
+                item_dict = {
+                    'item_code': item_codes[i],
+                    'qty': qty,
+                    'rate': rate,
+                    'description': descriptions[i] if i < len(descriptions) else '',
+                    'warehouse': warehouses[i] if i < len(warehouses) else '',
+                    'uom': uoms[i] if i < len(uoms) else ''
+                }
+                
+                if discount_percents and i < len(discount_percents):
+                    item_dict['discount_percentage'] = float(discount_percents[i])
+                
+                items.append(item_dict)
+            except (ValueError, IndexError) as e:
+                logger.warning(f"Invalid item data at index {i}: {e}")
+                continue
+
+        if not items:
+            return JsonResponse({'error': 'No valid items in order (must have quantity > 0)'}, status=400)
+        
+        # Update allocated_amount to the net total
+        sales_team[0]['allocated_amount'] = net_total
+        
+        # Prepare order data (create in Draft state)
+        order_data = {
+            'doctype': 'Sales Order',
+            'customer': customer,
+            'transaction_date': request.POST.get("transaction_date"),
+            'delivery_date': request.POST.get("delivery_date"),
+            'sales_team': sales_team,
+            'docstatus': 0,  # Create as Draft
+            'items': items,
+            'notes': request.POST.get("notes", "")
+        }
+
+        # Create Draft Sales Order
+        create_response = requests.post(
+            f"{ERP_URL}/api/resource/Sales Order",
+            headers={
+                "Authorization": f"token {ERP_API_KEY}:{ERP_API_SECRET}",
+                "Content-Type": "application/json"
+            },
+            json=order_data
+        )
+        create_response.raise_for_status()
+        
+        # Parse the creation response
+        try:
+            create_data = create_response.json()
+            logger.debug(f"ERPNext create response: {create_data}")
+        except ValueError as e:
+            logger.error(f"Failed to parse ERPNext create response as JSON: {create_response.text}")
+            return JsonResponse({
+                'error': 'Invalid response format from ERPNext on create'
+            }, status=500)
+        
+        # Verify creation response structure
+        if not isinstance(create_data, dict) or 'data' not in create_data or 'name' not in create_data['data']:
+            logger.error(f"Unexpected ERPNext create response structure: {create_data}")
+            return JsonResponse({
+                'error': 'Unexpected response structure from ERPNext on create'
+            }, status=500)
+        
+        order_name = create_data['data']['name']
+        
+        # Submit the order and transition to Pending Credit Approval
+        submit_response = requests.post(
+            f"{ERP_URL}/api/method/frappe.model.workflow.apply_workflow",
+            headers={
+                "Authorization": f"token {ERP_API_KEY}:{ERP_API_SECRET}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "doc": json.dumps({
+                    "doctype": "Sales Order",
+                    "name": order_name
+                }),
+                "action": "Submit"  # Action to submit the order
+            }
+        )
+        submit_response.raise_for_status()
+        
+        # Parse the submit response
+        try:
+            submit_data = submit_response.json()
+            logger.debug(f"ERPNext submit response: {submit_data}")
+        except ValueError as e:
+            logger.error(f"Failed to parse ERPNext submit response as JSON: {submit_response.text}")
+            return JsonResponse({
+                'error': 'Invalid response format from ERPNext on submit'
+            }, status=500)
+        
+        # Verify submit response structure and workflow state
+        if not isinstance(submit_data, dict) or 'message' not in submit_data or submit_data['message'].get('workflow_state') != 'Pending Credit Approval':
+            logger.error(f"Unexpected ERPNext submit response or incorrect workflow state: {submit_data}")
+            return JsonResponse({
+                'error': 'Failed to transition to Pending Credit Approval'
+            }, status=500)
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Sales order created and submitted successfully',
+            'order_name': order_name
+        })
+
+    except requests.HTTPError as http_err:
+        try:
+            error_msg = http_err.response.json().get('message', http_err.response.text)
+        except ValueError:
+            error_msg = http_err.response.text
+        logger.error(f"ERPNext API error: {error_msg}")
+        return JsonResponse({
+            'error': f"ERPNext API error: {error_msg}"
+        }, status=http_err.response.status_code)
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'error': f"Unexpected error occurred: {str(e)}"
+        }, status=500) 
 @login_required
 def upload_delivery_note(request):
     if request.method == "POST":
@@ -1514,3 +1490,346 @@ def search(request):
         ) or []
         return render(request, 'sales_dashboard.html', {'sales_orders': sales_orders, 'query': query})
     return redirect('dashboard')
+
+
+#sales order
+
+# api/views.py
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .models import Customer, Item
+from django.db.models import F
+
+@api_view(['GET'])
+def customer_list(request):
+    customers = Customer.objects.annotate(
+        outstanding_amount=F('outstanding_amount')
+    ).values('erpnext_id', 'customer_name', 'outstanding_amount')
+    return Response(list(customers))
+
+
+@api_view(['GET'])
+def item_list(request):
+    items = Item.objects.values(
+        'erpnext_id', 'code', 'name', 'standard_rate', 'stock_uom'
+    )
+    return Response(list(items))
+
+@api_view(['GET'])
+def item_stock(request, item_id):
+    # Implement your stock checking logic here
+    # This might query ERPNext's API or your local database
+    return Response({
+        'available_qty': 10  # Example value
+    })
+ 
+
+@csrf_exempt
+def get_item_details(request):
+    item_code = request.GET.get('item_code')
+    if not item_code:
+        return JsonResponse({'error': 'Item code required'}, status=400)
+    
+    try:
+        item = Item.objects.get(erpnext_id=item_code)
+        return JsonResponse({
+            'rate': float(item.standard_rate),
+            'uom': item.stock_uom,
+            'description': item.description
+        })
+    except Item.DoesNotExist:
+        return JsonResponse({'error': 'Item not found'}, status=404)
+    
+    
+    
+    
+@login_required
+def sales_dashboard(request):
+    user = request.user
+    print(user)
+    
+    # Fetch Employee and Sales Person data in a single optimized query
+    employee_data = erpnext_api_request(
+        "Employee",
+        params={
+            "fields": json.dumps(["name", "employee_name", "branch"]),
+            "filters": json.dumps([["user_id", "=", user.username]]),
+            "limit_page_length": 1
+        },
+        request=request
+    )
+
+    if not employee_data or not isinstance(employee_data, list):
+        messages.error(request, "Employee record not found for this user. Contact administrator.")
+        sales_person_name = user.username
+        branch = user.username
+    else:
+        employee = employee_data[0] if employee_data else {}
+        branch = employee.get("branch", user.username)
+        sales_person_name = employee.get("employee_name", user.username)
+
+    # Optimized: Fetch customers directly using sales person filter
+    # Note: Changed to use sales_person name instead of sales_person_name which might be employee_name
+    customers = erpnext_api_request(
+        "Customer",
+        params={
+            "fields": json.dumps(["name", "customer_name","mobile_no"]),
+            "filters": json.dumps([
+                ["Sales Team", "sales_person", "=", branch]  # Using branch as sales person ID
+            ]),
+            "limit_page_length": 200
+        },
+        request=request
+    ) or []
+
+    context = {
+        'today': date.today(),
+        "branch": branch,
+        "user": user,
+        "sales_person_name": sales_person_name,
+        "customers": customers,
+        "customers_count": len(customers)
+    }
+    return render(request, "dashboards/sales_dashboard.html", context)
+
+
+
+@login_required
+@csrf_exempt
+def customer_outstanding(request):
+    customer_id = request.GET.get('customer_id')
+    if not customer_id:
+        return JsonResponse({'error': 'Missing customer_id', 'status': 'error'}, status=400)
+
+    customer_id = unquote(customer_id)
+    logger.info(f"Decoded customer ID: {customer_id}")
+
+    ERP_API_SECRET = os.getenv('ERP_API_SECRET')
+    ERP_API_KEY = os.getenv('ERP_API_KEY')
+    ERP_URL = os.getenv('ERP_URL')
+
+    headers = {"Authorization": f"token {ERP_API_KEY}:{ERP_API_SECRET}"}
+
+    try:
+        # URL encode each segment of the customer_id to handle slashes and special chars
+        resource_customer = "/".join(quote(part, safe='') for part in customer_id.split('/'))
+        url_customer = f"{ERP_URL}/api/resource/Customer/{resource_customer}"
+        
+        # Request both customer data and sales team in one call
+        params = {
+            "fields": json.dumps([
+                "name",
+                "customer_name",
+                "accounts",
+                "sales_team.sales_person",
+                "sales_team.allocated_percentage",
+                "sales_team.commission_rate"
+            ])
+        }
+
+        # Fetch customer data with sales team
+        resp_customer = requests.get(url_customer, headers=headers, params=params)
+        if resp_customer.status_code != 200:
+            logger.warning(f"Customer API call failed: {resp_customer.status_code} {resp_customer.text}")
+            return JsonResponse({'error': 'Customer not found', 'status': 'error'}, status=404)
+
+        customer_data = resp_customer.json().get('data')
+        if not customer_data:
+            return JsonResponse({'error': 'Customer data missing', 'status': 'error'}, status=404)
+
+        # Process accounts and outstanding balance
+        accounts = customer_data.get('accounts', [])
+        if not accounts or not (account_name := accounts[0].get('account')):
+            return JsonResponse({'error': 'No linked account found', 'status': 'error'}, status=400)
+
+        # Prepare GL Entry query parameters
+        filters = [
+            ["party", "=", customer_id],
+            ["account", "=", account_name],
+            ["docstatus", "=", 1]
+        ]
+        fields = ["sum(debit) as total_debit", "sum(credit) as total_credit"]
+
+        url_gl = f"{ERP_URL}/api/resource/GL Entry"
+        params_gl = {
+            "filters": json.dumps(filters),
+            "fields": json.dumps(fields)
+        }
+
+        # Fetch GL Entry data
+        resp_gl = requests.get(url_gl, headers=headers, params=params_gl)
+        if resp_gl.status_code != 200:
+            logger.warning(f"GL Entry API call failed: {resp_gl.status_code} {resp_gl.text}")
+            return JsonResponse({'error': 'Failed to get GL entries', 'status': 'error'}, status=500)
+
+        gl_data = (resp_gl.json().get('data') or [{}])[0]
+        outstanding = float(gl_data.get('total_debit') or 0) - float(gl_data.get('total_credit') or 0)
+
+        # Process sales team data
+        sales_team = []
+        for member in customer_data.get('sales_team', []):
+            sales_team.append({
+                'sales_person': member.get('sales_person'),
+                'allocated_percentage': float(member.get('allocated_percentage', 100)),
+                'commission_rate': float(member.get('commission_rate', 0))
+            })
+
+        return JsonResponse({
+            'outstanding': outstanding,
+            'account': account_name,
+            'sales_team': sales_team,
+            'status': 'success'
+        })
+
+    except Exception as e:
+        logger.exception("Error fetching customer data")
+        return JsonResponse({'error': str(e), 'status': 'error'}, status=500)
+
+ERP_API_SECRET = os.getenv('ERP_API_SECRET')
+ERP_API_KEY = os.getenv('ERP_API_KEY')
+ERP_URL = os.getenv('ERP_URL')
+@login_required
+def get_warehouses(request):
+    
+
+    headers = {
+        "Authorization": f"token {ERP_API_KEY}:{ERP_API_SECRET}"
+    }
+
+    try:
+        url = f"{ERP_URL}/api/resource/Warehouse"
+        params = {
+            "fields": '["name"]',
+            "limit_page_length": 100
+        }
+
+        resp = requests.get(url, headers=headers, params=params)
+        if resp.status_code != 200:
+            return JsonResponse({'error': 'Failed to fetch warehouses'}, status=500)
+
+        warehouses = resp.json().get('data', [])
+        return JsonResponse({'warehouses': warehouses})
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+def fetch_items_from_erp(request):
+    search_term = request.GET.get('search', '').strip()
+    warehouse = request.GET.get('warehouse', '')
+    limit = int(request.GET.get('limit', 20))
+
+    try:
+        # 1️⃣ Step 1: Fast search from ERPNext
+        search_payload = {
+            'txt': search_term,
+            'doctype': 'Item',
+            'limit': limit
+        }
+
+        if warehouse:
+            # Filter only items in given warehouse
+            bin_response = requests.get(
+                f"{ERP_URL}/api/resource/Bin",
+                headers={'Authorization': f'token {ERP_API_KEY}:{ERP_API_SECRET}'},
+                params={
+                    'fields': '["item_code"]',
+                    'filters': f'[["warehouse", "=", "{warehouse}"]]',
+                    'limit_page_length': 1000
+                },
+                timeout=5
+            )
+            bin_response.raise_for_status()
+            item_codes_in_wh = [bin['item_code'] for bin in bin_response.json().get('data', [])]
+            if not item_codes_in_wh:
+                return JsonResponse({'items': []})
+            search_payload['filters'] = {'name': ['in', item_codes_in_wh]}
+
+        search_response = requests.post(
+            f"{ERP_URL}/api/method/frappe.desk.search.search_link",
+            headers={
+                'Authorization': f'token {ERP_API_KEY}:{ERP_API_SECRET}',
+                'Content-Type': 'application/json'
+            },
+            json=search_payload,
+            timeout=5
+        )
+        search_response.raise_for_status()
+        search_results = search_response.json().get('message', [])
+
+        if not search_results:
+            return JsonResponse({'items': []})
+
+        item_codes = [item['value'] for item in search_results]
+
+        # 2️⃣ Step 2: Get quantities from Bin
+        bin_params = {
+            'fields': '["item_code", "actual_qty", "warehouse"]',
+            'filters': f'[["item_code", "in", {json.dumps(item_codes)}]]',
+            'limit_page_length': 1000
+        }
+        bin_qty_response = requests.get(
+            f"{ERP_URL}/api/resource/Bin",
+            headers={'Authorization': f'token {ERP_API_KEY}:{ERP_API_SECRET}'},
+            params=bin_params,
+            timeout=5
+        )
+        bin_qty_response.raise_for_status()
+        bin_data = bin_qty_response.json().get('data', [])
+        qty_map = {}
+        for b in bin_data:
+            code = b['item_code']
+            qty_map[code] = qty_map.get(code, 0) + float(b.get('actual_qty', 0))
+
+        # 3️⃣ Step 3: Get prices & UOM in bulk
+        price_params = {
+            'fields': '["item_code", "price_list_rate"]',
+            'filters': f'[["item_code", "in", {json.dumps(item_codes)}], ["selling", "=", 1]]',
+            'limit_page_length': 1000
+        }
+        price_response = requests.get(
+            f"{ERP_URL}/api/resource/Item Price",
+            headers={'Authorization': f'token {ERP_API_KEY}:{ERP_API_SECRET}'},
+            params=price_params,
+            timeout=5
+        )
+        price_response.raise_for_status()
+        prices = {p['item_code']: float(p.get('price_list_rate', 0)) for p in price_response.json().get('data', [])}
+
+        # Fetch UOM
+        item_params = {
+            'fields': '["name", "stock_uom"]',
+            'filters': f'[["name", "in", {json.dumps(item_codes)}]]',
+            'limit_page_length': 1000
+        }
+        item_response = requests.get(
+            f"{ERP_URL}/api/resource/Item",
+            headers={'Authorization': f'token {ERP_API_KEY}:{ERP_API_SECRET}'},
+            params=item_params,
+            timeout=5
+        )
+        item_response.raise_for_status()
+        uom_map = {i['name']: i.get('stock_uom', '') for i in item_response.json().get('data', [])}
+
+        # 4️⃣ Step 4: Merge data
+        items = []
+        for sr in search_results:
+            code = sr['value']
+            items.append({
+                'code': code,
+                'name': sr.get('description', '').split(' - ')[0],
+                'description': sr.get('description', ''),
+                'available_qty': qty_map.get(code, 0.0),
+                'rate': prices.get(code, 0.0),
+                'uom': uom_map.get(code, ''),
+                'warehouse': warehouse if warehouse else None
+            })
+
+        return JsonResponse({'items': items})
+
+    except requests.RequestException as e:
+        logger.error(f"ERP API error: {str(e)}")
+        return JsonResponse({'error': 'Failed to search items'}, status=500)
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        return JsonResponse({'error': 'An unexpected error occurred'}, status=500)

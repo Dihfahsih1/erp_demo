@@ -21,6 +21,7 @@ ALLOWED_HOSTS = []
 
 
 INSTALLED_APPS = [ 
+    'corsheaders',
     'dal',
     'dal_select2',            
     'erp',
@@ -50,6 +51,7 @@ IMPORT_EXPORT_USE_TRANSACTIONS = True
 IMPORT_EXPORT_SKIP_ADMIN_LOG = True    
 
 MIDDLEWARE = [
+     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

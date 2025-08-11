@@ -6,6 +6,7 @@ from django.contrib.auth import views as auth_views
 
 urlpatterns = [
      path('', views.customer_sales_dashboard, name='dashboard'),
+     path('api/orders/create/', views.create_sales_order, name='create_sales_order'),
      path('api/sales/dashboard/', views.sales_dashboard, name='sales_dashboard'),
      path('api/customer-fields/', views.get_customer_fields, name='customer_fields'),
      path('api/sales-persons/', views.sales_persons, name='sales_persons'),
@@ -68,5 +69,11 @@ urlpatterns = [
      path('weekly-report/generate/', views.generate_weekly_report, name='generate_weekly_report'),
      path('price-list/generate/', views.generate_price_list, name='generate_price_list'),
      path('customer-contacts/', views.view_customer_contacts, name='view_customer_contacts'),
+     
+     
+     path('api/customer-gl-outstanding/', views.customer_outstanding, name='customer_gl_outstanding'),
+     path('api/get-warehouses/', views.get_warehouses, name='get_warehouses'),
+     path('api/items/', views.fetch_items_from_erp, name='fetch_items_from_erp'),
+     
     
 ]

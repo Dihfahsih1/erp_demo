@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date 
 from erp.models import SalesOrder
 from django.utils.dateparse import parse_datetime
-from .models import CustomerDetails, CustomerAddress, ERPUser, SalesPerson, CustomerSalesTeam
+from .models import CustomerDetails, CustomerAddress, ERPUser, SalesPerson, CustomerSalesTeam, SalesPersonTarget
 from django.db import IntegrityError
 
 ERP_BASE_URL = settings.ERP_NEXT_URL
@@ -346,3 +346,44 @@ def fetch_erpnext_users():
             continue  # Likely a duplicate email or other unique field conflict
 
     return f"Created: {created_count}, Skipped: {skipped_count}, Failed: {failed_count} users from ERPNext"
+
+@shared_task
+def fetch_erpnext_salespersons():
+    url = f"{ERP_BASE_URL}/api/resource/Sales Person?limit_page_length=1000"
+    res = requests.get(url, headers=HEADERS)
+    
+    if res.status_code != 200:
+        return f"Failed to fetch Sales Persons: {res.status_code}"
+    
+    sales_people = res.json().get("data", [])
+    created_count = 0
+
+    for sp in sales_people:
+        sales_person_name = sp.get("name")
+        if SalesPerson.objects.filter(sales_person_name=sales_person_name).exists():
+            continue  # Avoid duplicates
+
+        # Get full details
+        detail_url = f"{ERP_BASE_URL}/api/resource/Sales Person/{sales_person_name}"
+        detail_res = requests.get(detail_url, headers=HEADERS)
+        if detail_res.status_code != 200:
+            continue
+
+        data = detail_res.json().get("data", {})
+
+        SalesPerson.objects.create(
+            
+            sales_person_name=data.get("sales_person_name", ""),
+            parent_sales_person=data.get("parent_sales_person") or None,
+            commission_rate=data.get("commission_rate") or 0.0,
+            is_group=data.get("is_group", False),
+            enabled=data.get("enabled", True),
+            employee=data.get("employee") or None,
+            department=data.get("department") or None,
+            lft=data.get("lft") or 0,
+            rgt=data.get("rgt") or 0,
+            old_parent=data.get("old_parent", ""),
+        )
+        created_count += 1
+
+    return f"{created_count} new sales persons imported from ERPNext"

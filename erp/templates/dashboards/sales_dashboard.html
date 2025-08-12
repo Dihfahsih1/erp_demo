@@ -328,36 +328,36 @@
                 <h4 class="mb-4">Sales Dashboard</h4>
             </div>
         </div>
-<div class="row">
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="value text-primary">{{ customers_billed_this_month }}</div>
-            <div class="label">Customers Billed</div>
-            <div class="mt-2"><i class="bi bi-people"></i> This Month</div>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value text-primary">{{ customers_billed_this_month }}</div>
+                    <div class="label">Customers Billed</div>
+                    <div class="mt-2"><i class="bi bi-people"></i> This Month</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value text-info">Shs. {{ monthly_target|floatformat:0 }}</div>
+                    <div class="label">Monthly Target</div>
+                    <div class="mt-2">Shs. {{ monthly_sales|floatformat:0 }} achieved</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value text-success">{{ monthly_achievement_percent|floatformat:1 }}%</div>
+                    <div class="label">Monthly Achievement</div>
+                    <div class="mt-2"><i class="bi bi-arrow-up"></i> vs Target</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="value text-warning">{{ yearly_growth_percent|floatformat:1 }}%</div>
+                    <div class="label">Yearly Growth</div>
+                    <div class="mt-2"><i class="bi bi-graph-up"></i> vs. Last Year</div>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="value text-info">Shs. {{ monthly_target|floatformat:0 }}</div>
-            <div class="label">Monthly Target</div>
-            <div class="mt-2">Shs. {{ monthly_sales|floatformat:0 }} achieved</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="value text-success">{{ monthly_achievement_percent|floatformat:1 }}%</div>
-            <div class="label">Monthly Achievement</div>
-            <div class="mt-2"><i class="bi bi-arrow-up"></i> vs Target</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="value text-warning">{{ yearly_growth_percent|floatformat:1 }}%</div>
-            <div class="label">Yearly Growth</div>
-            <div class="mt-2"><i class="bi bi-graph-up"></i> vs. Last Year</div>
-        </div>
-    </div>
-</div>
 
         
 

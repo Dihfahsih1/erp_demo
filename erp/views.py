@@ -1541,188 +1541,11 @@ def get_item_details(request):
         return JsonResponse({'error': 'Item not found'}, status=404)
     
 from datetime import date
-import calendar    
-def sales_dashboard(request):
-    monthly_target = 5_000_000 
-    user = request.user 
-    # Fetch Employee and Sales Person data
-    employee_data = erpnext_api_request(
-        "Employee",
-        params={
-            "fields": json.dumps(["name", "employee_name", "branch"]),
-            "filters": json.dumps([["user_id", "=", user.username]]),
-            "limit_page_length": 1
-        },
-        request=request
-    )
+from datetime import date, timedelta
+import json
+import calendar
 
-    if not employee_data or not isinstance(employee_data, list):
-        messages.error(request, "Employee record not found for this user. Contact administrator.")
-        sales_person_name = user.username
-        branch = user.username
-    else:
-        employee = employee_data[0] if employee_data else {}
-        branch = employee.get("branch", user.username)
-        sales_person_name = employee.get("employee_name", user.username)
 
-    # Fetch customers assigned to this sales person (branch)
-    customers = erpnext_api_request(
-        "Customer",
-        params={
-            "fields": json.dumps(["name", "customer_name", "mobile_no"]),
-            "filters": json.dumps([
-                ["Sales Team", "sales_person", "=", branch]
-            ]),
-            "limit_page_length": 200
-        },
-        request=request
-    ) or []
-
-    # Initialize sales orders list
-    sales_orders = []
-    
-    # Only proceed if we have customers
-    if customers:
-        # Option 1: Fetch orders using sales person filter directly (more efficient)
-        try:
-            sales_orders_data = erpnext_api_request(
-                "Sales Order",
-                params={
-                    "fields": json.dumps([
-                        "name", "customer", "customer_name", "transaction_date", 
-                        "delivery_date", "grand_total", "status", "per_billed"
-                    ]),
-                    "filters": json.dumps([
-                        ["Sales Team", "sales_person", "=", branch],
-                        ["docstatus", "=", 1]  # Only submitted orders
-                    ]),
-                    "order_by": "transaction_date desc",
-                    "limit_page_length": 50  # Limit to recent 50 orders
-                },
-                request=request
-            ) or []
-            
-            # Format the data
-            sales_orders = [
-                {
-                    'id': order.get('name'),
-                    'customer': order.get('customer_name', order.get('customer')),
-                    'date': order.get('transaction_date'),
-                    'delivery_date': order.get('delivery_date'),
-                    'amount': float(order.get('grand_total', 0)),
-                    'status': order.get('status'),
-                    'billed_percent': float(order.get('per_billed', 0))
-                }
-                for order in sales_orders_data
-            ]
-            
-        except Exception as e:
-            logger.error(f"Error fetching sales orders by sales person: {str(e)}")
-            
-            # Fallback Option 2: If direct sales person filter doesn't work, fetch in batches
-            customer_names = [customer['name'] for customer in customers]
-            batch_size = 20  # Number of customers per batch
-            
-            for i in range(0, len(customer_names), batch_size):
-                batch = customer_names[i:i + batch_size]
-                try:
-                    batch_orders = erpnext_api_request(
-                        "Sales Order",
-                        params={
-                            "fields": json.dumps([
-                                "name", "customer", "customer_name", "transaction_date", 
-                                "delivery_date", "grand_total", "status", "per_billed"
-                            ]),
-                            "filters": json.dumps([
-                                ["customer", "in", batch],
-                                ["docstatus", "=", 1]
-                            ]),
-                            "limit_page_length": 50
-                        },
-                        request=request
-                    ) or []
-                    
-                    # Extend the sales orders list
-                    sales_orders.extend([
-                        {
-                            'id': order.get('name'),
-                            'customer': order.get('customer_name', order.get('customer')),
-                            'date': order.get('transaction_date'),
-                            'delivery_date': order.get('delivery_date'),
-                            'amount': float(order.get('grand_total', 0)),
-                            'status': order.get('status'),
-                            'billed_percent': float(order.get('per_billed', 0))
-                        }
-                        for order in batch_orders
-                    ])
-                    
-                except Exception as batch_error:
-                    logger.error(f"Error fetching batch {i//batch_size + 1}: {str(batch_error)}")
-                    continue
-
-    # Sort all orders by date (descending) and get unique orders
-    unique_orders = {}
-    for order in sales_orders:
-        if order['id'] not in unique_orders:
-            unique_orders[order['id']] = order
-    
-    sorted_orders = sorted(unique_orders.values(), 
-                          key=lambda x: x['date'] if x['date'] else "", 
-                          reverse=True)
-    
-   # === After sorted_orders is ready, add the stats calculations ===
-    sorted_orders = sorted(unique_orders.values(), 
-                          key=lambda x: x['date'] if x['date'] else "", 
-                          reverse=True)
-
-    total_orders = len(sorted_orders)
-    total_sales = sum(order['amount'] for order in sorted_orders)
-    average_order_value = total_sales / total_orders if total_orders > 0 else 0
-
-    # ===== NEW STATS =====
-    today = date.today()
-    first_day_month = today.replace(day=1)
-    last_year_same_month_start = first_day_month.replace(year=today.year - 1)
-    last_year_same_month_end = last_year_same_month_start.replace(
-        day=calendar.monthrange(last_year_same_month_start.year, last_year_same_month_start.month)[1]
-    )
-
-    # This month’s data
-    this_month_orders = [o for o in sorted_orders if o['date'] and o['date'] >= str(first_day_month)]
-    customers_billed_this_month = len(set(o['customer'] for o in this_month_orders))
-    this_month_sales = sum(o['amount'] for o in this_month_orders)
-
-    # Last year’s same month data
-    last_year_orders = [
-        o for o in sorted_orders
-        if o['date'] and last_year_same_month_start <= date.fromisoformat(o['date']) <= last_year_same_month_end
-    ]
-    last_year_sales = sum(o['amount'] for o in last_year_orders)
-
-    # Calculations
-    monthly_achievement_percent = (this_month_sales / monthly_target * 100) if monthly_target else 0
-    yearly_growth_percent = ((this_month_sales - last_year_sales) / last_year_sales * 100) if last_year_sales else 0
-
-    context = {
-        'today': today,
-        "branch": branch,
-        "user": user,
-        "sales_person_name": sales_person_name,
-        "customers": customers,
-        "customers_count": len(customers),
-        "sales_orders": sorted_orders,
-        "total_orders": total_orders,
-        "total_sales": total_sales,
-        "average_order_value": average_order_value,
-        "recent_orders": sorted_orders[:10],
-        # ===== Pass the new 4 key stats =====
-        "customers_billed_this_month": customers_billed_this_month,
-        "monthly_target": monthly_target,
-        "monthly_sales": this_month_sales,
-        "monthly_achievement_percent": monthly_achievement_percent,
-        "yearly_growth_percent": yearly_growth_percent
-    }
-    return render(request, "dashboards/sales_dashboard.html", context)
 @login_required
 @csrf_exempt
 def customer_outstanding(request):
@@ -1993,6 +1816,236 @@ def fetch_sales_order_details(request):
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}", exc_info=True)
         return JsonResponse({'error': f"Unexpected error: {str(e)}"}, status=500)
+
     
-    
-    
+def get_employee_info(user, request):
+    employee_data = erpnext_api_request(
+        "Employee",
+        params={
+            "fields": json.dumps(["name", "employee_name", "branch"]),
+            "filters": json.dumps([["user_id", "=", user.username]]),
+            "limit_page_length": 1
+        },
+        request=request
+    )
+    if not employee_data or not isinstance(employee_data, list):
+        messages.error(request, "Employee record not found for this user. Contact administrator.")
+        return user.username, user.username  # sales_person_name, branch fallback
+    employee = employee_data[0]
+    return employee.get("employee_name", user.username), employee.get("branch", user.username)
+
+def get_customers_by_sales_person(branch, request):
+    customers = erpnext_api_request(
+        "Customer",
+        params={
+            "fields": json.dumps(["name", "customer_name", "mobile_no"]),
+            "filters": json.dumps([
+                ["Sales Team", "sales_person", "=", branch]
+            ]),
+            "limit_page_length": 200
+        },
+        request=request
+    )
+    return customers or []
+
+def process_sales_orders(sales_orders_data):
+    return [
+        {
+            'id': order.get('name'),
+            'customer': order.get('customer_name', order.get('customer')),
+            'date': order.get('transaction_date'),
+            'delivery_date': order.get('delivery_date'),
+            'amount': float(order.get('grand_total', 0)),
+            'status': order.get('status'),
+            'billed_percent': float(order.get('per_billed', 0))
+        }
+        for order in sales_orders_data
+    ]
+
+def get_sales_orders_by_sales_person(branch, customers, request):
+    sales_orders = []
+    try:
+        sales_orders_data = erpnext_api_request(
+            "Sales Order",
+            params={
+                "fields": json.dumps([
+                    "name", "customer", "customer_name", "transaction_date", 
+                    "delivery_date", "grand_total", "status", "per_billed"
+                ]),
+                "filters": json.dumps([
+                    ["Sales Team", "sales_person", "=", branch],
+                    ["docstatus", "=", 1]
+                ]),
+                "order_by": "transaction_date desc",
+                "limit_page_length": 50
+            },
+            request=request
+        ) or []
+        sales_orders = process_sales_orders(sales_orders_data)
+    except Exception as e:
+        logger.error(f"Error fetching sales orders by sales person: {str(e)}")
+        # Fallback to batch fetch by customers
+        customer_names = [c['name'] for c in customers]
+        batch_size = 20
+        for i in range(0, len(customer_names), batch_size):
+            batch = customer_names[i:i + batch_size]
+            try:
+                batch_orders_data = erpnext_api_request(
+                    "Sales Order",
+                    params={
+                        "fields": json.dumps([
+                            "name", "customer", "customer_name", "transaction_date", 
+                            "delivery_date", "grand_total", "status", "per_billed"
+                        ]),
+                        "filters": json.dumps([
+                            ["customer", "in", batch],
+                            ["docstatus", "=", 1]
+                        ]),
+                        "limit_page_length": 50
+                    },
+                    request=request
+                ) or []
+                sales_orders.extend(process_sales_orders(batch_orders_data))
+            except Exception as batch_error:
+                logger.error(f"Error fetching batch {i//batch_size + 1}: {str(batch_error)}")
+                continue
+    return sales_orders
+
+def calculate_sales_stats(sorted_orders, monthly_target):
+    total_orders = len(sorted_orders)
+    total_sales = sum(order['amount'] for order in sorted_orders)
+    average_order_value = total_sales / total_orders if total_orders > 0 else 0
+
+    today = date.today()
+    first_day_month = today.replace(day=1)
+    last_year_same_month_start = first_day_month.replace(year=today.year - 1)
+    last_year_same_month_end = last_year_same_month_start.replace(
+        day=calendar.monthrange(last_year_same_month_start.year, last_year_same_month_start.month)[1]
+    )
+
+    this_month_orders = [o for o in sorted_orders if o['date'] and o['date'] >= str(first_day_month)]
+    customers_billed_this_month = len(set(o['customer'] for o in this_month_orders))
+    this_month_sales = sum(o['amount'] for o in this_month_orders)
+
+    last_year_orders = [
+        o for o in sorted_orders
+        if o['date'] and last_year_same_month_start <= date.fromisoformat(o['date']) <= last_year_same_month_end
+    ]
+    last_year_sales = sum(o['amount'] for o in last_year_orders)
+
+    monthly_achievement_percent = (this_month_sales / monthly_target * 100) if monthly_target else 0
+    yearly_growth_percent = ((this_month_sales - last_year_sales) / last_year_sales * 100) if last_year_sales else 0
+
+    return {
+        "total_orders": total_orders,
+        "total_sales": total_sales,
+        "average_order_value": average_order_value,
+        "customers_billed_this_month": customers_billed_this_month,
+        "monthly_sales": this_month_sales,
+        "monthly_achievement_percent": monthly_achievement_percent,
+        "yearly_growth_percent": yearly_growth_percent,
+    }
+
+
+
+import datetime, json
+from dateutil.relativedelta import relativedelta
+
+def get_sales_person_stats(user, request):
+    # 1. Get sales person name dynamically
+    sales_person_name, _ = get_employee_info(user, request)
+
+    # 2. Get yearly target from ERPNext
+    sp_data = erpnext_api_request(
+        f"Sales Person/{sales_person_name}",
+        request=request
+    )
+    targets = sp_data["targets"] if "targets" in sp_data else []
+    yearly_target = targets[0]["target_amount"] if targets else 0
+    monthly_target = yearly_target / 12 if yearly_target else 0
+
+    # 3. Date ranges for current and last month
+    today = datetime.date.today()
+    first_day_current = today.replace(day=1)
+    last_day_current = (first_day_current + relativedelta(months=1)) - datetime.timedelta(days=1)
+    first_day_last = first_day_current - relativedelta(months=1)
+    last_day_last = first_day_current - datetime.timedelta(days=1)
+
+    # 4. Fetch sales for current month
+    current_month_invoices = erpnext_api_request(
+        "Sales Invoice",
+        params={
+            "fields": json.dumps(["grand_total"]),
+            "filters": json.dumps([
+                ["posting_date", ">=", str(first_day_current)],
+                ["posting_date", "<=", str(last_day_current)],
+                ["docstatus", "=", 1],
+                ["Sales Team", "sales_person", "=", sales_person_name]
+            ])
+        },
+        request=request
+    )
+    current_month_total = sum(inv["grand_total"] for inv in current_month_invoices)
+
+    # 5. Fetch sales for last month
+    last_month_invoices = erpnext_api_request(
+        "Sales Invoice",
+        params={
+            "fields": json.dumps(["grand_total"]),
+            "filters": json.dumps([
+                ["posting_date", ">=", str(first_day_last)],
+                ["posting_date", "<=", str(last_day_last)],
+                ["docstatus", "=", 1],
+                ["Sales Team", "sales_person", "=", sales_person_name]
+            ])
+        },
+        request=request
+    )
+    last_month_total = sum(inv["grand_total"] for inv in last_month_invoices)
+
+    # 6. Calculate stats
+    cm_achievement_pct = (current_month_total / monthly_target) * 100 if monthly_target else 0
+    if last_month_total > 0:
+        cm_vs_lm_growth_pct = ((current_month_total - last_month_total) / last_month_total) * 100
+    else:
+        cm_vs_lm_growth_pct = 100 if current_month_total > 0 else 0
+
+    return {
+        "sales_person": sales_person_name,
+        "yearly_target": yearly_target,
+        "monthly_target": monthly_target,
+        "current_month_sales": current_month_total,
+        "last_month_sales": last_month_total,
+        "achievement_pct": round(cm_achievement_pct, 2),
+        "cm_vs_lm_growth_pct": round(cm_vs_lm_growth_pct, 2)
+    }
+
+def sales_dashboard(request):
+    monthly_target = 5_000_000 
+    user = request.user
+
+    sales_person_name, branch = get_employee_info(user, request)
+    customers = get_customers_by_sales_person(branch, request)
+    sales_orders = get_sales_orders_by_sales_person(branch, customers, request)
+
+    # Remove duplicates and sort orders by date descending
+    unique_orders = {order['id']: order for order in sales_orders}
+    sorted_orders = sorted(unique_orders.values(), key=lambda x: x['date'] or "", reverse=True)
+
+    stats = calculate_sales_stats(sorted_orders, monthly_target)
+    monthly_stats = get_sales_person_stats(user, request)
+
+    context = {
+        "monthly_stats": monthly_stats,
+        'today': date.today(),
+        "branch": branch,
+        "user": user,
+        "sales_person_name": sales_person_name,
+        "customers": customers,
+        "customers_count": len(customers),
+        "sales_orders": sorted_orders,
+        "recent_orders": sorted_orders[:10],
+        "monthly_target": monthly_target,
+        **stats
+    }
+    return render(request, "dashboards/sales_dashboard.html", context)

@@ -1818,21 +1818,20 @@ def fetch_sales_order_details(request):
         return JsonResponse({'error': f"Unexpected error: {str(e)}"}, status=500)
 
     
-def get_employee_info(user, request):
+def get_employee_info(user, request): 
     employee_data = erpnext_api_request(
         "Employee",
         params={
-            "fields": json.dumps(["name", "employee_name", "branch"]),
+            "fields": json.dumps(["branch"]),
             "filters": json.dumps([["user_id", "=", user.username]]),
             "limit_page_length": 1
         },
         request=request
     )
-    if not employee_data or not isinstance(employee_data, list):
-        messages.error(request, "Employee record not found for this user. Contact administrator.")
-        return user.username, user.username  # sales_person_name, branch fallback
-    employee = employee_data[0]
-    return employee.get("employee_name", user.username), employee.get("branch", user.username)
+
+    # Assuming the employee record always exists and branch is set
+    return employee_data[0]["branch"]
+
 
 def get_customers_by_sales_person(branch, request):
     customers = erpnext_api_request(
@@ -1953,32 +1952,42 @@ from dateutil.relativedelta import relativedelta
 
 def get_sales_person_stats(user, request):
     # 1. Get sales person name dynamically
-    sales_person_name, _ = get_employee_info(user, request)
+    sales_person_name = get_employee_info(user, request)  # Assuming this returns branch or sales person name as string
 
     # 2. Get yearly target from ERPNext
     sp_data = erpnext_api_request(
         f"Sales Person/{sales_person_name}",
         request=request
     )
-    targets = sp_data["targets"] if "targets" in sp_data else []
+    targets = sp_data.get("targets", [])
     yearly_target = targets[0]["target_amount"] if targets else 0
     monthly_target = yearly_target / 12 if yearly_target else 0
 
-    # 3. Date ranges for current and last month
+    # 3. Date ranges for current partial month and last month partial
     today = datetime.date.today()
-    first_day_current = today.replace(day=1)
-    last_day_current = (first_day_current + relativedelta(months=1)) - datetime.timedelta(days=1)
-    first_day_last = first_day_current - relativedelta(months=1)
-    last_day_last = first_day_current - datetime.timedelta(days=1)
+    start_current_month = today.replace(day=1)
 
-    # 4. Fetch sales for current month
+    # Calculate last month start date
+    start_last_month = (start_current_month - relativedelta(months=1))
+
+    # Calculate end date for last month period — same day number as today or last day of last month if day too high
+    try:
+        end_last_period = start_last_month.replace(day=today.day)
+    except ValueError:
+        # If day doesn't exist in last month (e.g., Feb 30), use last day of last month
+        end_last_period = (start_last_month + relativedelta(months=1)) - datetime.timedelta(days=1)
+
+    # Current period is from 1st to today (inclusive)
+    end_current_period = today
+
+    # 4. Fetch sales for current partial month
     current_month_invoices = erpnext_api_request(
         "Sales Invoice",
         params={
             "fields": json.dumps(["grand_total"]),
             "filters": json.dumps([
-                ["posting_date", ">=", str(first_day_current)],
-                ["posting_date", "<=", str(last_day_current)],
+                ["posting_date", ">=", str(start_current_month)],
+                ["posting_date", "<=", str(end_current_period)],
                 ["docstatus", "=", 1],
                 ["Sales Team", "sales_person", "=", sales_person_name]
             ])
@@ -1987,14 +1996,14 @@ def get_sales_person_stats(user, request):
     )
     current_month_total = sum(inv["grand_total"] for inv in current_month_invoices)
 
-    # 5. Fetch sales for last month
+    # 5. Fetch sales for last month partial period
     last_month_invoices = erpnext_api_request(
         "Sales Invoice",
         params={
             "fields": json.dumps(["grand_total"]),
             "filters": json.dumps([
-                ["posting_date", ">=", str(first_day_last)],
-                ["posting_date", "<=", str(last_day_last)],
+                ["posting_date", ">=", str(start_last_month)],
+                ["posting_date", "<=", str(end_last_period)],
                 ["docstatus", "=", 1],
                 ["Sales Team", "sales_person", "=", sales_person_name]
             ])
@@ -2003,8 +2012,13 @@ def get_sales_person_stats(user, request):
     )
     last_month_total = sum(inv["grand_total"] for inv in last_month_invoices)
 
-    # 6. Calculate stats
-    cm_achievement_pct = (current_month_total / monthly_target) * 100 if monthly_target else 0
+    # 6. Pro-rate the monthly target for days passed so far in current month
+    total_days_current_month = (start_current_month + relativedelta(months=1) - datetime.timedelta(days=1)).day
+    days_passed = today.day
+    pro_rated_target = (monthly_target / total_days_current_month) * days_passed if monthly_target else 0
+
+    # 7. Calculate stats
+    achievement_pct = (current_month_total / pro_rated_target) * 100 if pro_rated_target else 0
     if last_month_total > 0:
         cm_vs_lm_growth_pct = ((current_month_total - last_month_total) / last_month_total) * 100
     else:
@@ -2014,19 +2028,19 @@ def get_sales_person_stats(user, request):
         "sales_person": sales_person_name,
         "yearly_target": yearly_target,
         "monthly_target": monthly_target,
+        "pro_rated_target": pro_rated_target,
         "current_month_sales": current_month_total,
         "last_month_sales": last_month_total,
-        "achievement_pct": round(cm_achievement_pct, 2),
+        "achievement_pct": round(achievement_pct, 2),
         "cm_vs_lm_growth_pct": round(cm_vs_lm_growth_pct, 2)
     }
-
 def sales_dashboard(request):
     monthly_target = 5_000_000 
     user = request.user
 
-    sales_person_name, branch = get_employee_info(user, request)
-    customers = get_customers_by_sales_person(branch, request)
-    sales_orders = get_sales_orders_by_sales_person(branch, customers, request)
+    sales_person_name = get_employee_info(user, request)
+    customers = get_customers_by_sales_person(sales_person_name, request)
+    sales_orders = get_sales_orders_by_sales_person(sales_person_name, customers, request)
 
     # Remove duplicates and sort orders by date descending
     unique_orders = {order['id']: order for order in sales_orders}
@@ -2038,7 +2052,7 @@ def sales_dashboard(request):
     context = {
         "monthly_stats": monthly_stats,
         'today': date.today(),
-        "branch": branch,
+        "branch": sales_person_name,
         "user": user,
         "sales_person_name": sales_person_name,
         "customers": customers,

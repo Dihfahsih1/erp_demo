@@ -264,6 +264,7 @@
     }
 </style>
 </head>
+{% load humanize %}
 <body>
     <div class="sidebar col-md-3 col-lg-2 d-md-block">
         <div class="text-center mb-4">
@@ -305,7 +306,7 @@
     </div>
 
     <div class="main-content">
-        <div class="top-bar">
+        {% comment %} <div class="top-bar">
             <div class="search-bar">
                 <div class="input-group">
                     <input type="text" id="keywordSearch" class="form-control" placeholder="Search orders, customers...">
@@ -317,16 +318,84 @@
             <div class="user-profile">
                 <img src="https://via.placeholder.com/50" alt="User">
                 <div>
-                    <div class="fw-bold">{{user}}</div>
+                    <div class="">{{user}}</div>
                     <div class="text-muted small">Region - {{branch}}</div>
                 </div>
             </div>
-        </div>
+        </div> {% endcomment %}
 
         <div class="row">
-            <div class="col-md-12">
-                <h4 class="mb-4">Sales Dashboard</h4>
-            </div>
+            <div class="container my-4">
+                <h2 class="mb-4 text-center">Sales Dashboard - {{ monthly_stats.sales_person }}</h2>
+                <div class="row g-3 justify-content-center">
+
+                    <!-- Card 1: Targets -->
+                    <div class="col-12 col-sm-6 col-md-3">
+                    <div class="card shadow-sm border-primary small-card">
+                        <div class="card-body p-3 text-primary text-center"> 
+                        <h6 class="card-subtitle mb-2">Targets</h6>
+                        <div class="d-flex justify-content-between fs-6 fw-semibold">
+                            <span>Yearly:</span>
+                            <span>{{ monthly_stats.yearly_target|floatformat:0 |intcomma}}</span>
+                        </div>
+                        <div class="d-flex justify-content-between fs-6 fw-semibold">
+                            <span>Monthly:</span>
+                            <span>{{ monthly_stats.monthly_target|floatformat:0 |intcomma}}</span>
+                        </div>
+                        </div>
+                    </div>
+                    </div>
+
+                    <!-- Card 2: Sales -->
+                    <div class="col-12 col-sm-6 col-md-3">
+                    <div class="card shadow-sm border-success small-card">
+                        <div class="card-body p-3 text-success text-center">
+                        <i class="bi bi-currency-fa-money-bill fs-3 mb-2"></i>
+                        <h6 class="card-subtitle mb-2">Sales</h6>
+                        <div class="d-flex justify-content-between fs-6 fw-semibold">
+                            <span>CM:</span>
+                            <span>{{ monthly_stats.current_month_sales|floatformat:0 |intcomma }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between fs-6 fw-semibold">
+                            <span>LM:</span>
+                            <span>{{ monthly_stats.last_month_sales|floatformat:0 |intcomma }}</span>
+                        </div>
+                        </div>
+                    </div>
+                    </div>
+
+                    <!-- Card 3: Achievement -->
+                    <div class="col-12 col-sm-6 col-md-3">
+                    <div class="card shadow-sm border-warning small-card">
+                        <div class="card-body p-3 text-warning text-center">
+                        <i class="bi bi-trophy fs-3 mb-2"></i>
+                        <h6 class="card-subtitle mb-2">Achievement</h6>
+                        <div class="fs-5 fw-bold">{{ monthly_stats.achievement_pct }}%</div>
+                        </div>
+                    </div>
+                    </div>
+
+                    <!-- Card 4: Growth -->
+                    <div class="col-12 col-sm-6 col-md-3">
+                    <div class="card shadow-sm border-info small-card">
+                        <div class="card-body p-3 text-info text-center">
+                        <i class="bi bi-graph-up-arrow fs-3 mb-2"></i>
+                        <h6 class="card-subtitle mb-2">Growth (CM vs LM)</h6>
+                        <div class="fs-5 fw-bold">{{ monthly_stats.cm_vs_lm_growth_pct }}%</div>
+                        </div>
+                    </div>
+                    </div>
+
+                </div>
+                </div>
+
+                <style>
+                
+                .card-subtitle {
+                    font-weight: 600;
+                }
+                </style>
+
         </div>
         <div class="row">
             <div class="col-md-3">
@@ -357,7 +426,7 @@
                     <div class="mt-2"><i class="bi bi-graph-up"></i> vs. Last Year</div>
                 </div>
             </div>
-        </div>
+        </div> 
 
         
 
@@ -462,7 +531,7 @@
                                         <div class="col-md-6 mb-2">
                                             <div class="bg-light p-3 rounded shadow-sm">
                                                 <strong>Outstanding Balance:</strong>
-                                                <span id="outstandingBalance" class="text-primary fw-bold ms-2">UGX 0</span>
+                                                <span id="outstandingBalance" class="text-primary  ms-2">UGX 0</span>
                                             </div>
                                         </div>
 

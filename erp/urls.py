@@ -75,4 +75,5 @@ urlpatterns = [
      path('api/get-warehouses/', views.get_warehouses, name='get_warehouses'),
      path('api/items/', views.fetch_items_from_erp, name='fetch_items_from_erp'), 
      path('api/sales-order-details/', views.fetch_sales_order_details, name='fetch_sales_order_details'),
+     path('api/customer-ledger/', views.customer_ledger, name='customer_ledger')
 ]

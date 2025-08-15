@@ -2,46 +2,256 @@
 {% load static %}
 <html lang="en">
   <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <style>
+      :root {
+        --primary-color: #3498db;
+        --secondary-color: #2c3e50;
+        --accent-color: #e74c3c;
+        --light-bg: #f8f9fa;
+        --success-color: #2ecc71;
+        --warning-color: #f39c12;
+        --sidebar-width: 250px;
+        --sidebar-collapsed-width: 60px;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--light-bg);
+      }
+
+      .app-wrapper {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      .app-header {
+        background-color: white;
+        padding: 10px 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        z-index: 1100;
+        position: sticky;
+        top: 0;
+      }
+
+      .app-sidebar {
+        background-color: var(--secondary-color);
+        color: white;
+        width: var(--sidebar-width);
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        transition: transform 0.3s ease, width 0.3s ease;
+        z-index: 1000;
+        overflow-y: auto;
+      }
+
+      .app-sidebar.collapsed {
+        width: var(--sidebar-collapsed-width);
+      }
+
+      .app-sidebar .sidebar-brand {
+        padding: 15px;
+        text-align: center;
+      }
+
+      .app-sidebar .brand-link {
+        display: flex;
+        align-items: center;
+        color: white;
+        text-decoration: none;
+      }
+
+      .app-sidebar .brand-image {
+        width: 40px;
+        height: 40px;
+        margin-right: 10px;
+      }
+
+      .app-sidebar .brand-text {
+        font-size: 1.2rem;
+        font-weight: 300;
+      }
+
+      .app-sidebar.collapsed .brand-text,
+      .app-sidebar.collapsed .nav-link-text,
+      .app-sidebar.collapsed .nav-header {
+        display: none;
+      }
+
+      .app-sidebar.collapsed .brand-image {
+        margin-right: 0;
+      }
+
+      .app-sidebar .nav-link {
+        color: rgba(255, 255, 255, 0.8);
+        padding: 10px 15px;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        font-size: 1rem;
+        margin: 5px 10px;
+      }
+
+      .app-sidebar .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: white;
+      }
+
+      .app-sidebar .nav-link.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .app-sidebar .nav-link i {
+        margin-right: 10px;
+        font-size: 1.2rem;
+      }
+
+      .app-sidebar.collapsed .nav-link i {
+        margin-right: 0;
+      }
+
+      .app-sidebar .nav-header {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+      }
+
+      .app-main {
+        flex: 1 0 auto;
+        margin-left: var(--sidebar-width);
+        padding: 20px;
+        transition: margin-left 0.3s ease;
+      }
+
+      .app-main.sidebar-collapsed {
+        margin-left: var(--sidebar-collapsed-width);
+      }
+
+      .app-footer {
+        flex-shrink: 0;
+        background-color: white;
+        padding: 15px;
+        text-align: center;
+        box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+        margin-bottom: 20px;
+      }
+
+      .card:hover {
+        transform: translateY(-5px);
+      }
+
+      .alert {
+        margin: 0 15px 15px;
+      }
+
+      @media (max-width: 767.98px) {
+        .app-sidebar {
+          transform: translateX(-100%);
+          width: 200px;
+        }
+
+        .app-sidebar.active {
+          transform: translateX(0);
+        }
+
+        .app-main {
+          margin-left: 0;
+        }
+
+        .app-main.sidebar-collapsed {
+          margin-left: 0;
+        }
+
+        .app-sidebar .nav-link {
+          font-size: 0.9rem; /* Reduced font size on mobile */
+        }
+
+        .app-sidebar .nav-link i {
+          font-size: 1.1rem;
+        }
+
+        .app-sidebar .nav-header {
+          font-size: 0.8rem;
+        }
+      }
+
+      @media (min-width: 768px) {
+        .app-sidebar {
+          transform: translateX(0);
+        }
+      }
+    </style>
     {% include 'includes/head.html' %}
   </head>
-  <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
-    <div class="app-wrapper">      
+  <body class="bg-body-tertiary">
+    <div class="app-wrapper">
+      <header class="app-header">
+        <button class="btn btn-primary d-md-none" id="sidebarToggle">
+          <i class="bi bi-list"></i>
+        </button>
+      </header>
       {% include 'includes/sidebar.html' %}
-
       <main class="app-main">
         {% if messages %}
-          <div class="container mt-3">
-            {% for message in messages %}
-              <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-              </div>
-            {% endfor %}
+          <div class="row mx-0">
+            <div class="col-12">
+              {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                  {{ message }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              {% endfor %}
+            </div>
           </div>
         {% endif %}
-    
-        {% block content %}
-         
-        
-        {% endblock %}
+        {% block content %}{% endblock %}
       </main>
-
       {% include 'includes/footer.html' %}
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.querySelector('.app-sidebar');
+        const main = document.querySelector('.app-main');
 
+        if (sidebarToggle && sidebar && main) {
+          sidebarToggle.addEventListener('click', function () {
+            sidebar.classList.toggle('active');
+          });
+        }
+
+        // Auto-close alerts after 4 seconds
+        setTimeout(function () {
+          const alerts = document.querySelectorAll('.alert');
+          alerts.forEach(alert => {
+            alert.classList.remove('show');
+            alert.classList.add('fade');
+          });
+        }, 4000);
+      });
+    </script>
     {% include 'includes/scripts.html' %}
     {% block extra_scripts %}{% endblock %}
   </body>
 </html>
-
-<script>
-  setTimeout(function () {
-    let alert = document.querySelector(".alert");
-    if (alert) {
-      alert.classList.remove("show");
-      alert.classList.add("fade");
-    }
-  }, 4000); // 4 seconds
-</script>
-
- 

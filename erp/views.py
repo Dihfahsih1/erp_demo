@@ -91,24 +91,50 @@ HEADERS = {
     "Expect": ""  
 }
 
-def erpnext_api_request(endpoint, method="GET", data=None, params=None):
-    print(f"Making {method} request to {endpoint} with data: {data} and params: {params}")  # Debugging line
-    """Generic function to interact with ERPNext API."""
+
+def erpnext_api_request(endpoint, method="GET", data=None, params=None, request=None):
+    """
+    Improved API request handler with better error handling and logging
+    """
     url = f"{settings.ERP_NEXT_URL}/api/resource/{endpoint}"
+    
+    # Add debug logging
+    logger.debug(f"API Request to {url} with params: {params}")
+    
     try:
-        if method == "GET":
-            response = requests.get(url, headers=HEADERS, params=params)
-        elif method == "POST":
-            response = requests.post(url, headers=HEADERS, json=data)
-        elif method == "PUT":
-            response = requests.put(url, headers=HEADERS, json=data)
+        response = requests.request(
+            method,
+            url,
+            headers=HEADERS,
+            params=params,
+            json=data,
+            timeout=30  # Add timeout to prevent hanging
+        )
+        
+        # Log the response status
+        logger.debug(f"API Response Status: {response.status_code}")
+        
         response.raise_for_status()
-        return response.json().get("data", [])
-    except requests.RequestException as e:
-        print(f"Error connecting to ERPNext: {str(e)}")
+        
+        # Handle empty responses
+        if not response.content:
+            logger.warning(f"Empty response from {url}")
+            return None
+            
+        json_response = response.json()
+        
+        # Some ERPNext endpoints return data in 'data' key, others directly
+        return json_response.get("data", json_response)
+        
+    except requests.exceptions.HTTPError as e:
+        logger.error(f"HTTP Error {e.response.status_code} for {url}: {e.response.text}")
         return None
-
-
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Request failed for {url}: {str(e)}")
+        return None
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to decode JSON from {url}: {str(e)}")
+        return None
 
 def fetch_sales_person_performance():
     """Fetches sales data from ERPNext API"""
@@ -1180,49 +1206,45 @@ from django.views.decorators.csrf import csrf_exempt
 
 logger = logging.getLogger(__name__)
 
-
-@login_required
 @login_required
 def create_sales_order(request):
     if request.method != "POST":
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
     try:
-        # Validate required fields
+        # ----------------------------
+        # 1. Validate required fields
+        # ----------------------------
         required_fields = ['customer', 'transaction_date', 'delivery_date']
-        missing_fields = [field for field in required_fields if not request.POST.get(field)]
+        missing_fields = [f for f in required_fields if not request.POST.get(f)]
         if missing_fields:
-            return JsonResponse({
-                'error': f'Missing required fields: {", ".join(missing_fields)}'
-            }, status=400)
-        
-        # Fetch customer details from ERPNext to get sales team
+            return JsonResponse({'error': f'Missing required fields: {", ".join(missing_fields)}'}, status=400)
+
         customer = request.POST.get("customer")
+
+        # ----------------------------
+        # 2. Get sales team from ERPNext
+        # ----------------------------
         cust_response = requests.get(
             f"{ERP_URL}/api/resource/Customer/{customer}",
-            headers={
-                "Authorization": f"token {ERP_API_KEY}:{ERP_API_SECRET}"
-            }
+            headers={"Authorization": f"token {ERP_API_KEY}:{ERP_API_SECRET}"}
         )
         cust_response.raise_for_status()
         cust_data = cust_response.json()['data']
         cust_sales_team = cust_data.get('sales_team', [])
-        
         if not cust_sales_team:
             return JsonResponse({'error': 'No sales team defined for this customer'}, status=400)
-        
-        # Assume only one sales person; take the first one
-        sales_person = cust_sales_team[0]['sales_person']
-        
-        # Build sales_team as a list (required by ERPNext API)
+
         sales_team = [{
-            "sales_person": sales_person,
+            "sales_person": cust_sales_team[0]['sales_person'],
             "allocated_percentage": 100,
             "commission_rate": 100,
-            "allocated_amount": 0  # Will be updated after calculating net total
+            "allocated_amount": 0  # Will set after calculating total
         }]
-        
-        # Process items
+
+        # ----------------------------
+        # 3. Build items list
+        # ----------------------------
         item_codes = request.POST.getlist("item_code[]")
         qtys = request.POST.getlist("qty[]")
         rates = request.POST.getlist("rate[]")
@@ -1231,18 +1253,15 @@ def create_sales_order(request):
         uoms = request.POST.getlist("uom[]")
         discount_percents = request.POST.getlist("discount_percent[]")
 
-        items = []
-        net_total = 0
+        items, net_total = [], 0
         for i in range(len(item_codes)):
             try:
                 qty = float(qtys[i])
                 if qty <= 0:
                     continue
-                
                 rate = float(rates[i]) if i < len(rates) else 0
-                item_total = qty * rate
-                net_total += item_total
-                
+                net_total += qty * rate
+
                 item_dict = {
                     'item_code': item_codes[i],
                     'qty': qty,
@@ -1251,100 +1270,93 @@ def create_sales_order(request):
                     'warehouse': warehouses[i] if i < len(warehouses) else '',
                     'uom': uoms[i] if i < len(uoms) else ''
                 }
-                
                 if discount_percents and i < len(discount_percents):
                     item_dict['discount_percentage'] = float(discount_percents[i])
-                
+
                 items.append(item_dict)
-            except (ValueError, IndexError) as e:
-                logger.warning(f"Invalid item data at index {i}: {e}")
+            except (ValueError, IndexError):
                 continue
 
         if not items:
             return JsonResponse({'error': 'No valid items in order (must have quantity > 0)'}, status=400)
-        
-        # Update allocated_amount to the net total
+
         sales_team[0]['allocated_amount'] = net_total
-        
-        # Prepare order data (create in Draft state)
+
+        # ----------------------------
+        # 4. Create Draft order
+        # ----------------------------
         order_data = {
             'doctype': 'Sales Order',
             'customer': customer,
             'transaction_date': request.POST.get("transaction_date"),
             'delivery_date': request.POST.get("delivery_date"),
             'sales_team': sales_team,
-            'docstatus': 0,  # Create as Draft
+            'docstatus': 0,
             'items': items,
             'notes': request.POST.get("notes", "")
         }
-
-        # Create Draft Sales Order
         create_response = requests.post(
             f"{ERP_URL}/api/resource/Sales Order",
-            headers={
-                "Authorization": f"token {ERP_API_KEY}:{ERP_API_SECRET}",
-                "Content-Type": "application/json"
-            },
+            headers={"Authorization": f"token {ERP_API_KEY}:{ERP_API_SECRET}", "Content-Type": "application/json"},
             json=order_data
         )
         create_response.raise_for_status()
-        
-        # Parse the creation response
-        try:
-            create_data = create_response.json()
-            logger.debug(f"ERPNext create response: {create_data}")
-        except ValueError as e:
-            logger.error(f"Failed to parse ERPNext create response as JSON: {create_response.text}")
-            return JsonResponse({
-                'error': 'Invalid response format from ERPNext on create'
-            }, status=500)
-        
-        # Verify creation response structure
-        if not isinstance(create_data, dict) or 'data' not in create_data or 'name' not in create_data['data']:
-            logger.error(f"Unexpected ERPNext create response structure: {create_data}")
-            return JsonResponse({
-                'error': 'Unexpected response structure from ERPNext on create'
-            }, status=500)
-        
-        order_name = create_data['data']['name']
-        
-        # Submit the order and transition to Pending Credit Approval
-        submit_response = requests.post(
+        order_name = create_response.json()['data']['name']
+
+        # ----------------------------
+        # 5. Get current workflow state
+        # ----------------------------
+        doc_response = requests.get(
+            f"{ERP_URL}/api/resource/Sales Order/{order_name}",
+            headers={"Authorization": f"token {ERP_API_KEY}:{ERP_API_SECRET}"}
+        )
+        doc_response.raise_for_status()
+        current_state = doc_response.json()['data'].get("workflow_state", "Draft")
+
+        # ----------------------------
+        # 6. Workflow mapping
+        # ----------------------------
+        workflow_map = {
+            "Draft": {"role": "Sales User", "action": "Submit"},
+            "Pending Credit Approval": {"role": "Credit Controller", "action": "Approve"},
+            "Approved": {"role": "Billing", "action": "Create Pick List"}
+        }
+
+        if current_state not in workflow_map:
+            return JsonResponse({'error': f"No workflow defined for state '{current_state}'"}, status=400)
+
+        allowed_role = workflow_map[current_state]['role']
+        workflow_action = workflow_map[current_state]['action']
+
+        # ----------------------------
+        # 7. Check ERPNext user roles
+        # ----------------------------
+        user_roles_resp = requests.get(
+            f"{ERP_URL}/api/resource/User/{request.user.username}",
+            headers={"Authorization": f"token {ERP_API_KEY}:{ERP_API_SECRET}"}
+        )
+        user_roles_resp.raise_for_status()
+        user_roles = [r['role'] for r in user_roles_resp.json()['data'].get('roles', [])]
+
+        if allowed_role not in user_roles:
+            return JsonResponse({'error': f"User does not have the '{allowed_role}' role required for this action."}, status=403)
+
+        # ----------------------------
+        # 8. Apply workflow action
+        # ----------------------------
+        apply_resp = requests.post(
             f"{ERP_URL}/api/method/frappe.model.workflow.apply_workflow",
-            headers={
-                "Authorization": f"token {ERP_API_KEY}:{ERP_API_SECRET}",
-                "Content-Type": "application/json"
-            },
+            headers={"Authorization": f"token {ERP_API_KEY}:{ERP_API_SECRET}", "Content-Type": "application/json"},
             json={
-                "doc": json.dumps({
-                    "doctype": "Sales Order",
-                    "name": order_name
-                }),
-                "action": "Submit"  # Action to submit the order
+                "doc": json.dumps({"doctype": "Sales Order", "name": order_name}),
+                "action": workflow_action
             }
         )
-        submit_response.raise_for_status()
-        
-        # Parse the submit response
-        try:
-            submit_data = submit_response.json()
-            logger.debug(f"ERPNext submit response: {submit_data}")
-        except ValueError as e:
-            logger.error(f"Failed to parse ERPNext submit response as JSON: {submit_response.text}")
-            return JsonResponse({
-                'error': 'Invalid response format from ERPNext on submit'
-            }, status=500)
-        
-        # Verify submit response structure and workflow state
-        if not isinstance(submit_data, dict) or 'message' not in submit_data or submit_data['message'].get('workflow_state') != 'Pending Credit Approval':
-            logger.error(f"Unexpected ERPNext submit response or incorrect workflow state: {submit_data}")
-            return JsonResponse({
-                'error': 'Failed to transition to Pending Credit Approval'
-            }, status=500)
-        
+        apply_resp.raise_for_status()
+
         return JsonResponse({
             'success': True,
-            'message': 'Sales order created and submitted successfully',
+            'message': f"Sales Order created and moved to '{workflow_action}' step.",
             'order_name': order_name
         })
 
@@ -1353,15 +1365,11 @@ def create_sales_order(request):
             error_msg = http_err.response.json().get('message', http_err.response.text)
         except ValueError:
             error_msg = http_err.response.text
-        logger.error(f"ERPNext API error: {error_msg}")
-        return JsonResponse({
-            'error': f"ERPNext API error: {error_msg}"
-        }, status=http_err.response.status_code)
+        return JsonResponse({'error': f"ERPNext API error: {error_msg}"}, status=http_err.response.status_code)
+
     except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}", exc_info=True)
-        return JsonResponse({
-            'error': f"Unexpected error occurred: {str(e)}"
-        }, status=500) 
+        return JsonResponse({'error': f"Unexpected error: {str(e)}"}, status=500)
+
 @login_required
 def upload_delivery_note(request):
     if request.method == "POST":
@@ -1827,8 +1835,8 @@ def get_employee_info(user, request):
             "limit_page_length": 1
         },
         request=request
-    )
-
+    ) 
+    # Debugging line
     # Assuming the employee record always exists and branch is set
     return employee_data[0]["branch"]
 
@@ -2063,3 +2071,130 @@ def sales_dashboard(request):
         **stats
     }
     return render(request, "dashboards/sales_dashboard.html", context)
+from collections import defaultdict
+from django.http import JsonResponse
+from django.shortcuts import render
+import urllib.parse
+
+logger = logging.getLogger(__name__)
+
+def customer_ledger(request):
+    """Fetch customer ledger entries from ERPNext with batching and special character handling"""
+    try:
+        user = request.user
+        sales_person_name = get_employee_info(user, request)
+        logger.debug(f"Sales Person Name: {sales_person_name}")
+
+        # Get and validate query parameters
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        customer_filter = request.GET.get('customer')
+        try:
+            limit_start = int(request.GET.get('start', 0))
+            limit_length = int(request.GET.get('length', 10))
+            if limit_start < 0 or limit_length <= 0:
+                raise ValueError("Invalid pagination parameters")
+        except ValueError:
+            return JsonResponse({"error": "Invalid start or length parameters"}, status=400)
+
+        # Get customers assigned to sales person
+        customers = get_customers_by_sales_person(sales_person_name, request)
+        customer_names = [urllib.parse.quote(c["name"]) if isinstance(c["name"], str) else c["name"] for c in customers]
+
+        # Apply customer filter
+        filtered_customers = [urllib.parse.quote(customer_filter) if customer_filter else customer_filter] if (customer_filter and customer_filter in customer_names) else customer_names
+        if not filtered_customers:
+            return JsonResponse({
+                "ledger_entries": [],
+                "outstanding": {},
+                "recordsTotal": 0,
+                "recordsFiltered": 0,
+                "error": "No customers assigned or invalid customer filter"
+            }, status=400)
+
+        # Build base filters
+        base_filters = [
+            ["docstatus", "=", 1],
+            ["is_cancelled", "=", 0]
+        ]
+        if start_date:
+            base_filters.append(["posting_date", ">=", start_date])
+        if end_date:
+            base_filters.append(["posting_date", "<=", end_date])
+
+        # Batch processing for customers
+        batch_size = 20  # Adjust based on testing
+        total_records = 0
+        ledger_entries = []
+        for i in range(0, len(filtered_customers), batch_size):
+            batch_customers = filtered_customers[i:i + batch_size]
+            ledger_filters = base_filters + [["party", "in", batch_customers]]
+
+            # Get total count for batch
+            count_params = {
+                "filters": json.dumps(ledger_filters),
+                "limit_page_length": 1,
+                "fields": json.dumps(["name"]),
+            }
+            try:
+                total_count_resp = erpnext_api_request(
+                    "GL Entry",
+                    method="POST",  # Use POST to avoid URL length issues
+                    data=count_params,
+                    request=request
+                )
+                if isinstance(total_count_resp, list):
+                    total_records += len(total_count_resp)
+                elif isinstance(total_count_resp, dict):
+                    total_records += total_count_resp.get("count", 0)
+            except Exception as e:
+                logger.error(f"Failed to fetch GL Entry count for batch {i//batch_size + 1}: {str(e)}")
+                continue  # Skip batch on error, continue with next
+
+            # Get ledger entries for batch
+            try:
+                batch_entries = erpnext_api_request(
+                    "GL Entry",
+                    method="POST",
+                    data={
+                        "fields": json.dumps([
+                            "name", "posting_date", "party as customer",
+                            "debit", "credit", "voucher_type", "voucher_no",
+                            "remarks", "against_voucher"
+                        ]),
+                        "filters": json.dumps(ledger_filters),
+                        "order_by": "posting_date desc",
+                        "limit_page_length": limit_length,
+                        "limit_start": limit_start
+                    },
+                    request=request
+                ) or []
+                ledger_entries.extend(batch_entries)
+            except Exception as e:
+                logger.error(f"Failed to fetch GL Entry data for batch {i//batch_size + 1}: {str(e)}")
+                continue  # Skip batch on error, continue with next
+
+        # Calculate outstanding balances
+        outstanding = defaultdict(float)
+        for entry in ledger_entries:
+            customer = entry.get("customer")
+            if customer:
+                outstanding[customer] += (float(entry.get("debit", 0)) - float(entry.get("credit", 0)))
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                "ledger_entries": ledger_entries,
+                "outstanding": dict(outstanding),
+                "recordsTotal": total_records,
+                "recordsFiltered": total_records,
+            })
+
+        return render(request, "customer_ledger.html", {
+            "sales_person": sales_person_name,
+            "customers": customers,
+            "outstanding": dict(outstanding),
+        })
+
+    except Exception as e:
+        logger.error(f"Unexpected error in customer_ledger: {str(e)}")
+        return JsonResponse({"error": "Unexpected server error"}, status=500)

@@ -1,24 +1,17 @@
 {% load custom_tags %}
-{% load static %} 
-<aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
-  
-  <div class="sidebar-brand"> 
+{% load static %}
+<aside class="app-sidebar shadow" data-bs-theme="dark">
+  <div class="sidebar-brand">
     <a href="{% url 'dashboard' %}" class="brand-link">
-      
-      <img
-        src="{% static 'img/Logo.png'%}"
-        alt="AutoZone Logo"
-        class="brand-image opacity-75 shadow"
-      /> 
+      <img src="{% static 'img/Logo.png' %}" alt="AutoZone Logo" class="brand-image opacity-75 shadow">
       <span class="brand-text fw-light">Auto Pro Master</span>
-       
-    </a> 
-  </div>  
+    </a>
+  </div>
   <div class="sidebar-wrapper">
-    <div class="card shadow-sm mb-4 border-0 rounded-4 bg-light">
+    <div class="card shadow-sm mb-3 border-0 rounded-4 bg-light">
       <div class="card-body d-flex align-items-start">
-        <div class="me-3">
-          <i class="bi bi-person-circle fs-2 text-primary"></i>
+        <div class="me-2">
+          <i class="bi bi-person-circle fs-4 text-primary"></i>
         </div>
         <div class="flex-grow-1">
           <h6 class="mb-1 text-muted fw-bold">
@@ -37,197 +30,170 @@
           </div>
         </div>
       </div>
-    </div> 
-  
-    <nav class="mt-2"> 
-      <ul
-        class="nav sidebar-menu flex-column"
-        data-lte-toggle="treeview"
-        role="menu"
-        data-accordion="false"
-      >
-        {% comment %} <li class="nav-item menu-open">
-          <a href="{% url 'dashboard' %}" class="nav-link active">
-            <i class="nav-icon bi bi-speedometer"></i>
-            <p>
-              Dashboard
-              <i class="nav-arrow"></i>
-            </p>
-          </a>
-          
-        </li> {% endcomment %}
-        {% if request.user.username == 'Administrator' %}
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link active" href="#">
-                    <i class="bi bi-speedometer2"></i> Dashboard
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="bi bi-cart-plus"></i> Create Sales Order
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="bi bi-list-check"></i> My Orders
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="bi bi-truck"></i> Delivery Notes
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="bi bi-people"></i> Customer Contacts
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="bi bi-file-earmark-text"></i> Price List
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="bi bi-graph-up"></i> Item Movement
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="bi bi-clipboard-data"></i> Weekly Reports
-                </a>
-            </li>
-            <li class="nav-item mt-3">
-                <a class="nav-link" href="#">
-                    <i class="bi bi-gear"></i> Settings
-                </a>
-            </li>
-        </ul>
-        {% endif %}
-
-        {% if request.user.role and request.user.role.name == 'CRM Officer' or request.user.role.name == 'Estimates Officer' or request.user.role.name == 'Credit Officer' %}
-        <li class="nav-header">CUSTOMERS</li>
-
-          <li class="nav-item">
-            <a href="{% url 'register_customer' %}" class="nav-link">
-              <i class="nav-icon bi bi-person-plus"></i>
-              <p>Register Customer</p>
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a href="{% url 'customer_list' %}" class="nav-link">
-              <i class="nav-icon bi bi-people"></i>
-              <p>List Of Customer</p>
-            </a>
-          </li>
-          {% if request.user.role and request.user.role.name == 'Estimates Officer' or request.user.role.name == 'Credit Officer' %}
-            <li class="nav-header">ESTIMATES</li>
-              <li class="nav-item">
-                <a href="{% url 'record_estimate' %}" class="nav-link">
-                  <i class="nav-icon bi bi-pencil-square"></i>
-                  <p>Record Estimate</p>
-                </a>
-              </li>
-          {% endif %}
-          {% endif %}  
-          {% if request.user.role and request.user.role.name == 'CRM Officer' or request.user.role.name == 'Delivery Officer' or request.user.role.name == 'Estimates Officer' or request.user.role.name == 'Billing Officer' or request.user.role.name == 'Credit Officer' or request.user.role.name == 'Dispatch Officer' %}
-          <li class="nav-item">
-            <a href="{% url 'list_estimates' %}" class="nav-link">
-              <i class="nav-icon bi bi-list-ul"></i>
-              <p>List Of Estimate</p>
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a href="{% url 'billed_estimates_list' %}" class="nav-link">
-              <i class="nav-icon bi bi-clipboard-data"></i>
-              <p>Billed Estimate</p>
-            </a>
-          </li>
-          {% endif %}  
-
-         
-        {% if request.user.role and request.user.role.name == 'Delivery Officer' %}
-        <li class="nav-header">DELIVERY NOTES</li>
-        
-          
-        {% comment %} <li class="nav-item">
-          <a href="{% url 'create_delivery_note' %}" class="nav-link">
-            <i class="nav-icon bi bi-truck"></i>
-            <p>Record Delivery Details</p>
-          </a>
-        </li> {% endcomment %}
-
+    </div>
+    <nav>
+      <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu" data-accordion="false">
         <li class="nav-item">
-          <a href="{% url 'delivery_note_list' %}" class="nav-link">
-            <i class="nav-icon bi bi-clipboard-data"></i>
-            <p>Delivery Notes</p>
+          <a class="nav-link active" href="{% url 'sales_dashboard' %}">
+            <i class="bi bi-speedometer2"></i>
+            <span class="nav-link-text">Dashboard</span>
           </a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'customer_ledger' %}">
+            <i class="bi bi-cart-plus"></i>
+            <span class="nav-link-text">Customer Ledger</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">
+            <i class="bi bi-list-check"></i>
+            <span class="nav-link-text">My Orders</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">
+            <i class="bi bi-truck"></i>
+            <span class="nav-link-text">Delivery Notes</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">
+            <i class="bi bi-people"></i>
+            <span class="nav-link-text">Customer Contacts</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">
+            <i class="bi bi-file-earmark-text"></i>
+            <span class="nav-link-text">Price List</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">
+            <i class="bi bi-graph-up"></i>
+            <span class="nav-link-text">Item Movement</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">
+            <i class="bi bi-clipboard-data"></i>
+            <span class="nav-link-text">Weekly Reports</span>
+          </a>
+        </li>
+        <li class="nav-item mt-2">
+          <a class="nav-link" href="#">
+            <i class="bi bi-gear"></i>
+            <span class="nav-link-text">Settings</span>
+          </a>
+        </li>
+
+        {% if request.user.role and request.user.role.name in 'CRM Officer,Estimates Officer,Credit Officer' %}
+          <li class="nav-header">CUSTOMERS</li>
+          <li class="nav-item">
+            <a href="{% url 'register_customer' %}" class="nav-link">
+              <i class="bi bi-person-plus"></i>
+              <span class="nav-link-text">Register Customer</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'customer_list' %}" class="nav-link">
+              <i class="bi bi-people"></i>
+              <span class="nav-link-text">List Of Customers</span>
+            </a>
+          </li>
+          {% if request.user.role and request.user.role.name in 'Estimates Officer,Credit Officer' %}
+            <li class="nav-header">ESTIMATES</li>
+            <li class="nav-item">
+              <a href="{% url 'record_estimate' %}" class="nav-link">
+                <i class="bi bi-pencil-square"></i>
+                <span class="nav-link-text">Record Estimate</span>
+              </a>
+            </li>
+          {% endif %}
+        {% endif %}
+
+        {% if request.user.role and request.user.role.name in 'CRM Officer,Delivery Officer,Estimates Officer,Billing Officer,Credit Officer,Dispatch Officer' %}
+          <li class="nav-item">
+            <a href="{% url 'list_estimates' %}" class="nav-link">
+              <i class="bi bi-list-ul"></i>
+              <span class="nav-link-text">List Of Estimates</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'billed_estimates_list' %}" class="nav-link">
+              <i class="bi bi-clipboard-data"></i>
+              <span class="nav-link-text">Billed Estimates</span>
+            </a>
+          </li>
+        {% endif %}
+
+        {% if request.user.role and request.user.role.name == 'Delivery Officer' %}
+          <li class="nav-header">DELIVERY NOTES</li>
+          <li class="nav-item">
+            <a href="{% url 'delivery_note_list' %}" class="nav-link">
+              <i class="bi bi-clipboard-data"></i>
+              <span class="nav-link-text">Delivery Notes</span>
+            </a>
+          </li>
         {% endif %}
 
         {% if request.user.role and request.user.role.name == 'Sales Officer' %}
           <li class="nav-item">
             <a href="{% url 'delivery_note_list_by_sales_person' %}" class="nav-link">
-              
-              <i class="nav-icon bi bi-file-earmark-person"></i>
-              <p>My Delivery Notes</p>
+              <i class="bi bi-file-earmark-person"></i>
+              <span class="nav-link-text">My Delivery Notes</span>
             </a>
-          </li> 
-        {% endif %}
-       
-        
-        {% if request.user.role and request.user.role.name == 'Delivery Officer' or request.user.role.name == 'Dispatch Officer' %}
-        <li class="nav-header">TRANSPORTATION</li>
-        <li class="nav-item">
-          <a href="{% url 'mark_dispatch_delivered' %}" class="nav-link">
-            <i class="nav-icon bi bi-box-seam"></i>
-            <p>
-              Create Courier Details
-            </p>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="{% url 'dispatch_list' %}" class="nav-link">
-            <i class="nav-icon bi bi-card-list"></i>
-            <p>
-              List Courier Details
-            </p>
-          </a>
-        </li>
+          </li>
         {% endif %}
 
-        {% if request.user.role and request.user.role.name == 'Dispatch Officer' or request.user.role.name == 'Delivery Officer' %}
+        {% if request.user.role and request.user.role.name in 'Delivery Officer,Dispatch Officer' %}
+          <li class="nav-header">TRANSPORTATION</li>
+          <li class="nav-item">
+            <a href="{% url 'mark_dispatch_delivered' %}" class="nav-link">
+              <i class="bi bi-box-seam"></i>
+              <span class="nav-link-text">Create Courier Details</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'dispatch_list' %}" class="nav-link">
+              <i class="bi bi-card-list"></i>
+              <span class="nav-link-text">List Courier Details</span>
+            </a>
+          </li>
+        {% endif %}
+
+        {% if request.user.role and request.user.role.name in 'Dispatch Officer,Delivery Officer' %}
           <li class="nav-header">DISPATCH VERIFICATION</li>
           <li class="nav-item">
             <a href="#" class="nav-link">
-              <i class="nav-icon bi bi-send-check text-danger"></i>
-              <p class="text">Record Dispatch</p>
+              <i class="bi bi-send-check text-danger"></i>
+              <span class="nav-link-text">Record Dispatch</span>
             </a>
           </li>
           <li class="nav-item">
             <a href="#" class="nav-link">
-              <i class="nav-icon bi bi-check2-circle text-warning"></i>
-              <p>Dispatched items</p>
+              <i class="bi bi-check2-circle text-warning"></i>
+              <span class="nav-link-text">Dispatched Items</span>
             </a>
           </li>
           <li class="nav-item">
             <a href="#" class="nav-link">
-              <i class="nav-icon bi bi-bar-chart-line text-info"></i>
-              <p>Reports</p>
+              <i class="bi bi-bar-chart-line text-info"></i>
+              <span class="nav-link-text">Reports</span>
             </a>
           </li>
         {% endif %}
+
         {% if user.is_authenticated %}
-          <li class="nav-item">
+          <li class="nav-item mt-2">
             <a class="nav-link text-danger fw-semibold" href="{% url 'log_out' %}">
-              <i class="bi bi-box-arrow-right me-2 fs-5"></i> Logout
+              <i class="bi bi-box-arrow-right me-2 fs-5"></i>
+              <span class="nav-link-text">Logout</span>
             </a>
           </li>
         {% endif %}
-      </ul> 
+      </ul>
     </nav>
-  </div> 
-</aside> 
+  </div>
+</aside>
